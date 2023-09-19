@@ -1,0 +1,14 @@
+#ifndef TENSEUR_TENSOR
+#define TENSEUR_TENSOR
+
+// Configuration
+#include <Ten/Config.hxx>
+// Forward declaration of types
+#include <Ten/Types.hxx>
+// Kernels
+#include <Ten/Kernels/Host>
+// Implementation
+#include <Ten/Tensor.hxx>
+#include <Ten/Random.hxx>
+
+#endif
