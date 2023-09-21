@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <type_traits>
 
 #include <Ten/Kernels/Host>
@@ -123,12 +124,15 @@ template <::ten::BinaryOperation kind> struct BinaryFunc {
 
       static constexpr typename C::shape_type
       outputShape(const typename A::shape_type &left,
-                  const typename B::shape_type &right) {
+                  const typename B::shape_type &right)
+      {
+         if (left.size() != right.size()) {
+            throw
+               std::runtime_error("Different sizes.");
+         }
          typename C::shape_type s(left);
          return s;
       }
-
-      static auto outputShape(const A &a, const B &b) { return a.shape(); }
 
       void operator()(const A &left, const B &right, C &result) {
          ::ten::kernels::binaryOps<kind>(left, right, result);

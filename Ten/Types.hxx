@@ -292,4 +292,12 @@ static constexpr bool enableStackAlloc = TENSEUR_ENABLE_STACK_ALLOC;
 static constexpr size_type maxStackSize = TENSEUR_MAX_STACK_SIZE;
 } // namespace ten::stack
 
+// Debug variable
+namespace ten {
+#ifndef TENSEUR_DEBUG
+#define TENSEUR_DEBUG false
+#endif
+static bool Debug = TENSEUR_DEBUG;
+} // namespace ten
+
 #endif

@@ -518,7 +518,6 @@ class RankedTensor final
    RankedTensor(const std::shared_ptr<node_type> &node) : _node(node) {}
 
    /// Asignment from an expression
-   /// FIXME convert from any compatible output type
    template <class Expr>
       requires(::ten::isUnaryExpr<std::remove_cvref_t<Expr>>::value ||
                ::ten::isBinaryExpr<std::remove_cvref_t<Expr>>::value)
@@ -526,19 +525,21 @@ class RankedTensor final
       using expr_type = std::remove_cvref_t<Expr>;
       using evaluated_type = typename expr_type::evaluated_type;
 
-      auto node = expr.eval().node();
-      auto storage = node.get()->storage();
+      auto evaluatedNode = expr.eval().node();
+      // storage of the TensorNode
+      auto storage = evaluatedNode->storage();
 
       if constexpr (evaluated_type::isDynamic()) {
-         // TODO Check shape size
-         auto shape = node.get()->shape();
+         auto shape = evaluatedNode->shape();
          size_t size = shape.size();
-         if (size != _node.get()->shape().size()) {
-            throw
-               std::runtime_error("Different sizes");
+         if (_node) {
+            if (size != _node->shape().size()) {
+               throw std::runtime_error("Different sizes");
+            }
          }
          _node = std::make_shared<node_type>(storage, shape);
       }
+
       if constexpr (evaluated_type::isStatic()) {
          static_assert(Shape::staticSize() == evaluated_type::staticSize() &&
                        "Expected equal shape size");
@@ -565,7 +566,7 @@ class RankedTensor final
    /// Assignment operator
    RankedTensor(const RankedTensor &t) { _node = t._node; }
 
-   RankedTensor(RankedTensor &&) = default;
+   RankedTensor(RankedTensor &&t) { _node = std::move(t._node); }
 
    RankedTensor &operator=(const RankedTensor &t) {
       if constexpr (base_type::shape_type::isDynamic()) {
@@ -573,10 +574,12 @@ class RankedTensor final
       } else {
          _node = std::make_shared<node_type>(t.storage());
       }
-      //_node = t._node;
       return *this;
    }
-   // RankedTensor &operator=(RankedTensor &&t) = default;
+   RankedTensor &operator=(RankedTensor &&t) {
+      _node = std::move(t.node());
+      return *this;
+   }
 
    // TODO Iterators
 

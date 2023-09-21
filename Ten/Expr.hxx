@@ -330,19 +330,29 @@ class BinaryNode {
       if constexpr (Output::isStatic()) {
          _value.reset(new Output());
       } else {
+         // func(TensorNode, TensorNode)
          if constexpr (!::ten::isScalarNode<Left>::value &&
                        !::ten::isScalarNode<Right>::value) {
+            if (::ten::Debug)
+               std::cout << "f(Tensor, Tensor)" << std::endl;
             _value.reset(new Output(func_type::outputShape(
                 ::ten::details::NodeWrapper<Left>::shape(_left),
                 ::ten::details::NodeWrapper<Right>::shape(_right))));
          } else {
+            // func(ScalarNode, TensorNode)
             if constexpr (::ten::isScalarNode<Left>::value &&
                           !::ten::isScalarNode<Right>::value) {
+
+               if (::ten::Debug)
+                  std::cout << "f(Scalar, Tensor)" << std::endl;
                _value.reset(new Output(func_type::outputShape(
                    ::ten::details::NodeWrapper<Right>::shape(_right))));
             }
+            // func(TensorNode, ScalarNode)
             if constexpr (!::ten::isScalarNode<Left>::value &&
                           ::ten::isScalarNode<Right>::value) {
+               if (::ten::Debug)
+                  std::cout << "f(Tensor, Scalar)" << std::endl;
                _value.reset(new Output(func_type::outputShape(
                    ::ten::details::NodeWrapper<Left>::shape(_left))));
             }
@@ -409,9 +419,9 @@ class BinaryExpr : ::ten::Expr<BinaryExpr<Left, Right, Func, Args...>> {
       return evaluated_type(_node.get()->node());
    }
 
-   /// Evaluate a binary expression
-   /// If the input expression has not been evaluated, it will evaluate it
-   /// recursively before evaluating this expression
+   /// Evaluate a binary expression and return ten::ScalarNode or
+   /// ten::TensorNode If the input expression has not been evaluated, it will
+   /// evaluate it recursively before evaluating this expression
    [[maybe_unused]] auto eval() -> evaluated_type {
       return _node.get()->eval();
    }
