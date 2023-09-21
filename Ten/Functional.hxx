@@ -30,6 +30,12 @@ template <class T> struct HasParams {
 template <class A, class B = A> struct Sqrt : Func<> {
    using output_type = B;
 
+   static constexpr typename B::shape_type
+   outputShape(const typename A::shape_type &shape) {
+      typename B::shape_type s(shape);
+      return s;
+   }
+
    void operator()(const A &a, B &b) {
       using value_type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
@@ -41,6 +47,12 @@ template <class A, class B = A> struct Sqrt : Func<> {
 /// Absolute value
 template <class A, class B = A> struct Abs : Func<> {
    using output_type = B;
+
+   static constexpr typename B::shape_type
+   outputShape(const typename A::shape_type &shape) {
+      typename B::shape_type s(shape);
+      return s;
+   }
 
    void operator()(const A &a, B &b) {
       using value_type = typename B::value_type;
@@ -59,6 +71,12 @@ template <class A, class B = A> struct Pow : Func<true> {
    using output_type = B;
 
    explicit Pow(double n) : _n(n) {}
+
+   static constexpr typename B::shape_type
+   outputShape(const typename A::shape_type &shape) {
+      typename B::shape_type s(shape);
+      return s;
+   }
 
    void operator()(const A &a, B &b) const {
       using value_type = typename B::value_type;
@@ -124,11 +142,9 @@ template <::ten::BinaryOperation kind> struct BinaryFunc {
 
       static constexpr typename C::shape_type
       outputShape(const typename A::shape_type &left,
-                  const typename B::shape_type &right)
-      {
+                  const typename B::shape_type &right) {
          if (left.size() != right.size()) {
-            throw
-               std::runtime_error("Different sizes.");
+            throw std::runtime_error("Different sizes.");
          }
          typename C::shape_type s(left);
          return s;

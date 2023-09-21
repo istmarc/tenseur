@@ -1192,6 +1192,16 @@ auto sqrt(E &&expr) {
        expr.node());
 }
 
+/// \fn pow
+/// Returns the power of a scalar, a tensor or an expression
+template <class E, class Value>
+   requires isExpr<std::remove_cvref_t<E>>
+auto pow(E &&expr, Value &&value) {
+   using expr_type = std::remove_cvref_t<E>;
+   return UnaryExpr<typename expr_type::node_type, functional::Pow>(
+       expr.node(), std::forward<Value>(value));
+}
+
 } // namespace ten
 
 #endif
