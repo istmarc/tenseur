@@ -9,7 +9,8 @@ The following instructions describe how to clone the repository and install Tens
 
 .. code-block:: bash
 
-   $ git clone https://github.com/axmat/Tenseur.git
+#: #dcdcdc
+   $ git clone https://github.com/istmarco/Tenseur.git
    $ cd Tenseur
    $ mkdir build
    $ cd build
