@@ -2,4 +2,5 @@ build/
 build-tests/
 build-examples/
 build-benchmarks/
+build-docs/
 
