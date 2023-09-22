@@ -10,5 +10,6 @@
 // Implementation
 #include <Ten/Tensor.hxx>
 #include <Ten/Random.hxx>
+#include <Ten/Distributions.hxx>
 
 #endif
