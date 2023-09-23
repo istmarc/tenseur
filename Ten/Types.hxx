@@ -24,6 +24,13 @@ enum class StorageFormat {
    UpperTr
 };
 
+// File type
+enum class FileType{
+   Infer,
+   Csv,
+   Text
+};
+
 #ifndef TENSEUR_SIZE_TYPE
 #define TENSEUR_SIZE_TYPE std::size_t
 #endif

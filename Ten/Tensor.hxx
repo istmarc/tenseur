@@ -641,6 +641,11 @@ class RankedTensor final
    void resize(std::initializer_list<size_type> &&dims) {
       _node.get()->resize(std::move(dims));
    }
+
+   // Save to a file
+   void save(const std::string& fileName, const FileType& fileType = FileType::Infer, const std::string sep = ",") {
+      ::ten::details::SaveToFile(*this, fileName, fileType, sep);
+   }
 };
 
 // Vector<T>
