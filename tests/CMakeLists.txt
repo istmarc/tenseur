@@ -19,4 +19,5 @@ message("BLAS vendor : ${BLA_VENDOR}")
 add_subdirectory(Tensor)
 add_subdirectory(Expr)
 add_subdirectory(Distributions)
+add_subdirectory(Utils)
 
