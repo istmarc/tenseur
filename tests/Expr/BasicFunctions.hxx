@@ -56,6 +56,7 @@ TEST(Abs, Vector) {
    ASSERT_TRUE(tests::equal(b, ref));
 }
 
+
 TEST(Pow, StaticVector) {
    auto a = iota<SVector<float, 10>>();
    SVector<float, 10> b = pow(a, 3);

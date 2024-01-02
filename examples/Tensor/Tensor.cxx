@@ -75,7 +75,7 @@ int main() {
       StaticTensor<float, 2, 3> a;
       using tensor_type = decltype(a);
       static_assert(std::is_same_v<tensor_type::storage_type,
-                                   StaticDenseStorage<float, Shape<2, 3>>>);
+                                   StaticDenseStorage<float, Shape<2, 3>::staticSize()>>);
       cout << "Rank = " << a.rank() << endl;
       cout << "Order = "
            << (a.storageOrder() == StorageOrder::RowMajor ? "RowMajor"
