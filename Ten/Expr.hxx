@@ -173,7 +173,8 @@ class UnaryNode {
       } else {
          _value.reset(new Output(
              //::ten::details::NodeWrapper<Input>::shape(_input)
-             _func.value().outputShape(_input.get()->shape())
+             //_func.value().outputShape(_input.get()->shape())
+            _func.value().outputShape(::ten::details::NodeWrapper<Input>::shape(_input))
             ));
       }
 

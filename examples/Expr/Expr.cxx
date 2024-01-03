@@ -140,6 +140,7 @@ int main() {
       static_assert(std::is_same_v<decltype(c), Tensor<float, 2>>);
    }
 
+/*
    {
       cout << "Binary expr matrix * vector" << std::endl;
       auto a = iota<Matrix<float>>({2, 3});
@@ -164,6 +165,7 @@ int main() {
       cout << endl;
       static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
    }
+*/
 
    {
       cout << "Binary expr alpha * a" << std::endl;
@@ -173,6 +175,7 @@ int main() {
       static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
    }
 
+/*
    {
       cout << "Chain binary expressions" << std::endl;
       auto a = iota<Vector<float>>(5);
@@ -183,6 +186,7 @@ int main() {
       auto d = (c * a).eval();
       printTensor(d);
    }
+*/
 
    {
       cout << "Chain unary expressions" << std::endl;

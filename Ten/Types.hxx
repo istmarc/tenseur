@@ -46,7 +46,7 @@ template <size_type Dim, size_type... Rest> class Shape;
 /// Storage order of a multidimentional array
 enum class StorageOrder { ColMajor, RowMajor };
 
-static constexpr StorageOrder defaultOrder = StorageOrder::RowMajor;
+static constexpr StorageOrder defaultOrder = StorageOrder::ColMajor;
 
 /// \class tensor_base
 /// Base class for tensor types
