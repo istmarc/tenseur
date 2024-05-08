@@ -1,3 +1,5 @@
+[![docs](https://readthedocs.org/projects/tenseur/badge/?version=latest)](https://tenseur.readthedocs.io/en/latest/index.html)
+
 ## Tenseur
 A header only C++20 tensor library [WIP]
 

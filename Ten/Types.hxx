@@ -24,13 +24,6 @@ enum class StorageFormat {
    UpperTr
 };
 
-// File type
-enum class FileType{
-   Infer,
-   Csv,
-   Text
-};
-
 #ifndef TENSEUR_SIZE_TYPE
 #define TENSEUR_SIZE_TYPE std::size_t
 #endif
@@ -46,7 +39,7 @@ template <size_type Dim, size_type... Rest> class Shape;
 /// Storage order of a multidimentional array
 enum class StorageOrder { ColMajor, RowMajor };
 
-static constexpr StorageOrder defaultOrder = StorageOrder::ColMajor;
+static constexpr StorageOrder defaultOrder = StorageOrder::RowMajor;
 
 /// \class tensor_base
 /// Base class for tensor types
@@ -298,13 +291,5 @@ static constexpr bool enableStackAlloc = TENSEUR_ENABLE_STACK_ALLOC;
 #endif
 static constexpr size_type maxStackSize = TENSEUR_MAX_STACK_SIZE;
 } // namespace ten::stack
-
-// Debug variable
-namespace ten {
-#ifndef TENSEUR_DEBUG
-#define TENSEUR_DEBUG false
-#endif
-static bool Debug = TENSEUR_DEBUG;
-} // namespace ten
 
 #endif

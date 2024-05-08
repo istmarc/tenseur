@@ -159,6 +159,7 @@ class ScalarNode : public ScalarOperations<ScalarNode<T>> {
    using scalar_type = Scalar<T>;
    // for std::conditional_t
    using tensor_type = void;
+   using shape_type = Shape<1>;
 
  private:
    T _value;
@@ -518,28 +519,30 @@ class RankedTensor final
    RankedTensor(const std::shared_ptr<node_type> &node) : _node(node) {}
 
    /// Asignment from an expression
+   /// FIXME convert from any compatible output type
    template <class Expr>
       requires(::ten::isUnaryExpr<std::remove_cvref_t<Expr>>::value ||
                ::ten::isBinaryExpr<std::remove_cvref_t<Expr>>::value)
    RankedTensor(Expr &&expr) {
+      std::cout << "Tensor  form unary or binary expr" << std::endl;
       using expr_type = std::remove_cvref_t<Expr>;
       using evaluated_type = typename expr_type::evaluated_type;
 
-      auto evaluatedNode = expr.eval().node();
-      // storage of the TensorNode
-      auto storage = evaluatedNode->storage();
+      auto node = expr.eval().node();
+      auto storage = node.get()->storage();
+      std::cout << "><" << std::endl;
 
       if constexpr (evaluated_type::isDynamic()) {
-         auto shape = evaluatedNode->shape();
+         std::cout << ">< dynamic" << std::endl;
+         // TODO Check shape size
+         auto shape = node.get()->shape();
+         std::cout << ">< dynamic" << std::endl;
          size_t size = shape.size();
-         if (_node) {
-            if (size != _node->shape().size()) {
-               throw std::runtime_error("Different sizes");
-            }
+         if (size != _node.get()->shape().size()) {
+            throw std::runtime_error("Different sizes");
          }
-         _node = std::make_shared<node_type>(storage, shape);
+         //_node = std::make_shared<node_type>(storage, shape);
       }
-
       if constexpr (evaluated_type::isStatic()) {
          static_assert(Shape::staticSize() == evaluated_type::staticSize() &&
                        "Expected equal shape size");
@@ -566,7 +569,7 @@ class RankedTensor final
    /// Assignment operator
    RankedTensor(const RankedTensor &t) { _node = t._node; }
 
-   RankedTensor(RankedTensor &&t) { _node = std::move(t._node); }
+   RankedTensor(RankedTensor &&) = default;
 
    RankedTensor &operator=(const RankedTensor &t) {
       if constexpr (base_type::shape_type::isDynamic()) {
@@ -574,12 +577,10 @@ class RankedTensor final
       } else {
          _node = std::make_shared<node_type>(t.storage());
       }
+      //_node = t._node;
       return *this;
    }
-   RankedTensor &operator=(RankedTensor &&t) {
-      _node = std::move(t.node());
-      return *this;
-   }
+   // RankedTensor &operator=(RankedTensor &&t) = default;
 
    // TODO Iterators
 
@@ -640,11 +641,6 @@ class RankedTensor final
    // Resize
    void resize(std::initializer_list<size_type> &&dims) {
       _node.get()->resize(std::move(dims));
-   }
-
-   // Save to a file
-   void save(const std::string& fileName, const FileType& fileType = FileType::Infer, const std::string sep = ",") {
-      ::ten::details::SaveToFile(*this, fileName, fileType, sep);
    }
 };
 
@@ -1195,16 +1191,6 @@ auto sqrt(E &&expr) {
    using expr_type = std::remove_cvref_t<E>;
    return UnaryExpr<typename expr_type::node_type, functional::Sqrt>(
        expr.node());
-}
-
-/// \fn pow
-/// Returns the power of a scalar, a tensor or an expression
-template <class E, class Value>
-   requires isExpr<std::remove_cvref_t<E>>
-auto pow(E &&expr, Value &&value) {
-   using expr_type = std::remove_cvref_t<E>;
-   return UnaryExpr<typename expr_type::node_type, functional::Pow>(
-       expr.node(), std::forward<Value>(value));
 }
 
 } // namespace ten

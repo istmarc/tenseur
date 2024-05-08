@@ -4,8 +4,6 @@
 #include <Ten/Types.hxx>
 
 #include <array>
-#include <fstream>
-#include <sstream>
 #include <type_traits>
 
 namespace ten {
@@ -76,58 +74,6 @@ staticLinearIndex(const std::array<::ten::size_type, Stride::rank()> &indices,
       return staticLinearIndex<Stride, N + 1>(indices, index);
    } else {
       return index;
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// save to a file
-
-template <class V> static void SaveVectorToFile(V &&vec, std::ofstream &file) {
-   std::cout << "save vector to file" << std::endl;
-   for (size_t i = 0; i < vec.size(); i++) {
-      file << vec[i] << "\n";
-   }
-}
-
-template <class M>
-static void SaveMatrixToFile(M &&mat, std::ofstream &file,
-                             const std::string &sep) {
-   for (size_t i = 0; i < mat.dim(0); i++) {
-      file << mat(i, 0);
-      for (size_t j = 1; j < mat.dim(1); j++) {
-         file << sep << mat(i, j);
-      }
-      file << "\n";
-   }
-}
-
-template <typename T>
-static void SaveToFile(T &&t, const std::string &fileName,
-                       const FileType &filetype, std::string sep) {
-   std::ofstream file;
-   file.open(fileName);
-
-   if (!file.is_open()) {
-      std::stringstream ss;
-      ss << "Tenseur : can't open file ";
-      ss << fileName;
-      throw std::runtime_error(ss.str());
-   }
-
-   using type = typename std::remove_cv_t<std::remove_reference_t<T>>;
-   // if constexpr (std::is_same_v<typename type::value_type, float>){
-
-   if constexpr (type::rank() == 1) {
-      SaveVectorToFile(t, file);
-   }
-   if constexpr (type::rank() == 2) {
-      SaveMatrixToFile(t, file, sep);
-   }
-   if constexpr (type::rank() > 2) {
-      std::stringstream ss;
-      ss << "Tenseur : SaveToFile(...) not implemented ";
-      ss << "for tensors of size > 2";
-      throw std::stringstream(ss.str());
    }
 }
 

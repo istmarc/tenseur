@@ -5,7 +5,6 @@
 #include <initializer_list>
 #include <iostream>
 #include <memory>
-#include <stdexcept>
 #include <type_traits>
 
 #include <Ten/Kernels/Host>
@@ -30,18 +29,16 @@ template <class T> struct HasParams {
 template <class A, class B = A> struct Sqrt : Func<> {
    using output_type = B;
 
-      static constexpr typename B::shape_type
-      outputShape(const typename A::shape_type &shape)
-      {
-         typename B::shape_type s(shape);
-         return s;
-      }
-
    void operator()(const A &a, B &b) {
       using value_type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::sqrt(static_cast<value_type>(a[i]));
       }
+   }
+
+   static typename B::shape_type
+   outputShape(const typename B::shape_type &right) {
+      return right;
    }
 };
 
@@ -49,18 +46,16 @@ template <class A, class B = A> struct Sqrt : Func<> {
 template <class A, class B = A> struct Abs : Func<> {
    using output_type = B;
 
-      static constexpr typename B::shape_type
-      outputShape(const typename A::shape_type &shape)
-      {
-         typename B::shape_type s(shape);
-         return s;
-      }
-
    void operator()(const A &a, B &b) {
       using value_type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::abs(static_cast<value_type>(a[i]));
       }
+   }
+
+   static typename B::shape_type
+   outputShape(const typename B::shape_type &right) {
+      return right;
    }
 };
 
@@ -74,18 +69,16 @@ template <class A, class B = A> struct Pow : Func<true> {
 
    explicit Pow(double n) : _n(n) {}
 
-      static constexpr typename B::shape_type
-      outputShape(const typename A::shape_type &shape)
-      {
-         typename B::shape_type s(shape);
-         return s;
-      }
-
    void operator()(const A &a, B &b) const {
       using value_type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::pow(static_cast<value_type>(a[i]), _n);
       }
+   }
+
+   static typename B::shape_type
+   outputShape(const typename B::shape_type &right) {
+      return right;
    }
 };
 
@@ -100,6 +93,11 @@ template <class A, class B = typename A::scalarnode_type> struct Min : Func<> {
       }
       b = res;
    }
+
+   static typename B::shape_type
+   outputShape(const typename B::shape_type &right) {
+      return right;
+   }
 };
 
 template <class A, class B = typename A::scalarnode_type> struct Max : Func<> {
@@ -112,6 +110,11 @@ template <class A, class B = typename A::scalarnode_type> struct Max : Func<> {
          res = std::max(static_cast<type>(a[i]), res);
       }
       b = res;
+   }
+
+   static typename B::shape_type
+   outputShape(const typename B::shape_type &right) {
+      return right;
    }
 };
 
@@ -145,15 +148,12 @@ template <::ten::BinaryOperation kind> struct BinaryFunc {
 
       static constexpr typename C::shape_type
       outputShape(const typename A::shape_type &left,
-                  const typename B::shape_type &right)
-      {
-         if (left.size() != right.size()) {
-            throw
-               std::runtime_error("Different sizes.");
-         }
+                  const typename B::shape_type &right) {
          typename C::shape_type s(left);
          return s;
       }
+
+      static auto outputShape(const A &a, const B &b) { return a.shape(); }
 
       void operator()(const A &left, const B &right, C &result) {
          ::ten::kernels::binaryOps<kind>(left, right, result);

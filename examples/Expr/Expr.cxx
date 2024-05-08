@@ -59,6 +59,7 @@ int main() {
       cout << "And expr value = " << v.value() << endl;
    }
 
+
    {
       cout << "UnaryExpr sqrt" << endl;
       auto x = iota<Vector<float>>(3);
@@ -166,7 +167,6 @@ int main() {
       static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
    }
 */
-
    {
       cout << "Binary expr alpha * a" << std::endl;
       auto a = iota<Vector<float>>(5);
@@ -175,18 +175,18 @@ int main() {
       static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
    }
 
-/*
+
    {
       cout << "Chain binary expressions" << std::endl;
       auto a = iota<Vector<float>>(5);
       auto b = iota<Vector<float>>(5);
       auto c = a + b;
-      // 0 2 4  6  8
-      // 0 2 8 18 32
-      auto d = (c * a).eval();
-      printTensor(d);
+      // c = 0 2 4  6  8
+      // d = c * a = 0 2 8 18 32
+      //auto d = (c * a).eval();
+      //printTensor(d);
    }
-*/
+
 
    {
       cout << "Chain unary expressions" << std::endl;
@@ -206,11 +206,18 @@ int main() {
    }
 
    {
+      cout << "Tensor from unary expr static" << std::endl;
+      auto a = iota<SVector<float, 5>>();
+      SVector<float, 5> b = sqrt(a);
+      printTensor(b);
+   }
+
+   /*{
       cout << "Tensor from unary expr" << std::endl;
       auto a = iota<Vector<float>>(5);
       Vector<float> b = sqrt(a);
       printTensor(b);
-   }
+   }*/
 
    {
       cout << "Tensor from binary expr" << std::endl;

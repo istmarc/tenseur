@@ -3,13 +3,13 @@ Installation
 
 Install from source
 -------------------
-Tenseur can be installed from its source code available at https://github.com/istmarco/Tenseur.
+Tenseur can be installed from its source code available at https://github.com/axmat/Tenseur.
 
 The following instructions describe how to clone the repository and install Tenseur on Linux and MacOS:
 
 .. code-block:: bash
 
-   $ git clone https://github.com/istmarco/Tenseur.git
+   $ git clone https://github.com/axmat/Tenseur.git
    $ cd Tenseur
    $ mkdir build
    $ cd build

@@ -18,6 +18,4 @@ message("BLAS vendor : ${BLA_VENDOR}")
 # Tests
 add_subdirectory(Tensor)
 add_subdirectory(Expr)
-add_subdirectory(Distributions)
-add_subdirectory(Utils)
 

@@ -75,7 +75,7 @@ int main() {
       StaticTensor<float, 2, 3> a;
       using tensor_type = decltype(a);
       static_assert(std::is_same_v<tensor_type::storage_type,
-                                   StaticDenseStorage<float, Shape<2, 3>::staticSize()>>);
+                                   StaticDenseStorage<float, 6>>);
       cout << "Rank = " << a.rank() << endl;
       cout << "Order = "
            << (a.storageOrder() == StorageOrder::RowMajor ? "RowMajor"
@@ -433,8 +433,7 @@ int main() {
       printTensor(x);
       printTensor(y);
       auto z = reshape<3, 2>(x).eval();
-      // auto z = reshape<StaticMatrix<float, 3, 2>>(x);
-      // printTensor(z);
+      printTensor(z);
    }
 
    {

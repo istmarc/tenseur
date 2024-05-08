@@ -4,7 +4,7 @@ cmake_policy(SET CMP0135 NEW)
 
 project(Tenseur VERSION 1.0.0
                 DESCRIPTION "A header only C++20 tensor library."
-                HOMEPAGE_URL "https://github.com/istmarco/Tenseur")
+                HOMEPAGE_URL "https://github.com/axmat/Tenseur")
 
 include(GNUInstallDirs)
 
