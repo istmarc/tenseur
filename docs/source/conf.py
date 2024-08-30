@@ -7,8 +7,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'Tenseur'
-copyright = '2023, Ahmat Hamdan'
-author = 'Ahmat Hamdan'
+copyright = '2023, Marc'
+author = 'Marc'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

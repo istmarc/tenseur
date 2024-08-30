@@ -1,10 +1,11 @@
 #ifndef TENSEUR_UTILS_HXX
 #define TENSEUR_UTILS_HXX
 
-#include <Ten/Types.hxx>
+#include <ten/types.hxx>
 
 #include <array>
 #include <type_traits>
+#include <complex>
 
 namespace ten {
 template <class> std::string to_string();
@@ -12,6 +13,15 @@ template <class> std::string to_string();
 template <> std::string to_string<float>() { return "float"; }
 
 template <> std::string to_string<double>() { return "double"; }
+
+template <> std::string to_string<std::complex<float>> () {
+   return "complex<float>";
+   }
+
+template <> std::string to_string<std::complex<double>> () {
+   return "complex<double>";
+   }
+
 } // namespace ten
 
 namespace ten::details {
@@ -53,30 +63,30 @@ template <typename _d>
 
 /// \fn linearIndex
 /// Compute the linear index from the stride and the indices
-template <class Stride>
+template <class stride>
 [[nodiscard]] inline ::ten::size_type
-linearIndex(const Stride &stride,
-            const std::array<::ten::size_type, Stride::rank()> &indices) {
+linear_index(const stride &strides,
+            const std::array<::ten::size_type, stride::rank()> &indices) {
    ::ten::size_type index = 0;
-   for (::ten::size_type i = 0; i < Stride::rank(); i++)
-      index += indices[i] * stride.dim(i);
+   for (::ten::size_type i = 0; i < stride::rank(); i++)
+      index += indices[i] * strides.dim(i);
    return index;
 }
 
 /// \fn staticLinearIndex
 /// Compute the linear index from the static strides and the indices
-template <class Stride, size_type N = 0>
+template <class stride, size_type N = 0>
 [[nodiscard]] size_type
-staticLinearIndex(const std::array<::ten::size_type, Stride::rank()> &indices,
+static_linear_index(const std::array<::ten::size_type, stride::rank()> &indices,
                   size_type index = 0) {
-   index += indices[N] * Stride::template staticDim<N>();
-   if constexpr (N + 1 < Stride::rank()) {
-      return staticLinearIndex<Stride, N + 1>(indices, index);
+   index += indices[N] * stride::template static_dim<N>();
+   if constexpr (N + 1 < stride::rank()) {
+      return static_linear_index<stride, N + 1>(indices, index);
    } else {
       return index;
    }
 }
 
-}; // namespace ten::details
+} // namespace ten::details
 
 #endif

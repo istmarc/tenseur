@@ -62,7 +62,7 @@ int main() {
 
    {
       cout << "UnaryExpr sqrt" << endl;
-      auto x = iota<Vector<float>>(3);
+      auto x = range<Vector<float>>(3);
       for (size_t i = 0; i < 3; i++)
          x[i] = float(i);
       auto e = sqrt(x);
@@ -81,8 +81,8 @@ int main() {
 
    {
       cout << "Binary expr a + b" << std::endl;
-      auto a = iota<Vector<float>>(3);
-      auto b = iota<Vector<float>>(3);
+      auto a = range<Vector<float>>(3);
+      auto b = range<Vector<float>>(3);
       auto c = a + b;
       auto res = c.eval();
       printTensor(a);
@@ -105,8 +105,8 @@ int main() {
 
    {
       cout << "Binary expr a * b" << std::endl;
-      auto a = iota<Vector<float>>(6);
-      auto b = iota<Vector<float>>(6);
+      auto a = range<Vector<float>>(6);
+      auto b = range<Vector<float>>(6);
       auto c = (a * b).eval();
       printTensor(c);
       static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
@@ -114,8 +114,8 @@ int main() {
 
    {
       cout << "Binary expr A * B" << std::endl;
-      auto a = iota<Matrix<float>>({2, 3});
-      auto b = iota<Matrix<float>>({3, 4});
+      auto a = range<Matrix<float>>({2, 3});
+      auto b = range<Matrix<float>>({3, 4});
       auto c = (a * b).eval();
       cout << "A = \n";
       for (size_t i = 0; i < 2; i++) {
@@ -141,11 +141,10 @@ int main() {
       static_assert(std::is_same_v<decltype(c), Tensor<float, 2>>);
    }
 
-/*
    {
       cout << "Binary expr matrix * vector" << std::endl;
-      auto a = iota<Matrix<float>>({2, 3});
-      auto b = iota<Vector<float>>(3);
+      auto a = range<Matrix<float>>({2, 3});
+      auto b = range<Vector<float>>(3);
       auto c = (a * b).eval();
       cout << "A = \n";
       for (size_t i = 0; i < 2; i++) {
@@ -164,12 +163,12 @@ int main() {
          std::cout << c[j] << " ";
       }
       cout << endl;
-      static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
+      //static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
    }
-*/
+
    {
       cout << "Binary expr alpha * a" << std::endl;
-      auto a = iota<Vector<float>>(5);
+      auto a = range<Vector<float>>(5);
       auto c = (2. * a).eval();
       printTensor(c);
       static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
@@ -178,8 +177,8 @@ int main() {
 
    {
       cout << "Chain binary expressions" << std::endl;
-      auto a = iota<Vector<float>>(5);
-      auto b = iota<Vector<float>>(5);
+      auto a = range<Vector<float>>(5);
+      auto b = range<Vector<float>>(5);
       auto c = a + b;
       // c = 0 2 4  6  8
       // d = c * a = 0 2 8 18 32
@@ -190,7 +189,7 @@ int main() {
 
    {
       cout << "Chain unary expressions" << std::endl;
-      auto a = iota<Vector<float>>(5);
+      auto a = range<Vector<float>>(5);
       auto b = sqrt(a);
       auto c = sqrt(b).eval();
       printTensor(c);
@@ -198,7 +197,7 @@ int main() {
 
    {
       cout << "Chain unary and binary expressions" << std::endl;
-      auto a = iota<Vector<float>>(5);
+      auto a = range<Vector<float>>(5);
       auto b = 2. * a;
       auto c = sqrt(b);
       auto d = (c + a).eval();
@@ -207,24 +206,25 @@ int main() {
 
    {
       cout << "Tensor from unary expr static" << std::endl;
-      auto a = iota<SVector<float, 5>>();
+      auto a = range<SVector<float, 5>>();
       SVector<float, 5> b = sqrt(a);
       printTensor(b);
    }
 
-   /*{
+   {
       cout << "Tensor from unary expr" << std::endl;
-      auto a = iota<Vector<float>>(5);
+      auto a = range<Vector<float>>(5);
+      std::cout << a << std::endl;
       Vector<float> b = sqrt(a);
-      printTensor(b);
-   }*/
+      std::cout << b << std::endl;
+   }
 
    {
       cout << "Tensor from binary expr" << std::endl;
-      auto a = iota<StaticVector<float, 5>>();
-      auto b = iota<StaticVector<float, 5>>();
-      StaticVector<float, 5> d = a + b;
-      printTensor(d);
+      auto a = range<SVector<float, 5>>();
+      auto b = range<SVector<float, 5>>();
+      SVector<float, 5> d = a + b;
+      std::cout << d << std::endl;
    }
 
    return 0;

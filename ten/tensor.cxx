@@ -1,16 +1,18 @@
 #include <cmath>
 #include <iostream>
 
-//#include <Ten/Tensor>
-//#include <Ten/SharedLib.hxx>
-//#include <Ten/Test.hxx>
+#include <ten/tensor.hxx>
+#include <ten/shared_lib.hxx>
 
-namespace ten{
+// #include <Ten/Test.hxx>
 
-struct Struct{
-private:
+namespace ten {
+
+struct Struct {
+ private:
    int x = 1234;
-public:
+
+ public:
    void testFun();
 };
 
@@ -18,4 +20,4 @@ extern "C" void Struct::testFun() {
    std::cout << "Struct::testFun() run" << std::endl;
 }
 
-}
+} // namespace ten

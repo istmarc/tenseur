@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.2)
 
 cmake_policy(SET CMP0135 NEW)
 
-project(Tenseur VERSION 1.0.0
+project(tenseur VERSION 1.0.0
                 DESCRIPTION "A header only C++20 tensor library."
-                HOMEPAGE_URL "https://github.com/axmat/Tenseur")
+                HOMEPAGE_URL "https://github.com/istmarc/tenseur")
 
 include(GNUInstallDirs)
 
@@ -19,22 +19,22 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -march=native")
 option(TENSEUR_SHAREDLIB "Build shared Library." OFF)
 
 if (TENSEUR_SHAREDLIB)
-   add_library(Tenseur SHARED ${PROJECT_SOURCE_DIR}/Ten/Tensor.cxx)
-   set_target_properties(Tenseur PROPERTIES POSITION_INDEPENDANT_CODE ON)
-   target_include_directories(Tenseur PRIVATE ${PROJECT_SOURCE_DIR})
+   add_library(tenseur SHARED ${PROJECT_SOURCE_DIR}/ten/tensor.cxx)
+   set_target_properties(tenseur PROPERTIES POSITION_INDEPENDANT_CODE ON)
+   target_include_directories(tenseur PRIVATE ${PROJECT_SOURCE_DIR})
 else()
-   add_library(Tenseur INTERFACE)
+   add_library(tenseur INTERFACE)
    target_include_directories(
-     Tenseur
-     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Ten>
+     tenseur
+     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ten>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
    )
    # Compiler features
-   target_compile_features(Tenseur INTERFACE cxx_std_20)
+   target_compile_features(tenseur INTERFACE cxx_std_20)
 endif()
 
 # Target paths
-install(TARGETS Tenseur
+install(TARGETS tenseur
         EXPORT ${PROJECT_NAME}_Targets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -42,7 +42,7 @@ install(TARGETS Tenseur
 
 # Version
 include(CMakePackageConfigHelpers)
-write_basic_package_version_file("TenseurConfigVersion.cmake"
+write_basic_package_version_file("tenseurConfigVersion.cmake"
   VERSION ${PROJECT_VERSION}
   COMPATIBILITY SameMajorVersion)
 
@@ -67,7 +67,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
   DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/cmake)
 
 # Install directory
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/Ten DESTINATION include)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/ten DESTINATION include)
 
 # Build the tests
 option(TENSEUR_TESTS "Build tests." OFF)

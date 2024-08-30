@@ -1,0 +1,8 @@
+#ifndef TEN_KERNELS_HOST
+#define TEN_KERNELS_HOST
+
+#include <ten/kernels/blas_api.hxx>
+#include <ten/kernels/mul.hxx>
+#include <ten/kernels/binary_ops.hxx>
+
+#endif

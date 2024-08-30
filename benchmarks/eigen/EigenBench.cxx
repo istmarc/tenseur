@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
       std::cerr << "./EigenBench [file_name]" << std::endl;
       return 1;
    }
-   std::string fileName = (argc == 2) ? std::string(argv[1]) : "eigenBench";
+   std::string file_name = (argc == 2) ? std::string(argv[1]) : "eigenBench";
 
    ankerl::nanobench::Bench bench;
    bench.title("Eigen");
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
       bench.run("Mul2", [&] { MatrixXf d = a.array() * b.array(); });
    }
 
-   std::ofstream file(fileName + ".csv");
+   std::ofstream file(file_name + ".csv");
    ankerl::nanobench::render(ankerl::nanobench::templates::csv(), bench, file);
 
    return 0;

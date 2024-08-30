@@ -9,6 +9,11 @@
 #include <Ten/Kernels/Host>
 // Implementation
 #include <Ten/Tensor.hxx>
+// Distributions
+#include <Ten/Distributions.hxx>
+// Random numbers generation from distributions
 #include <Ten/Random.hxx>
+// Linear Algebra
+//#include <Ten/LinearAlgebra/.hxx>
 
 #endif

@@ -1,22 +1,22 @@
-#ifndef TENSEUR_STORAGE_DENSE_HXX
-#define TENSEUR_STORAGE_DENSE_HXX
+#ifndef TENSEUR_STORAGE_DENSE_STORAGE
+#define TENSEUR_STORAGE_DENSE_STORAGE
 
 #include <memory>
 #include <new>
 #include <type_traits>
 
-#include <Ten/Types.hxx>
+#include <ten/types.hxx>
 
 namespace ten {
-/// \class DenseStorage
+/// \class dense_storage
 /// Dense array
-template <typename T, typename Allocator> class DenseStorage final {
+template <typename T, typename allocator> class dense_storage final {
  public:
    using value_type = T;
-   using allocator_type = Allocator;
-   using allocator_traits = std::allocator_traits<Allocator>;
+   using allocator_type = allocator;
+   using allocator_traits = std::allocator_traits<allocator>;
 
-   template <class To> using casted_type = DenseStorage<To, Allocator>;
+   template <class to> using casted_type = dense_storage<to, allocator>;
 
  private:
    allocator_type _allocator{};
@@ -24,13 +24,15 @@ template <typename T, typename Allocator> class DenseStorage final {
    T *_data = nullptr;
 
  public:
-   DenseStorage() noexcept {}
+   dense_storage() noexcept {}
 
-   DenseStorage(size_type size) noexcept
-       : _size(size),
-         _data(allocator_traits::allocate(_allocator, size * sizeof(T))) {}
+   template<typename Shape>
+   dense_storage(const Shape& shape) noexcept {
+       _size = shape.size();
+      _data = allocator_traits::allocate(_allocator, _size * sizeof(T));
+   }
 
-   ~DenseStorage() {
+   ~dense_storage() {
       if (_data)
          delete[] _data;
    }
@@ -38,6 +40,8 @@ template <typename T, typename Allocator> class DenseStorage final {
    [[nodiscard]] inline const T *data() const { return _data; }
 
    [[nodiscard]] inline T *data() { return _data; }
+
+   [[nodiscard]] inline size_type size() const {return _size;}
 
    /// Get/Set the element at index
    [[nodiscard]] inline const T &operator[](size_type index) const noexcept {
@@ -48,13 +52,13 @@ template <typename T, typename Allocator> class DenseStorage final {
    }
 };
 
-/// \class StaticDenseStorage
+/// \class sdense_storage
 /// Static dense array
-template <typename T, size_t N> class StaticDenseStorage final {
+template <typename T, size_t N> class sdense_storage final {
  public:
    using value_type = T;
 
-   template <class To> using casted_type = StaticDenseStorage<To, N>;
+   template <class to> using casted_type = sdense_storage<to, N>;
 
    using allocator_type = void;
 
@@ -62,9 +66,9 @@ template <typename T, size_t N> class StaticDenseStorage final {
    alignas(T) T _data[N];
 
  public:
-   StaticDenseStorage() noexcept {}
+   sdense_storage() noexcept {}
 
-   ~StaticDenseStorage() {}
+   ~sdense_storage() {}
 
    // FIXME reinterpret cast aligned memory T[] to a pointer T*
    //[[nodiscard]] inline (const Scalar)[N] data() const {
@@ -77,6 +81,8 @@ template <typename T, size_t N> class StaticDenseStorage final {
    [[nodiscard]] inline T *data() {
       return std::launder(reinterpret_cast<T *>(&_data));
    }
+
+   [[nodiscard]] inline static constexpr size_type size() {return N;}
 
    /// Get/Set the element at index
    [[nodiscard]] inline const T &operator[](size_t index) const noexcept {

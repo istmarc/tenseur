@@ -16,6 +16,9 @@ Tenseur
    installation
    getting_started
    initialization
+   functions
+   linear_algebra
+   multilinear_algebra
    advanced
    examples
    benchmarks

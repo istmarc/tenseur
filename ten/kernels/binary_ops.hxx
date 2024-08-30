@@ -4,16 +4,16 @@
 #include <experimental/bits/simd.h>
 #include <experimental/simd>
 
-#include <Ten/Config.hxx>
-#include <Ten/Types.hxx>
+#include <ten/config.hxx>
+#include <ten/types.hxx>
 
 namespace ten::kernels {
 
-template <::ten::BinaryOperation kind, class A, class B, class C>
-static void binaryOps(const A &a, const B &b, C &c) {
+template <::ten::binary_operation kind, class A, class B, class C>
+static void binary_ops(const A &a, const B &b, C &c) {
    size_t n = a.size();
-   constexpr size_t vlen = ::ten::simdVecLen;
-   using ::ten::BinaryOperation;
+   constexpr size_t vlen = ::ten::simd_vecLen;
+   using ::ten::binary_operation;
    using T = typename A::value_type;
    using vector_type = std::experimental::fixed_size_simd<float, vlen>;
    using alignment = std::experimental::element_aligned_tag;
@@ -28,16 +28,16 @@ static void binaryOps(const A &a, const B &b, C &c) {
       // c_vec = a_vec ops b_vec
       vector_type c_vec;
       switch (kind) {
-      case BinaryOperation::add:
+      case binary_operation::add:
          c_vec = a_vec + b_vec;
          break;
-      case BinaryOperation::sub:
+      case binary_operation::sub:
          c_vec = a_vec - b_vec;
          break;
-      case BinaryOperation::div:
+      case binary_operation::div:
          c_vec = a_vec / b_vec;
          break;
-      case BinaryOperation::mul:
+      case binary_operation::mul:
          c_vec = a_vec * b_vec;
          break;
       }
@@ -46,16 +46,16 @@ static void binaryOps(const A &a, const B &b, C &c) {
    }
    for (size_t i = vlen * (n / vlen); i < n; i++) {
       switch (kind) {
-      case BinaryOperation::add:
+      case binary_operation::add:
          c[i] = a[i] + b[i];
          break;
-      case BinaryOperation::sub:
+      case binary_operation::sub:
          c[i] = a[i] - b[i];
          break;
-      case BinaryOperation::div:
+      case binary_operation::div:
          c[i] = a[i] / b[i];
          break;
-      case BinaryOperation::mul:
+      case binary_operation::mul:
          c[i] = a[i] * b[i];
          break;
       }
