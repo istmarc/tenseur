@@ -37,16 +37,16 @@ A header only C++20 tensor library [WIP]
 
 ## Example
 ```
-#include <Ten/Tensor>
+#include <ten/tensor>
 
 using namespace ten;
 
 int main() {
-   auto a = iota<Matrix<float>>({3, 3});
-   auto b = iota<Matrix<float>>({3, 3});
-   auto c = ones<Vector<float>>(3);
+   auto a = iota<matrix<float>>({3, 3});
+   auto b = iota<matrix<float>>({3, 3});
+   auto c = ones<vector<float>>(3);
 
-   Vector<float> x = a * b + c;
+   vector<float> x = a * b + c;
 }
 ```
 
