@@ -9,7 +9,7 @@ A header only C++20 tensor library [WIP]
 - Lazy evaluation of expressions
 - BLAS backend for high performance numerical linear algebra
 - Chain expressions
-- Factory functions: fill, ones, zeros, iota, rand
+- Factory functions: fill, ones, zeros, range, rand
 
 ### Todo
 - Shape and strides for static row major tensors
@@ -42,8 +42,8 @@ A header only C++20 tensor library [WIP]
 using namespace ten;
 
 int main() {
-   auto a = iota<matrix<float>>({3, 3});
-   auto b = iota<matrix<float>>({3, 3});
+   auto a = range<matrix<float>>({3, 3});
+   auto b = range<matrix<float>>({3, 3});
    auto c = ones<vector<float>>(3);
 
    vector<float> x = a * b + c;
