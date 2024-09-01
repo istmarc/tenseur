@@ -327,10 +327,12 @@ class tensor_node
  public:
    /// \typedef base_type
    /// Base type
-   using base_type = tensor_operations<__t, __shape, __order, __allocator, __storage>;
+   using base_type =
+       tensor_operations<__t, __shape, __order, __allocator, __storage>;
 
    /// Tensor type
-   using tensor_type = ranked_tensor<__t, __shape, __order, __storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
 
    using scalarnode_type = scalar_node<__t>;
 
@@ -394,7 +396,8 @@ class tensor_node
  public:
    /// Construct a static tensor_node
    tensor_node() noexcept
-       : _shape(std::nullopt), _stride(std::nullopt), _storage(new __storage()) {}
+       : _shape(std::nullopt), _stride(std::nullopt),
+         _storage(new __storage()) {}
 
    /// Construct a tensor_node from a list of shape
    explicit tensor_node(std::initializer_list<size_type> &&dims) noexcept
@@ -437,7 +440,8 @@ class tensor_node
    /// Tensor node from data
    explicit tensor_node(std::initializer_list<__t> &&data) noexcept
       requires(__shape::is_static())
-       : _shape(std::nullopt), _stride(std::nullopt), _storage(new __storage()) {
+       : _shape(std::nullopt), _stride(std::nullopt),
+         _storage(new __storage()) {
       size_type i = 0;
       for (auto x : data) {
          (*_storage.get())[i] = x;
@@ -466,7 +470,8 @@ class tensor_node
 
    /// Construct a tenso_node from storage and shape
    /// FIXME Check size
-   explicit tensor_node(const std::shared_ptr<__storage> &st, const __shape &dims,
+   explicit tensor_node(const std::shared_ptr<__storage> &st,
+                        const __shape &dims,
                         ::ten::storage_format format) noexcept
       requires(__shape::is_dynamic())
        : _format(format), _storage(st), _shape(dims),
@@ -506,8 +511,7 @@ class tensor_node
    [[nodiscard]] inline const __shape &shape() const { return _shape.value(); }
 
    /// Get the strides
-   [[nodiscard]] inline const typename base_type::stride_type &
-   strides() const {
+   [[nodiscard]] inline const typename base_type::stride_type &strides() const {
       return _stride.value();
    }
 
@@ -566,9 +570,7 @@ class tensor_node
    }
 
    /// Get the storage
-   [[nodiscard]] std::shared_ptr<__storage> storage() const {
-      return _storage;
-   }
+   [[nodiscard]] std::shared_ptr<__storage> storage() const { return _storage; }
 
    /// Overloading the [] operator
    [[nodiscard]] inline const typename base_type::value_type &
@@ -617,8 +619,10 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = default_storage<__t, __shape>,
           class __allocator = typename details::allocator_type<__storage>::type>
 class ranked_tensor final
-    : public ::ten::expr<ranked_tensor<__t, __shape, __order, __storage, __allocator>>,
-      public ::ten::tensor_operations<__t, __shape, __order, __storage, __allocator>,
+    : public ::ten::expr<
+          ranked_tensor<__t, __shape, __order, __storage, __allocator>>,
+      public ::ten::tensor_operations<__t, __shape, __order, __storage,
+                                      __allocator>,
       public ::ten::tensor_base {
  public:
    /// \typedef casted_type
@@ -633,7 +637,8 @@ class ranked_tensor final
 
    /// \typedef base_type
    /// Type of the tensor operations.
-   using base_type = tensor_operations<__t, __shape, __order, __storage, __allocator>;
+   using base_type =
+       tensor_operations<__t, __shape, __order, __storage, __allocator>;
 
    /// \typedef node_type
    /// Node type
@@ -741,10 +746,13 @@ class ranked_tensor final
    ranked_tensor(const ranked_tensor &t) { _node = t._node; }
 
    /// Copy constructor
-   ranked_tensor(ranked_tensor &&) = default;
+   ranked_tensor(ranked_tensor &&t) { _node = std::move(t._node); }
 
    /// Assignment operator
-   ranked_tensor &operator=(const ranked_tensor &t) = default;
+   ranked_tensor &operator=(const ranked_tensor &t) {
+      _node = t._node;
+      return *this;
+   }
    /*{
       if constexpr (base_type::shape_type::is_dynamic()) {
          _node = std::make_shared<node_type>(t.storage(), t.shape());
@@ -756,7 +764,10 @@ class ranked_tensor final
    }*/
 
    /// Assignment operator
-   ranked_tensor &operator=(ranked_tensor &&t) = default;
+   ranked_tensor &operator=(ranked_tensor &&t) {
+      _node = std::move(t._node);
+      return *this;
+   }
 
    // TODO Iterators
 
@@ -766,8 +777,7 @@ class ranked_tensor final
    }
 
    /// Returns the strides
-   [[nodiscard]] inline const typename base_type::stride_type &
-   strides() const {
+   [[nodiscard]] inline const typename base_type::stride_type &strides() const {
       return _node.get()->strides();
    }
 
@@ -865,21 +875,22 @@ class ranked_tensor final
    }
 
    /// std::ostream friend function
-   template <class __type, class __shape_type, storage_order __storage_order, class __storage_type,
-             class __allocator_type>
+   template <class __type, class __shape_type, storage_order __storage_order,
+             class __storage_type, class __allocator_type>
    friend std::ostream &
    operator<<(std::ostream &os,
-              const ranked_tensor<__type, __shape_type, __storage_order, __storage_type, __allocator_type> &t);
+              const ranked_tensor<__type, __shape_type, __storage_order,
+                                  __storage_type, __allocator_type> &t);
 };
 
 /// Overload << operator for vector
 template <class __t, class __shape, storage_order __order, class __storage,
           class __allocator>
-   requires(::ten::is_dvector<
-            ranked_tensor<__t, __shape, __order, __storage, __allocator>>::value)
-std::ostream &
-operator<<(std::ostream &os,
-           const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
+   requires(::ten::is_dvector<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value)
+std::ostream &operator<<(
+    std::ostream &os,
+    const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
    os << "vector<" << ::ten::to_string<__t>() << "," << t.shape() << ">";
    size_type size = t.size();
    if (size <= 10) {
@@ -901,11 +912,11 @@ operator<<(std::ostream &os,
 /// Overload << operator for a static vector
 template <class __t, class __shape, storage_order __order, class __storage,
           class __allocator>
-   requires(::ten::is_svector<
-            ranked_tensor<__t, __shape, __order, __storage, __allocator>>::value)
-std::ostream &
-operator<<(std::ostream &os,
-           const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
+   requires(::ten::is_svector<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value)
+std::ostream &operator<<(
+    std::ostream &os,
+    const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
    os << "svector<" << ::ten::to_string<__t>() << "," << __shape::static_size()
       << ">";
    size_type size = t.size();
@@ -930,11 +941,11 @@ operator<<(std::ostream &os,
 /// Overload << operator for matrix
 template <class __t, class __shape, storage_order __order, class __storage,
           class __allocator>
-   requires(::ten::is_matrix<
-            ranked_tensor<__t, __shape, __order, __storage, __allocator>>::value)
-std::ostream &
-operator<<(std::ostream &os,
-           const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
+   requires(::ten::is_matrix<ranked_tensor<__t, __shape, __order, __storage,
+                                           __allocator>>::value)
+std::ostream &operator<<(
+    std::ostream &os,
+    const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
    os << "matrix<" << ::ten::to_string<__t>() << "," << t.shape() << ">";
    size_type m = t.dim(0);
    size_type n = t.dim(1);
@@ -951,11 +962,11 @@ operator<<(std::ostream &os,
 /// Overload << operator for static matrix
 template <class __t, class __shape, storage_order __order, class __storage,
           class __allocator>
-   requires(::ten::is_smatrix<
-            ranked_tensor<__t, __shape, __order, __storage, __allocator>>::value)
-std::ostream &
-operator<<(std::ostream &os,
-           const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
+   requires(::ten::is_smatrix<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value)
+std::ostream &operator<<(
+    std::ostream &os,
+    const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
    os << "smatrix<" << ::ten::to_string<__t>() << ","
       << __shape::template static_dim<0>() << "x"
       << __shape::template static_dim<1>() << ">";
@@ -974,11 +985,11 @@ operator<<(std::ostream &os,
 /// Overload << operator for diagonal matrix
 template <class __t, class __shape, storage_order __order, class __storage,
           class __allocator>
-   requires(::ten::is_diagonal<
-            ranked_tensor<__t, __shape, __order, __storage, __allocator>>::value)
-std::ostream &
-operator<<(std::ostream &os,
-           const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
+   requires(::ten::is_diagonal<ranked_tensor<__t, __shape, __order, __storage,
+                                             __allocator>>::value)
+std::ostream &operator<<(
+    std::ostream &os,
+    const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
    os << "diagonal<" << ::ten::to_string<__t>() << "," << t.shape() << ">";
    size_type size = t.size();
    if (size <= 10) {
@@ -1075,7 +1086,8 @@ template <class __t, size_type __size, storage_order __order = default_order,
           class __storage = default_storage<__t, shape<__size>>,
           class __allocator = typename details::allocator_type<__storage>::type>
    requires(__size > 0)
-using svector = ranked_tensor<__t, shape<__size>, __order, __storage, __allocator>;
+using svector =
+    ranked_tensor<__t, shape<__size>, __order, __storage, __allocator>;
 
 // matrix<__t> or matrix<__t, __shape>
 template <class __t, class __shape = dynamic_shape<2>,
@@ -1090,24 +1102,28 @@ template <class __t, size_type __rows, size_type __cols,
           storage_order __order = default_order,
           class __storage = default_storage<__t, shape<__rows, __cols>>,
           class __allocator = typename details::allocator_type<__storage>::type>
-requires(__rows > 0 && __cols > 0)
-using smatrix = ranked_tensor<__t, shape<__rows, __cols>, __order, __storage, __allocator>;
+   requires(__rows > 0 && __cols > 0)
+using smatrix =
+    ranked_tensor<__t, shape<__rows, __cols>, __order, __storage, __allocator>;
 
 /// \typedef tensor
 /// tensor<__t, __rank>
 template <class __t, size_type __rank, storage_order __order = default_order,
           class __storage = default_storage<__t, dynamic_shape<__rank>>,
           class __allocator = typename details::allocator_type<__storage>::type>
-using tensor = ranked_tensor<__t, dynamic_shape<__rank>, __order, __storage, __allocator>;
+using tensor =
+    ranked_tensor<__t, dynamic_shape<__rank>, __order, __storage, __allocator>;
 
 /// \typedef stensor
 /// stensor<__t, __dims...>
 template <class __t, size_type... __dims>
 // TODO Shorter requires all dims > 0 without shape
-requires(shape<__dims...>::is_static())
-using stensor = ranked_tensor<
-    __t, shape<__dims...>, default_order, default_storage<__t, shape<__dims...>>,
-    typename details::allocator_type<default_storage<__t, shape<__dims...>>>::type>;
+   requires(shape<__dims...>::is_static())
+using stensor =
+    ranked_tensor<__t, shape<__dims...>, default_order,
+                  default_storage<__t, shape<__dims...>>,
+                  typename details::allocator_type<
+                      default_storage<__t, shape<__dims...>>>::type>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Special matrices
@@ -1401,10 +1417,11 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = default_storage<__t, __shape>,
           class __allocator = typename details::allocator_type<__storage>::type>
    requires(::ten::is_static_storage<__storage>::value &&
-            ::ten::is_stensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value)
+            ::ten::is_stensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value)
 [[nodiscard]] auto fill(__t value) {
-   return fill<ranked_tensor<__t, __shape, __order,__storage, __allocator>>(value);
+   return fill<ranked_tensor<__t, __shape, __order, __storage, __allocator>>(
+       value);
 }
 
 // fill<tensor<...>>(__shape, value)
@@ -1432,27 +1449,29 @@ template <class __t>
 }
 
 // fill<__t, __shape, __order,__storage, __allocator>(__shape, value)
-template <
-    class __t, class __shape, storage_order __order = default_order,
-    class __storage = ::ten::default_storage<__t, __shape>,
-    class __allocator = typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dtensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+template <class __t, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<__t, __shape>,
+          class __allocator =
+              typename ::ten::details::allocator_type<__storage>::type>
+   requires(::ten::is_dtensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto fill(__shape &&dims, __t value) {
-   using tensor_type = ranked_tensor<__t, __shape, __order,__storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
    return fill<tensor_type>(std::forward<shape>(dims), value);
 }
 
-template <
-    class __t, class __shape, storage_order __order = default_order,
-    class __storage = ::ten::default_storage<__t, __shape>,
-    class __allocator = typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dtensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+template <class __t, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<__t, __shape>,
+          class __allocator =
+              typename ::ten::details::allocator_type<__storage>::type>
+   requires(::ten::is_dtensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto fill(std::initializer_list<size_type> &&dims, __t value) {
-   using tensor_type = ranked_tensor<__t, __shape, __order,__storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
    using shape_type = typename tensor_type::shape_type;
    return fill<tensor_type>(shape_type(std::move(dims)), value);
 }
@@ -1483,11 +1502,11 @@ template <class __t>
 template <class __t, class __shape, storage_order __order = default_order,
           class __storage = default_storage<__t, __shape>,
           class __allocator = typename details::allocator_type<__storage>::type>
-   requires(::ten::is_stensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+   requires(::ten::is_stensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_static_storage<__storage>::value)
 [[nodiscard]] auto zeros() {
-   return zeros<ranked_tensor<__t, __shape, __order,__storage, __allocator>>();
+   return zeros<ranked_tensor<__t, __shape, __order, __storage, __allocator>>();
 }
 
 // zeros<tensor<...>>(shape)
@@ -1509,27 +1528,29 @@ template <class __t>
 }
 
 // zeros<__t, __shape, __order,__storage, __allocator>(shape)
-template <
-    class __t, class __shape, storage_order __order = default_order,
-    class __storage = ::ten::default_storage<__t, __shape>,
-    class __allocator = typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dtensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+template <class __t, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<__t, __shape>,
+          class __allocator =
+              typename ::ten::details::allocator_type<__storage>::type>
+   requires(::ten::is_dtensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto zeros(__shape &&dims) {
-   using tensor_type = ranked_tensor<__t, __shape, __order,__storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
    return zeros<tensor_type>(std::forward<shape>(dims));
 }
 
-template <
-    class __t, class __shape, storage_order __order = default_order,
-    class __storage = ::ten::default_storage<__t, __shape>,
-    class __allocator = typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dtensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+template <class __t, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<__t, __shape>,
+          class __allocator =
+              typename ::ten::details::allocator_type<__storage>::type>
+   requires(::ten::is_dtensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto zeros(std::initializer_list<size_type> &&dims) {
-   using tensor_type = ranked_tensor<__t, __shape, __order,__storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
    using shape_type = typename tensor_type::shape_type;
    return zeros<tensor_type>(shape_type(std::move(dims)));
 }
@@ -1560,11 +1581,11 @@ template <class __t>
 template <class __t, class __shape, storage_order __order = default_order,
           class __storage = default_storage<__t, __shape>,
           class __allocator = typename details::allocator_type<__storage>::type>
-   requires(::ten::is_stensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+   requires(::ten::is_stensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_static_storage<__storage>::value)
 [[nodiscard]] auto ones() {
-   return ones<ranked_tensor<__t, __shape, __order,__storage, __allocator>>();
+   return ones<ranked_tensor<__t, __shape, __order, __storage, __allocator>>();
 }
 
 // ones<tensor<...>>(shape)
@@ -1586,27 +1607,29 @@ template <class __t>
 }
 
 // ones<__t, __shape, __order,__storage, __allocator>(shape)
-template <
-    class __t, class __shape, storage_order __order = default_order,
-    class __storage = ::ten::default_storage<__t, __shape>,
-    class __allocator = typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dtensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+template <class __t, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<__t, __shape>,
+          class __allocator =
+              typename ::ten::details::allocator_type<__storage>::type>
+   requires(::ten::is_dtensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto ones(__shape &&dims) {
-   using tensor_type = ranked_tensor<__t, __shape, __order,__storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
    return ones<tensor_type>(std::forward<shape>(dims));
 }
 
-template <
-    class __t, class __shape, storage_order __order = default_order,
-    class __storage = ::ten::default_storage<__t, __shape>,
-    class __allocator = typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dtensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+template <class __t, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<__t, __shape>,
+          class __allocator =
+              typename ::ten::details::allocator_type<__storage>::type>
+   requires(::ten::is_dtensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto ones(std::initializer_list<size_type> &&dims) {
-   using tensor_type = ranked_tensor<__t, __shape, __order,__storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
    using shape_type = typename tensor_type::shape_type;
    return ones<tensor_type>(shape_type(std::move(dims)));
 }
@@ -1644,11 +1667,12 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = default_storage<__t, __shape>,
           class __allocator = typename details::allocator_type<__storage>::type>
    requires(std::is_floating_point_v<__t> &&
-            ::ten::is_stensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+            ::ten::is_stensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_static_storage<__storage>::value)
 [[nodiscard]] auto range(__t value = __t(0)) {
-   return range<ranked_tensor<__t, __shape, __order,__storage, __allocator>>(value);
+   return range<ranked_tensor<__t, __shape, __order, __storage, __allocator>>(
+       value);
 }
 
 // range<tensor<...>>(__shape, value)
@@ -1690,41 +1714,46 @@ range(size_type size,
 }
 
 // range<__t, __shape, __order,__storage, __allocator>(__shape, value)
-template <
-    class __t, class __shape, storage_order __order = default_order,
-    class __storage = ::ten::default_storage<__t, __shape>,
-    class __allocator = typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dtensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+template <class __t, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<__t, __shape>,
+          class __allocator =
+              typename ::ten::details::allocator_type<__storage>::type>
+   requires(::ten::is_dtensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto range(__shape &&dims, __t value = __t(0)) {
-   using tensor_type = ranked_tensor<__t, __shape, __order,__storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
    return range<tensor_type>(std::forward<shape>(dims), value);
 }
 
-template <
-    class __t, class __shape, storage_order __order = default_order,
-    class __storage = ::ten::default_storage<__t, __shape>,
-    class __allocator = typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dtensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+template <class __t, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<__t, __shape>,
+          class __allocator =
+              typename ::ten::details::allocator_type<__storage>::type>
+   requires(::ten::is_dtensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto range(std::initializer_list<size_type> &&dims,
                          __t value = __t(0)) {
-   using tensor_type = ranked_tensor<__t, __shape, __order,__storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
    using shape_type = typename tensor_type::shape_type;
    return range<tensor_type>(shape_type(std::move(dims)), value);
 }
 
 // range<__t, rank>(__shape, value)
-template <class __t, size_type __rank = 1, storage_order __order = default_order>
+template <class __t, size_type __rank = 1,
+          storage_order __order = default_order>
    requires(std::is_floating_point_v<__t>)
-[[nodiscard]] auto ones(const dynamic_shape<__rank> &shape, __t value = __t(0)) {
+[[nodiscard]] auto ones(const dynamic_shape<__rank> &shape,
+                        __t value = __t(0)) {
    using shape_type = ::ten::dynamic_shape<__rank>;
    return range<__t, shape_type, __order>(std::forward<shape>(shape), value);
 }
 
-template <class __t, size_type __rank = 1, storage_order __order = default_order>
+template <class __t, size_type __rank = 1,
+          storage_order __order = default_order>
    requires(std::is_floating_point_v<__t>)
 [[nodiscard]] auto range(std::initializer_list<size_type> &&dims,
                          __t value = __t(0)) {
@@ -1755,12 +1784,12 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = default_storage<__t, __shape>,
           class __allocator = typename details::allocator_type<__storage>::type>
    requires(std::is_floating_point_v<__t> &&
-            ::ten::is_stensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+            ::ten::is_stensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_static_storage<__storage>::value)
 [[nodiscard]] auto linear(__t start, __t stop) {
-   return linear<ranked_tensor<__t, __shape, __order,__storage, __allocator>>(start,
-                                                                     stop);
+   return linear<ranked_tensor<__t, __shape, __order, __storage, __allocator>>(
+       start, stop);
 }
 
 // linear<tensor<...>>(start, stop, __shape)
@@ -1798,52 +1827,59 @@ template <class __t>
             __t::isvector())
 [[nodiscard]] auto
 linear(typename __t::value_type start, typename __t::value_type stop, size_type
-size){ using shape_type = typename __t::shape_type; return linear<__t>(start, stop,
-shape_type({size}));
+size){ using shape_type = typename __t::shape_type; return linear<__t>(start,
+stop, shape_type({size}));
 }*/
 
-// linear<__t, __shape, storage_order,__storage, __allocator>(start, stop, __shape)
-template <
-    class __t, class __shape, storage_order __order = default_order,
-    class __storage = ::ten::default_storage<__t, __shape>,
-    class __allocator = typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dtensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+// linear<__t, __shape, storage_order,__storage, __allocator>(start, stop,
+// __shape)
+template <class __t, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<__t, __shape>,
+          class __allocator =
+              typename ::ten::details::allocator_type<__storage>::type>
+   requires(::ten::is_dtensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto linear(__t start, __t stop, __shape &&dims) {
-   using tensor_type = ranked_tensor<__t, __shape, __order,__storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
    return linear<tensor_type>(start, stop, std::forward<shape>(dims));
 }
 
-template <
-    class __t, class __shape, storage_order __order = default_order,
-    class __storage = ::ten::default_storage<__t, __shape>,
-    class __allocator = typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dtensor<
-                ranked_tensor<__t, __shape, __order,__storage, __allocator>>::value &&
+template <class __t, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<__t, __shape>,
+          class __allocator =
+              typename ::ten::details::allocator_type<__storage>::type>
+   requires(::ten::is_dtensor<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto linear(__t start, __t stop,
                           std::initializer_list<size_type> &&dims) {
-   using tensor_type = ranked_tensor<__t, __shape, __order,__storage, __allocator>;
+   using tensor_type =
+       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
    using shape_type = typename tensor_type::shape_type;
    return linear<tensor_type>(start, stop, shape_type(std::move(dims)));
 }
 
 // linear<__t, __rank>(start, stop, __shape)
-template <class __t, size_type __rank = 1, storage_order __order = default_order>
+template <class __t, size_type __rank = 1,
+          storage_order __order = default_order>
    requires(std::is_floating_point_v<__t>)
-[[nodiscard]] auto ones(__t start, __t stop, const dynamic_shape<__rank> &shape) {
+[[nodiscard]] auto ones(__t start, __t stop,
+                        const dynamic_shape<__rank> &shape) {
    using shape_type = ::ten::dynamic_shape<__rank>;
-   return linear<__t, shape_type, __order>(start, stop, std::forward<shape>(shape));
+   return linear<__t, shape_type, __order>(start, stop,
+                                           std::forward<shape>(shape));
 }
 
-template <class __t, size_type __rank = 1, storage_order __order = default_order>
+template <class __t, size_type __rank = 1,
+          storage_order __order = default_order>
    requires(std::is_floating_point_v<__t>)
 [[nodiscard]] auto linear(__t start, __t stop,
                           std::initializer_list<size_type> &&dims) {
    using shape_type = ::ten::dynamic_shape<__rank>;
    return linear<__t, shape_type, __order>(start, stop,
-                                       shape_type(std::move(dims)));
+                                           shape_type(std::move(dims)));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
