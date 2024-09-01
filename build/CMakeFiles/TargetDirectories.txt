@@ -1,6 +1,0 @@
-/home/ahmat/repos/tenseur/build/CMakeFiles/edit_cache.dir
-/home/ahmat/repos/tenseur/build/CMakeFiles/rebuild_cache.dir
-/home/ahmat/repos/tenseur/build/CMakeFiles/list_install_components.dir
-/home/ahmat/repos/tenseur/build/CMakeFiles/install.dir
-/home/ahmat/repos/tenseur/build/CMakeFiles/install/local.dir
-/home/ahmat/repos/tenseur/build/CMakeFiles/install/strip.dir
