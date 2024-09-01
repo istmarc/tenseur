@@ -1,3 +1,0 @@
-/home/ahmat/git/Tenseur/build/test/build/CMakeFiles/test.dir
-/home/ahmat/git/Tenseur/build/test/build/CMakeFiles/edit_cache.dir
-/home/ahmat/git/Tenseur/build/test/build/CMakeFiles/rebuild_cache.dir
