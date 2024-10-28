@@ -12,22 +12,16 @@ A header only C++20 tensor library [WIP]
 - Factory functions: fill, ones, zeros, range, rand
 
 ### Todo
-- Shape and strides for static row major tensors
-- Make raw major default?
 - Compile to a shared library
 - Tests for shared library
 - Generate automatic python bindings
 - Pythonizations
-- Tests
-- CI/CD
-- Check tensor shapes at compile time whenever possible
+- CI/CD with tests
 - Sparse tensors
-- Special matrices
+- More special matrices
 - Automatic differentiation
 - Python documentation
 - C++ API documentation
-- Untyped tensor
-- Operators precedence
 - Inplace operations
 
 ### Requirements
