@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
    ankerl::nanobench::Bench bench;
    bench.title("Eigen");
 
-   std::vector<size_t> sizes = {512, 1024, 2048};
+   std::vector<size_t> sizes = {64, 128, 256, 512, 1024, 2048, 4096};
 
    for (auto N : sizes) {
       MatrixXf a(N, N);

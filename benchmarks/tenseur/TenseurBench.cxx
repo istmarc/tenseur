@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
    ankerl::nanobench::Bench bench;
    bench.title("Tenseur");
 
-   std::vector<size_t> sizes = {512, 1024, 2048};
+   std::vector<size_t> sizes = {64, 128, 256, 512, 1024, 2048, 4096};
 
    for (auto N : sizes) {
       auto a = range<matrix<float>>({N, N});
@@ -27,37 +27,22 @@ int main(int argc, char **argv) {
          matrix<float> d = a * b;
          ankerl::nanobench::doNotOptimizeAway(d);
       });
-   }
 
-   // sum
-   for (auto N : sizes) {
-      auto a = range<matrix<float>>({N, N});
-      auto b = range<matrix<float>>({N, N});
-      auto c = zeros<matrix<float>>({N, N});
+      // sum
       bench.run("Sum", [&] { c = a + b; });
       bench.run("Sum2", [&] {
          matrix<float> d = a + b;
          ankerl::nanobench::doNotOptimizeAway(d);
       });
-   }
 
-   // sub
-   for (auto N : sizes) {
-      auto a = range<matrix<float>>({N, N});
-      auto b = range<matrix<float>>({N, N});
-      auto c = zeros<matrix<float>>({N, N});
+      // sub
       bench.run("Sub", [&] { c = a - b; });
       bench.run("Sub2", [&] {
          matrix<float> d = a - b;
          ankerl::nanobench::doNotOptimizeAway(d);
       });
-   }
 
-   // div
-   for (auto N : sizes) {
-      auto a = range<matrix<float>>({N, N});
-      auto b = range<matrix<float>>({N, N});
-      auto c = zeros<matrix<float>>({N, N});
+      // div
       bench.run("Div", [&] { c = a / b; });
       bench.run("Div2", [&] {
          matrix<float> d = a / b;
