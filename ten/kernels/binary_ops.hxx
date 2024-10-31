@@ -18,6 +18,7 @@ static void binary_ops(const A &a, const B &b, C &c) {
    using vector_type = std::experimental::fixed_size_simd<float, vlen>;
    using alignment = std::experimental::element_aligned_tag;
 
+   // max vlen size = 32
    for (size_t i = 0; i < n / vlen; i++) {
       // Load a and b
       size_t offset = i * vlen;
@@ -44,8 +45,107 @@ static void binary_ops(const A &a, const B &b, C &c) {
       // Copy back
       c_vec.copy_to(c.data() + offset, alignment{});
    }
-   for (size_t i = vlen * (n / vlen); i < n; i++) {
+
+   // 16
+   constexpr size_t vlen16 = 16;
+   using vector_type16 = std::experimental::fixed_size_simd<float, vlen16>;
+   size_t j = vlen * (n / vlen);
+   size_t rest = n - j;
+   if (rest >= vlen16) {
+      size_t offset = j;
+      vector_type16 a_vec;
+      a_vec.copy_from(a.data() + offset, alignment{});
+      vector_type16 b_vec;
+      b_vec.copy_from(b.data() + offset, alignment{});
+      // c_vec = a_vec ops b_vec
+      vector_type16 c_vec;
       switch (kind) {
+      case binary_operation::add:
+         c_vec = a_vec + b_vec;
+         break;
+      case binary_operation::sub:
+         c_vec = a_vec - b_vec;
+         break;
+      case binary_operation::div:
+         c_vec = a_vec / b_vec;
+         break;
+      case binary_operation::mul:
+         c_vec = a_vec * b_vec;
+         break;
+      }
+      // copy back data
+      c_vec.copy_to(c.data() + offset, alignment{});
+      // Iter j
+      j += vlen16;
+   }
+
+   // 8
+   rest = n - j;
+   constexpr size_t vlen8 = 8;
+   using vector_type8 = std::experimental::fixed_size_simd<float, vlen8>;
+   if (rest >= vlen8) {
+      size_t offset = j;
+      vector_type8 a_vec;
+      a_vec.copy_from(a.data() + offset, alignment{});
+      vector_type8 b_vec;
+      b_vec.copy_from(b.data() + offset, alignment{});
+      // c_vec = a_vec ops b_vec
+      vector_type8 c_vec;
+      switch (kind) {
+      case binary_operation::add:
+         c_vec = a_vec + b_vec;
+         break;
+      case binary_operation::sub:
+         c_vec = a_vec - b_vec;
+         break;
+      case binary_operation::div:
+         c_vec = a_vec / b_vec;
+         break;
+      case binary_operation::mul:
+         c_vec = a_vec * b_vec;
+         break;
+      }
+      // copy back data
+      c_vec.copy_to(c.data() + offset, alignment{});
+      // Iter j
+      j += vlen8;
+   }
+
+   // 4
+   rest = n - j;
+   constexpr size_t vlen4 = 4;
+   using vector_type4 = std::experimental::fixed_size_simd<float, vlen4>;
+   if (rest >= vlen4) {
+      size_t offset = j;
+      vector_type4 a_vec;
+      a_vec.copy_from(a.data() + offset, alignment{});
+      vector_type4 b_vec;
+      b_vec.copy_from(b.data() + offset, alignment{});
+      // c_vec = a_vec ops b_vec
+      vector_type4 c_vec;
+      switch (kind) {
+      case binary_operation::add:
+         c_vec = a_vec + b_vec;
+         break;
+      case binary_operation::sub:
+         c_vec = a_vec - b_vec;
+         break;
+      case binary_operation::div:
+         c_vec = a_vec / b_vec;
+         break;
+      case binary_operation::mul:
+         c_vec = a_vec * b_vec;
+         break;
+      }
+      // copy back data
+      c_vec.copy_to(c.data() + offset, alignment{});
+      // Iter j
+      j += vlen4;
+   }
+
+   // Rest
+   for (size_t i = j; i < n; i++) {
+      switch(kind) {
       case binary_operation::add:
          c[i] = a[i] + b[i];
          break;
@@ -61,6 +161,7 @@ static void binary_ops(const A &a, const B &b, C &c) {
       }
    }
 }
+
 } // namespace ten::kernels
 
 #endif
