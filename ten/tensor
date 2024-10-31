@@ -2,18 +2,16 @@
 #define TENSEUR_TENSOR
 
 // Configuration
-#include <Ten/Config.hxx>
+#include <ten/config.hxx>
 // Forward declaration of types
-#include <Ten/Types.hxx>
+#include <ten/types.hxx>
 // Kernels
-#include <Ten/Kernels/Host>
+#include <ten/kernels/host>
 // Implementation
-#include <Ten/Tensor.hxx>
+#include <ten/tensor.hxx>
 // Distributions
-#include <Ten/Distributions.hxx>
+#include <ten/distributions.hxx>
 // Random numbers generation from distributions
-#include <Ten/Random.hxx>
-// Linear Algebra
-//#include <Ten/LinearAlgebra/.hxx>
+#include <ten/random.hxx>
 
 #endif

@@ -36,14 +36,9 @@ static simd_backend simd_backend_type = TENSEUR_SIMDBACKEND;
 
 // TODO Two simdvecLen default to 8 and 4 for floats, 4 and 2 for doubles
 #ifndef TENSEUR_SIMDVECLEN
-#define TENSEUR_SIMDVECLEN 8
+#define TENSEUR_SIMDVECLEN 32
 #endif
 static constexpr size_t simd_vecLen = TENSEUR_SIMDVECLEN;
-
-#ifndef TENSEUR_SECOND_SIMD_VECLEN
-#define TENSEUR_SECOND_SIMD_VECLEN 4
-#endif
-static constexpr size_t simd_veclen2 = TENSEUR_SECOND_SIMD_VECLEN;
 
 } // namespace ten
 
