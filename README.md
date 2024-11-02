@@ -30,7 +30,8 @@ A header only C++20 tensor library [WIP]
 - BLAS library (OpenBlas or BLIS)
 
 ## Example
-```
+
+```c++
 #include <ten/tensor>
 
 int main() {
@@ -43,7 +44,8 @@ int main() {
 ```
 
 ## Build the examples
-```
+
+```shell
 mkdir build-examples
 cd build-examples
 cmake .. -DCMAKE_CXX_COMPILER=clang++ -DTENSEUR_EXAMPLES=ON
@@ -51,7 +53,8 @@ cmake --build . --
 ```
 
 ## Build the tests
-```
+
+```shell
 mkdir build-tests
 cd build-tests
 cmake .. -DCMAKE_CXX_COMPILER=clang++ -DTENSEUR_TESTS=ON
@@ -59,7 +62,8 @@ cmake --build . --
 ```
 
 ## Build the docs
-```
+
+```shell
 mkdir build-docs
 cd build-docs
 cmake .. -DCMAKE_CXX_COMPILER=clang++ -DTENSEUR_DOCS=ON
