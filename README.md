@@ -33,14 +33,12 @@ A header only C++20 tensor library [WIP]
 ```
 #include <ten/tensor>
 
-using namespace ten;
-
 int main() {
-   auto a = range<matrix<float>>({3, 3});
-   auto b = range<matrix<float>>({3, 3});
-   auto c = ones<vector<float>>(3);
+   auto a = ten::range<ten::matrix<float>>({3, 3});
+   auto b = ten::range<ten::matrix<float>>({3, 3});
+   auto c = ten::ones<ten::vector<float>>(3);
 
-   vector<float> x = a * b + c;
+   ten::vector<float> x = a * b + c;
 }
 ```
 
