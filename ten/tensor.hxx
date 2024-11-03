@@ -342,7 +342,7 @@ class tensor_node
 
  private:
    /// Storage format
-   const ::ten::storage_format _format = ::ten::storage_format::dense;
+   ::ten::storage_format _format = ::ten::storage_format::dense;
    /// Optional shape (only for dynamic tensors)
    std::optional<__shape> _shape = std::nullopt;
    /// Optional stride (only for dynamic tensors)
@@ -491,7 +491,13 @@ class tensor_node
       return *this;
    }*/
    // Assignement operator
-   tensor_node &operator=(const tensor_node &) = default;
+   tensor_node &operator=(const tensor_node &node) {
+      this->_format = node._format;
+      this->_shape = node._shape;
+      this->_stride = node._stride;
+      this->_storage = node._storage;
+      return *this;
+   }
 
    /// Get the dimension at index
    [[nodiscard]] size_type dim(size_type index) const {
