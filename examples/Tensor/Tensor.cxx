@@ -1,15 +1,20 @@
-#include <ios>
 #include <iostream>
-
-#include <Ten/Tensor>
 #include <memory>
 #include <type_traits>
 
-template <class T> void printTensor(const T &val) {
+#include <ten/tensor>
+
+template <class T> void print_tensor(const T &val) {
    std::cout << "[";
    for (size_t i = 0; i < val.size(); i++)
       std::cout << val[i] << " ";
    std::cout << "]\n";
+}
+
+void print_line() {
+   for (size_t i = 0; i < 18; i++)
+      std::cout << "-";
+   std::cout << "\n";
 }
 
 int main() {
@@ -17,53 +22,61 @@ int main() {
    using namespace std;
 
    {
-      Shape<dynamic, 3, 4> s({2, 3, 4});
+      print_line();
+      shape<dynamic, 3, 4> s({2, 3, 4});
 
       std::cout << "Number of dims\n";
       std::cout << s.rank() << std::endl;
 
       std::cout << "Dynamic shape at 0\n";
-      std::cout << s.isDynamicDim<0>() << std::endl;
-      cout << s.staticDim<0>() << endl;
+      std::cout << s.is_dynamic_dim<0>() << std::boolalpha << std::endl;
+      cout << "static value = " << s.static_dim<0>() << endl;
+      cout << "dynamic value = " << s.dim(0) << endl;
 
       cout << "Static shape at 1\n";
-      cout << s.isDynamicDim<1>() << endl;
+      cout << s.is_dynamic_dim<1>() << std::boolalpha << endl;
       cout << s.dim(1) << endl;
-      std::cout << "Dynamic shape at 0\n";
+
+      cout << "Static shape at 2\n";
+      cout << s.is_dynamic_dim<2>() << std::boolalpha << endl;
+      cout << s.dim(2) << endl;
    }
 
    {
+      print_line();
       cout << "Shape of static dim 2 x 3" << endl;
-      Shape<2, 3> a;
-      cout << a.staticDim<0>() << endl;
-      cout << a.staticDim<1>() << endl;
-      cout << "Is dynamic = " << std::boolalpha << a.isDynamic() << endl;
+      shape<2, 3> a;
+      cout << a.static_dim<0>() << endl;
+      cout << a.static_dim<1>() << endl;
+      cout << "Is dynamic = " << std::boolalpha << a.is_dynamic() << endl;
       cout << a.dim(0) << endl;
       cout << a.dim(1) << endl;
    }
 
    {
+      print_line();
       cout << "\nDyanmic or static shape\n";
       cout << "s\n";
-      Shape<dynamic, 2> s({2, 2});
-      cout << s.isDynamic() << endl;
-      cout << s.isStatic() << endl;
+      shape<dynamic, 2> s({2, 2});
+      cout << s.is_dynamic() << endl;
+      cout << s.is_static() << endl;
 
       cout << "a\n";
-      Shape<3, 3, 5, 2, dynamic> a({3, 3, 5, 2, 4});
-      cout << a.isDynamic() << endl;
-      cout << a.isStatic() << endl;
+      shape<3, 3, 5, 2, dynamic> a({3, 3, 5, 2, 4});
+      cout << a.is_dynamic() << endl;
+      cout << a.is_static() << endl;
 
       cout << "b\n";
-      Shape<3, 3, 5, 2> b;
-      cout << b.isDynamic() << endl;
-      cout << b.isStatic() << endl;
+      shape<3, 3, 5, 2> b;
+      cout << b.is_dynamic() << endl;
+      cout << b.is_static() << endl;
    }
 
    {
+      print_line();
       cout << "\nStorage\n";
-      DynamicShape<2> shape({2, 3});
-      DenseStorage<float, std::allocator<float>> s(DynamicShape<1>({shape.size()}));
+      dynamic_shape<2> shape({2, 3});
+      dense_storage<float, std::allocator<float>> s(dynamic_shape<1>({shape.size()}));
       for (size_t i = 0; i < 6; i++)
          s[i] = i;
       for (size_t i = 0; i < 6; i++)
@@ -71,77 +84,82 @@ int main() {
    }
 
    {
+      print_line();
       cout << "\nTensor with static storage\n";
-      STensor<float, 2, 3> a;
+      stensor<float, 2, 3> a;
       using tensor_type = decltype(a);
       static_assert(std::is_same_v<tensor_type::storage_type,
-                                   StaticDenseStorage<float, 6>>);
+                                   sdense_storage<float, 6>>);
       cout << "Rank = " << a.rank() << endl;
       cout << "Order = "
-           << (a.storageOrder() == StorageOrder::RowMajor ? "RowMajor"
-                                                          : "ColMajor")
+           << (a.storage_order() == storage_order::row_major ? "row_major"
+                                                          : "col_major")
            << endl;
-      cout << "IsVector = " << a.isVector() << endl;
-      cout << "IsMatrix = " << a.isMatrix() << endl;
-      cout << "IsTransposed = " << a.isTransposed() << endl;
+      cout << "is_vector = " << a.is_vector() << endl;
+      cout << "is_matrix = " << a.is_matrix() << endl;
+      cout << "is_transposed = " << a.is_transposed() << endl;
    }
 
    {
+      print_line();
       using namespace ten::details;
 
-      using A = MakeDynamicSequence<1>;
-      static_assert(std::is_same_v<A::type::shape_type, Shape<dynamic>>);
+      using A = make_dynamic_sequence<1>;
+      static_assert(std::is_same_v<A::type::shape_type, shape<dynamic>>);
 
-      using dA = DynamicShape<1>;
-      static_assert(std::is_same_v<dA, Shape<dynamic>>);
+      using dA = dynamic_shape<1>;
+      static_assert(std::is_same_v<dA, shape<dynamic>>);
 
-      using B = MakeDynamicSequence<2>;
+      using B = make_dynamic_sequence<2>;
       static_assert(
-          std::is_same_v<B::type::shape_type, Shape<dynamic, dynamic>>);
+          std::is_same_v<B::type::shape_type, shape<dynamic, dynamic>>);
 
-      using dB = DynamicShape<2>;
-      static_assert(std::is_same_v<dB, Shape<dynamic, dynamic>>);
+      using dB = dynamic_shape<2>;
+      static_assert(std::is_same_v<dB, shape<dynamic, dynamic>>);
 
-      using C = MakeDynamicSequence<3>;
+      using C = make_dynamic_sequence<3>;
       static_assert(std::is_same_v<C::type::shape_type,
-                                   Shape<dynamic, dynamic, dynamic>>);
+                                   shape<dynamic, dynamic, dynamic>>);
 
-      using dC = DynamicShape<3>;
-      static_assert(std::is_same_v<dC, Shape<dynamic, dynamic, dynamic>>);
+      using dC = dynamic_shape<3>;
+      static_assert(std::is_same_v<dC, shape<dynamic, dynamic, dynamic>>);
    }
 
    {
+      print_line();
       cout << "\nTensor shape and static strides\n";
-      Shape<2, 3, 4> s;
+      shape<2, 3, 4> s;
       using S = decltype(s);
 
-      using Stride_t = Stride<S, StorageOrder::ColMajor>;
-      cout << "Stride_0 = " << Stride_t::template staticDim<0>() << endl;
-      cout << "Stride_1 = " << Stride_t::template staticDim<1>() << endl;
-      cout << "Stride_2 = " << Stride_t::template staticDim<2>() << endl;
+      using stride_t = stride<S, storage_order::col_major>;
+      cout << "Stride_0 = " << stride_t::template static_dim<0>() << endl;
+      cout << "Stride_1 = " << stride_t::template static_dim<1>() << endl;
+      cout << "Stride_2 = " << stride_t::template static_dim<2>() << endl;
 
-      cout << S::staticDim<0>() << "x" << S::staticDim<1>() << "x"
-           << S::staticDim<2>() << endl;
-      cout << details::NthStaticStride<0, S>::value << endl;
-      cout << details::NthStaticStride<1, S>::value << endl;
-      cout << details::NthStaticStride<2, S>::value << endl;
+      cout << S::static_dim<0>() << "x" << S::static_dim<1>() << "x"
+           << S::static_dim<2>() << endl;
+      cout << details::nth_static_stride<0, S>::value << endl;
+      cout << details::nth_static_stride<1, S>::value << endl;
+      cout << details::nth_static_stride<2, S>::value << endl;
 
-      auto v = details::computeStaticStrides<S, StorageOrder::ColMajor>();
+      auto v = details::compute_static_strides<S, storage_order::col_major>();
       cout << "v = {";
       cout << v[0] << ", " << v[1] << ", " << v[2] << "}" << endl;
    }
 
    {
+      print_line();
       cout << "\nDynamic strides\n";
-      DynamicShape<3> shape({2, 3, 4});
-      Stride<DynamicShape<3>, StorageOrder::ColMajor> stride(shape);
+      dynamic_shape<3> shape({2, 3, 4});
+      stride<dynamic_shape<3>, storage_order::col_major> stride(shape);
       for (size_t i = 0; i < 3; i++)
          cout << stride.dim(i) << endl;
    }
 
    {
+      print_line();
       cout << "\nTensor of dynamic shape\n";
-      Tensor<float, 2> A({3, 4});
+      tensor<float, 2> A({3, 4});
       using Tensor_t = decltype(A);
       using Shape_t = Tensor_t::shape_type;
       const Tensor_t::shape_type &shape = A.shape();
@@ -151,8 +169,8 @@ int main() {
       cout << shape.dim(0) << ", ";
       cout << shape.dim(1) << "]\n";
       cout << "Is dynamic dims = \n";
-      cout << Shape_t::isDynamicDim<0>() << endl;
-      cout << Shape_t::isDynamicDim<1>() << endl;
+      cout << Shape_t::is_dynamic_dim<0>() << endl;
+      cout << Shape_t::is_dynamic_dim<1>() << endl;
       cout << "Dynamic size = " << shape.size() << endl;
       cout << "Must be uninit\n";
       using Node_t = Tensor_t::node_type;
@@ -163,8 +181,9 @@ int main() {
    }
 
    {
+      print_line();
       cout << "Acess elements" << endl;
-      Tensor<float, 1> a({4});
+      tensor<float, 1> a({4});
       auto n = a.node();
       for (size_t i = 0; i < 4; i++)
          a[i] = i;
@@ -173,8 +192,9 @@ int main() {
    }
 
    {
+      print_line();
       cout << "\nStatic Tensor - uninitialized memory\n";
-      SVector<float, 10> x;
+      svector<float, 10> x;
       float *data = x.data();
       for (size_t i = 0; i < 10; i++)
          data[i] = float(i);
@@ -184,8 +204,9 @@ int main() {
    }
 
    {
+      print_line();
       cout << "\nStatic Matrix\n";
-      SMatrix<float, 2, 3> x;
+      smatrix<float, 2, 3> x;
       float *data = x.data();
       for (size_t i = 0; i < 6; i++)
          data[i] = float(i);
@@ -197,15 +218,16 @@ int main() {
    }
 
    {
+      print_line();
       cout << "fill static tensor" << endl;
-      auto x = fill<SVector<float, 10>>(3.);
+      auto x = fill<svector<float, 10>>(3.);
       cout << "x = ";
       for (size_t i = 0; i < 10; i++) {
          cout << x[i] << " ";
       }
       cout << endl;
 
-      auto y = fill<float, Shape<10>>(3.);
+      auto y = fill<float, shape<10>>(3.);
       cout << "y = ";
       for (size_t i = 0; i < 10; i++) {
          cout << y[i] << " ";
@@ -214,47 +236,42 @@ int main() {
    }
 
    {
+      print_line();
       cout << "fill dynamic tensor" << endl;
-      auto x = fill<RankedTensor<float, Shape<2, dynamic>>>(
-          Shape<2, dynamic>({2, 3}), 3.);
+      auto x = fill<ranked_tensor<float, shape<2, dynamic>>>(
+          shape<2, dynamic>({2, 3}), 3.);
       cout << "x = ";
       for (size_t i = 0; i < 6; i++) {
          cout << x[i] << " ";
       }
       cout << endl;
 
-      auto y = fill<RankedTensor<float, Shape<2, dynamic>>>({2, 3}, 3.);
+      auto y = fill<ranked_tensor<float, shape<2, dynamic>>>({2, 3}, 3.);
       cout << "y = ";
       for (size_t i = 0; i < 6; i++) {
          cout << y[i] << " ";
       }
       cout << endl;
 
-      auto z = fill<float, Shape<2, dynamic>>(Shape<2, dynamic>({2, 3}), 3.);
+      auto z = fill<float, shape<2, dynamic>>({2, 3}, 3.);
       cout << "z = ";
       for (size_t i = 0; i < 6; i++) {
          cout << z[i] << " ";
       }
       cout << endl;
-
-      auto t = fill<float, Shape<2, dynamic>>({2, 3}, 3.);
-      cout << "t = ";
-      for (size_t i = 0; i < 6; i++) {
-         cout << t[i] << " ";
-      }
-      cout << endl;
    }
 
    {
+      print_line();
       cout << "zeros static tensor" << endl;
-      auto x = zeros<RankedTensor<float, Shape<10>>>();
+      auto x = zeros<ranked_tensor<float, shape<10>>>();
       cout << "x = ";
       for (size_t i = 0; i < 10; i++) {
          cout << x[i] << " ";
       }
       cout << endl;
 
-      auto y = zeros<float, Shape<10>>();
+      auto y = zeros<float, shape<10>>();
       cout << "y = ";
       for (size_t i = 0; i < 10; i++) {
          cout << y[i] << " ";
@@ -263,47 +280,42 @@ int main() {
    }
 
    {
+      print_line();
       cout << "zeros dynamic tensor" << endl;
-      auto x = zeros<RankedTensor<float, Shape<2, dynamic>>>(
-          Shape<2, dynamic>({2, 3}));
+      auto x = zeros<ranked_tensor<float, shape<2, dynamic>>>(
+          shape<2, dynamic>({2, 3}));
       cout << "x = ";
       for (size_t i = 0; i < 6; i++) {
          cout << x[i] << " ";
       }
       cout << endl;
 
-      auto y = zeros<RankedTensor<float, Shape<2, dynamic>>>({2, 3});
+      auto y = zeros<ranked_tensor<float, shape<2, dynamic>>>({2, 3});
       cout << "y = ";
       for (size_t i = 0; i < 6; i++) {
          cout << y[i] << " ";
       }
       cout << endl;
 
-      auto z = zeros<float, Shape<2, dynamic>>(Shape<2, dynamic>({2, 3}));
+      auto z = zeros<float, shape<2, dynamic>>({2, 3});
       cout << "z = ";
       for (size_t i = 0; i < 6; i++) {
          cout << z[i] << " ";
       }
       cout << endl;
-
-      auto t = zeros<float, Shape<2, dynamic>>({2, 3});
-      cout << "t = ";
-      for (size_t i = 0; i < 6; i++) {
-         cout << t[i] << " ";
-      }
-      cout << endl;
    }
 
    {
+      print_line();
       cout << "ones static tensor" << endl;
-      auto x = ones<SVector<float, 10>>();
+      auto x = ones<svector<float, 10>>();
       cout << "x = ";
       for (size_t i = 0; i < 10; i++) {
          cout << x[i] << " ";
       }
       cout << endl;
 
-      auto y = ones<float, Shape<10>>();
+      auto y = ones<float, shape<10>>();
       cout << "y = ";
       for (size_t i = 0; i < 10; i++) {
          cout << y[i] << " ";
@@ -312,47 +324,42 @@ int main() {
    }
 
    {
+      print_line();
       cout << "ones dynamic tensor" << endl;
-      auto x = ones<RankedTensor<float, Shape<2, dynamic>>>(
-          Shape<2, dynamic>({2, 3}));
+      auto x = ones<ranked_tensor<float, shape<2, dynamic>>>(
+          shape<2, dynamic>({2, 3}));
       cout << "x = ";
       for (size_t i = 0; i < 6; i++) {
          cout << x[i] << " ";
       }
       cout << endl;
 
-      auto y = ones<RankedTensor<float, Shape<2, dynamic>>>({2, 3});
+      auto y = ones<ranked_tensor<float, shape<2, dynamic>>>({2, 3});
       cout << "y = ";
       for (size_t i = 0; i < 6; i++) {
          cout << y[i] << " ";
       }
       cout << endl;
 
-      auto z = ones<float, Shape<2, dynamic>>(Shape<2, dynamic>({2, 3}));
+      auto z = ones<float, shape<2, dynamic>>({2, 3});
       cout << "z = ";
       for (size_t i = 0; i < 6; i++) {
          cout << z[i] << " ";
       }
       cout << endl;
-
-      auto t = ones<float, Shape<2, dynamic>>({2, 3});
-      cout << "t = ";
-      for (size_t i = 0; i < 6; i++) {
-         cout << t[i] << " ";
-      }
-      cout << endl;
    }
 
    {
+      print_line();
       cout << "range static tensor" << endl;
-      auto x = range<SVector<float, 10>>();
+      auto x = range<svector<float, 10>>();
       cout << "x = ";
       for (size_t i = 0; i < 10; i++) {
          cout << x[i] << " ";
       }
       cout << endl;
 
-      auto y = range<float, Shape<10>>();
+      auto y = range<float, shape<10>>();
       cout << "y = ";
       for (size_t i = 0; i < 10; i++) {
          cout << y[i] << " ";
@@ -361,61 +368,56 @@ int main() {
    }
 
    {
+      print_line();
       cout << "range dynamic tensor" << endl;
-      auto x = range<RankedTensor<float, Shape<2, dynamic>>>(
-          Shape<2, dynamic>({2, 3}));
+      auto x = range<ranked_tensor<float, shape<2, dynamic>>>(
+          shape<2, dynamic>({2, 3}));
       cout << "x = ";
       for (size_t i = 0; i < 6; i++) {
          cout << x[i] << " ";
       }
       cout << endl;
 
-      auto y = range<RankedTensor<float, Shape<2, dynamic>>>({2, 3});
+      auto y = range<ranked_tensor<float, shape<2, dynamic>>>({2, 3});
       cout << "y = ";
       for (size_t i = 0; i < 6; i++) {
          cout << y[i] << " ";
       }
       cout << endl;
 
-      auto z = range<float, Shape<2, dynamic>>(Shape<2, dynamic>({2, 3}));
+      auto z = range<float, shape<2, dynamic>>({2, 3});
       cout << "z = ";
       for (size_t i = 0; i < 6; i++) {
          cout << z[i] << " ";
       }
       cout << endl;
-
-      auto t = range<float, Shape<2, dynamic>>({2, 3});
-      cout << "t = ";
-      for (size_t i = 0; i < 6; i++) {
-         cout << t[i] << " ";
-      }
-      cout << endl;
    }
 
    {
+      print_line();
       cout << "fill, zeros, ones and range for default float tensors" << endl;
-      auto x = fill<float, 2>({2, 5}, 3.);
+      auto x = fill<matrix<float>>({2, 5}, 3.);
       cout << "x = ";
       for (size_t i = 0; i < 10; i++) {
          cout << x[i] << " ";
       }
       cout << endl;
 
-      auto y = zeros<float, 2>({2, 5});
+      auto y = zeros<matrix<float>>({2, 5});
       cout << "y = ";
       for (size_t i = 0; i < 10; i++) {
          cout << y[i] << " ";
       }
       cout << endl;
 
-      auto z = ones<float, 2>({2, 5});
+      auto z = ones<matrix<float>>({2, 5});
       cout << "z = ";
       for (size_t i = 0; i < 10; i++) {
          cout << z[i] << " ";
       }
       cout << endl;
 
-      auto t = range<float, 2>({2, 5});
+      auto t = range<matrix<float>>({2, 5});
       cout << "t = ";
       for (size_t i = 0; i < 10; i++) {
          cout << t[i] << " ";
@@ -424,53 +426,59 @@ int main() {
    }
 
    {
+      print_line();
       cout << "Reshape static tensor" << endl;
-      auto x = range<SMatrix<float, 2, 3>>();
-      auto y = reshape<Shape<3, 2>>(x).eval();
-      printTensor(x);
-      printTensor(y);
+      auto x = range<smatrix<float, 2, 3>>();
+      auto y = reshape<shape<3, 2>>(x).eval();
+      print_tensor(x);
+      print_tensor(y);
       y[1] = 99.;
-      printTensor(x);
-      printTensor(y);
+      print_tensor(x);
+      print_tensor(y);
       auto z = reshape<3, 2>(x).eval();
-      printTensor(z);
+      print_tensor(z);
    }
 
    {
+      print_line();
       cout << "Reshape dynamic tensor" << endl;
-      auto x = range<Matrix<float>>({2, 3});
-      auto y = reshape(x, Shape<dynamic, dynamic>({3, 2})).eval();
-      printTensor(x);
-      printTensor(y);
+      auto x = range<matrix<float>>({2, 3});
+      auto y = reshape(x, shape<dynamic, dynamic>({3, 2})).eval();
+      print_tensor(x);
+      print_tensor(y);
       y[1] = 99.;
-      printTensor(x);
-      printTensor(y);
+      print_tensor(x);
+      print_tensor(y);
       auto z = reshape<2>(x, {3, 2}).eval();
-      printTensor(z);
+      print_tensor(z);
    }
 
    {
+      print_line();
       cout << "Uninitialized dynamic vector" << endl;
-      Vector<float> x(5);
-      printTensor(x);
+      ten::vector<float> x(5);
+      print_tensor(x);
    }
 
    {
+      print_line();
       cout << "Uninitialized dynamic matrix" << endl;
-      Matrix<float> x(2, 3);
-      printTensor(x);
+      matrix<float> x(2, 3);
+      print_tensor(x);
    }
 
    {
-      cout << "ColMajor tensor" << endl;
-      Tensor<float, 3, StorageOrder::ColMajor> x({2, 3, 4});
+      print_line();
+      cout << "col_major tensor" << endl;
+      tensor<float, 3, storage_order::col_major> x({2, 3, 4});
       cout << "shape = " << x.shape() << endl;
       cout << "strides = " << x.strides() << endl;
    }
 
    {
-      cout << "RowMajor tensor" << endl;
-      Tensor<float, 3, StorageOrder::RowMajor> x({2, 3, 4});
+      print_line();
+      cout << "row_major tensor" << endl;
+      tensor<float, 3, storage_order::row_major> x({2, 3, 4});
       cout << "shape = " << x.shape() << endl;
       cout << "strides = " << x.strides() << endl;
    }
