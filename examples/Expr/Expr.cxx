@@ -1,15 +1,13 @@
-#include "Ten/Storage/DenseStorage.hxx"
-#include <ios>
 #include <iostream>
-
-#include <Ten/Expr.hxx>
-#include <Ten/Functional.hxx>
-#include <Ten/Shape.hxx>
-#include <Ten/Tensor.hxx>
 #include <memory>
 #include <type_traits>
 
-template <class T> void printTensor(const T &val) {
+#include <ten/expr.hxx>
+#include <ten/functional.hxx>
+#include <ten/shape.hxx>
+#include <ten/tensor.hxx>
+
+template <class T> void print_tensor(const T &val) {
    std::cout << "[";
    for (size_t i = 0; i < val.size(); i++)
       std::cout << val[i] << " ";
@@ -22,7 +20,7 @@ int main() {
 
    {
       cout << "UnaryExpr" << endl;
-      Vector<float> x({3});
+      ten::vector<float> x({3});
       for (size_t i = 0; i < 3; i++)
          x[i] = -float(i);
 
@@ -41,7 +39,7 @@ int main() {
 
    {
       cout << "UnaryExpr min" << endl;
-      Vector<float> x({3});
+      ten::vector<float> x({3});
       for (size_t i = 0; i < 3; i++)
          x[i] = -float(i + 1.);
       auto e = min(x);
@@ -62,7 +60,7 @@ int main() {
 
    {
       cout << "UnaryExpr sqrt" << endl;
-      auto x = range<Vector<float>>(3);
+      auto x = range<ten::vector<float>>({3});
       for (size_t i = 0; i < 3; i++)
          x[i] = float(i);
       auto e = sqrt(x);
@@ -81,41 +79,41 @@ int main() {
 
    {
       cout << "Binary expr a + b" << std::endl;
-      auto a = range<Vector<float>>(3);
-      auto b = range<Vector<float>>(3);
+      auto a = range<ten::vector<float>>({3});
+      auto b = range<ten::vector<float>>({3});
       auto c = a + b;
       auto res = c.eval();
-      printTensor(a);
-      printTensor(b);
-      printTensor(res);
+      print_tensor(a);
+      print_tensor(b);
+      print_tensor(res);
    }
 
    {
       cout << "Binary expr a - b" << std::endl;
-      Vector<float> a({3});
-      Vector<float> b({3});
+      ten::vector<float> a({3});
+      ten::vector<float> b({3});
       for (size_t i = 0; i < 3; i++) {
          a[i] = i;
          b[i] = i + 1;
       }
       auto c = (a - b).eval();
-      printTensor(c);
-      static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
+      print_tensor(c);
+      static_assert(std::is_same_v<decltype(c), tensor<float, 1>>);
    }
 
    {
       cout << "Binary expr a * b" << std::endl;
-      auto a = range<Vector<float>>(6);
-      auto b = range<Vector<float>>(6);
+      auto a = range<ten::vector<float>>({6});
+      auto b = range<ten::vector<float>>({6});
       auto c = (a * b).eval();
-      printTensor(c);
-      static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
+      print_tensor(c);
+      static_assert(std::is_same_v<decltype(c), tensor<float, 1>>);
    }
 
    {
       cout << "Binary expr A * B" << std::endl;
-      auto a = range<Matrix<float>>({2, 3});
-      auto b = range<Matrix<float>>({3, 4});
+      auto a = range<matrix<float>>({2, 3});
+      auto b = range<matrix<float>>({3, 4});
       auto c = (a * b).eval();
       cout << "A = \n";
       for (size_t i = 0; i < 2; i++) {
@@ -138,13 +136,13 @@ int main() {
          }
          cout << endl;
       }
-      static_assert(std::is_same_v<decltype(c), Tensor<float, 2>>);
+      static_assert(std::is_same_v<decltype(c), tensor<float, 2>>);
    }
 
    {
       cout << "Binary expr matrix * vector" << std::endl;
-      auto a = range<Matrix<float>>({2, 3});
-      auto b = range<Vector<float>>(3);
+      auto a = range<matrix<float>>({2, 3});
+      auto b = range<ten::vector<float>>({3});
       auto c = (a * b).eval();
       cout << "A = \n";
       for (size_t i = 0; i < 2; i++) {
@@ -163,67 +161,67 @@ int main() {
          std::cout << c[j] << " ";
       }
       cout << endl;
-      //static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
+      //static_assert(std::is_same_v<decltype(c), tensor<float, 1>>);
    }
 
    {
       cout << "Binary expr alpha * a" << std::endl;
-      auto a = range<Vector<float>>(5);
+      auto a = range<ten::vector<float>>({5});
       auto c = (2. * a).eval();
-      printTensor(c);
-      static_assert(std::is_same_v<decltype(c), Tensor<float, 1>>);
+      print_tensor(c);
+      static_assert(std::is_same_v<decltype(c), tensor<float, 1>>);
    }
 
 
    {
       cout << "Chain binary expressions" << std::endl;
-      auto a = range<Vector<float>>(5);
-      auto b = range<Vector<float>>(5);
+      auto a = range<ten::vector<float>>({5});
+      auto b = range<ten::vector<float>>({5});
       auto c = a + b;
       // c = 0 2 4  6  8
       // d = c * a = 0 2 8 18 32
       //auto d = (c * a).eval();
-      //printTensor(d);
+      //print_tensor(d);
    }
 
 
    {
       cout << "Chain unary expressions" << std::endl;
-      auto a = range<Vector<float>>(5);
+      auto a = range<ten::vector<float>>({5});
       auto b = sqrt(a);
       auto c = sqrt(b).eval();
-      printTensor(c);
+      print_tensor(c);
    }
 
    {
       cout << "Chain unary and binary expressions" << std::endl;
-      auto a = range<Vector<float>>(5);
+      auto a = range<ten::vector<float>>({5});
       auto b = 2. * a;
       auto c = sqrt(b);
       auto d = (c + a).eval();
-      printTensor(d);
+      print_tensor(d);
    }
 
    {
       cout << "Tensor from unary expr static" << std::endl;
-      auto a = range<SVector<float, 5>>();
-      SVector<float, 5> b = sqrt(a);
-      printTensor(b);
+      auto a = range<svector<float, 5>>();
+      svector<float, 5> b = sqrt(a);
+      print_tensor(b);
    }
 
    {
       cout << "Tensor from unary expr" << std::endl;
-      auto a = range<Vector<float>>(5);
+      auto a = range<ten::vector<float>>({5});
       std::cout << a << std::endl;
-      Vector<float> b = sqrt(a);
+      ten::vector<float> b = sqrt(a);
       std::cout << b << std::endl;
    }
 
    {
       cout << "Tensor from binary expr" << std::endl;
-      auto a = range<SVector<float, 5>>();
-      auto b = range<SVector<float, 5>>();
-      SVector<float, 5> d = a + b;
+      auto a = range<svector<float, 5>>();
+      auto b = range<svector<float, 5>>();
+      svector<float, 5> d = a + b;
       std::cout << d << std::endl;
    }
 
