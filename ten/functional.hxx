@@ -508,7 +508,7 @@ struct mul_result<__a, __b> {
        std::common_type_t<typename __a::value_type, typename __b::value_type>;
    using type =
        tensor_node<value_type, shape<__a::shape_type::template static_dim<0>()>,
-                   __a::storageOrder(), typename __a::storage_type,
+                   __a::storage_order(), typename __a::storage_type,
                    typename __a::allocator_type>;
 };
 
