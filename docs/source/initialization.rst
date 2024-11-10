@@ -4,60 +4,80 @@ Initialization
 zeros
 -----
 
-- zeros<stensor<...>>()
+- Create a tensor of zeros
 
-- zeros<T, shape, storage_order, storage, allocator>()
+.. code-block:: cpp
 
-- zeros<tensor<...>>(shape)
+   auto x = ten::zeros<ten::tensor<float>>({2, 3, 4});
+   auto y = ten::zeros<ten::vector<float>>({10});
+   auto z = ten::zeros<float, ten::shape<ten::dynamic, ten::dynamic, ten::dynamic>>({2, 3, 4});
+   constexpr size_t Rank = 3;
+   auto t = ten::zeros<float, Rank>({2, 3, 4});
 
-- zeros<vector<...>>(size)
+- Create a static tensor of zeros
 
-- zeros<T, shape, storage_order, storage, allocator>(shape)
+.. code-block:: cpp
 
-- zeros<T, Rank>(shape)
+   auto x = ten::zeros<ten::stensor<float, 2, 3, 4>>();
+   auto y = zeros<float, ten::shape<2, 3, 4>>();
 
 ones
 ----
 
-- ones<stensor<...>>()
+- Create a tensor of ones
 
-- ones<T, shape, Order, Strorage, allocator>()
+.. code-block:: cpp
 
-- ones<tensor<...>>(shape)
+   auto x = ten::ones<ten::tensor<float>>({2, 3, 4});
+   auto y = ten::ones<ten::vector<float>>({10});
+   auto z = ten::ones<float, ten::shape<ten::dynamic, ten::dynamic, ten::dynamic>>({2, 3, 4});
+   constexpr size_t Rank = 3;
+   auto t = ten::ones<float, Rank>({2, 3, 4});
 
-- ones<vector<...>>(size)
+- Create a static tensor of ones
 
-- ones<T, shape, storage_order, storage, allocator>(shape)
+.. code-block:: cpp
 
-- ones<T, Rank>(shape)
+   auto x = ten::ones<ten::stensor<float, 2, 3, 4>>();
+   auto y = ten::ones<float, ten::shape<2, 3, 4>>();
 
 range
 -----
 
-- range<stensor<...>>()
+- Create a range tensor
 
-- range<T, shape, storage_order, storage, allocator>(value)
+.. code-block:: cpp
 
-- range<tensor<...>>(shape, value)
+   auto x = ten::range<ten::tensor<float>>({2, 3, 4});
+   auto y = ten::range<ten::matrix<float>>({2, 3});
+   auto z = ten::range<ten::vector<float>>({10}, 0.);
+   constexpr size_t Rank = 3;
+   auto z = ten::range<float, Rank>({2, 3, 4});
 
-- range<vector<...>>(size)
+- Create a static range tensor
 
-- range<T, shape, storage_order, storage, allocator>(shape, value)
+.. code-block:: cpp
 
-- range<T, Rank>(shape, value)
+   auto x = ten::range<ten::stensor<float, 2, 3, 4>>();
+   auto y = ten::range<float, ten::shape<2, 3, 4>>();
 
 linear
 ------
 
-- linear<stensor<...>>(start, stop)
+- Create a linear tensor
 
-- linear<T, shape, storage_order, storage, allocator>(start, stop)
+.. code-block:: cpp
 
-- linear<tensor<...>>(start, stop, shape)
+   auto x = ten::linear<ten::tensor<float>>(0., 10., {2, 3, 4});
+   auto y = ten::linear<ten::matrix<float>>(0., 10., {2, 3});
+   auto z = ten::linear<ten::vector<float>>(0., 10., {10});
+   constexpr size_t Rank = 3;
+   auto z = ten::range<float, Rank>(0., 10., {2, 3, 4});
 
-- linear<vector<...>>(start, stop, size)
+- Create a static linear tensor
 
-- linear<T, shape, storage_order, storage, allocator>(start, stop, shape)
+.. code-block:: cpp
 
-- linear<T, Rank>(start, stop, shape)
+   auto x = ten::range<ten::stensor<float, 2, 3, 4>>(0., 10.);
+   auto y = ten::range<float, ten::shape<2, 3, 4>>(0., 10.);
 

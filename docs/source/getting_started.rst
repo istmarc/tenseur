@@ -3,15 +3,32 @@ Getting started
 
 API
 ---
-Tenseur has an easy to use api, we illustrate it with the following example:
+Tenseur has an easy to use api, It can be illustrated with the following example:
 
 .. code-block:: cpp
 
-   using namespace ten;
-   normal norm;
-   vector<float> a = norm.sample(1000);
-   matrix<float> b;
+   // Normal distribution
+   ten::normal norm;
+   // Sample from a normal distribution
+   ten::vector<float> x = norm.sample(1000);
+   // Save to a mtx file (Matrix Market format)
+   save(x, "norm.mtx");
 
+The saved file can be loaded in numpy:
+
+.. code-block:: python
+
+   import numpy as np
+   import scipy as sp
+   import matplotlib.pyplot as plt
+   import seaborn as sn
+   plt.style.use("science")
+   a = sp.io.mmread("norm.mtx").flatten()
+   plt.hist(a, color = "black")
+   plt.savefig("hist.png")
+   plt.show()
+
+.. image:: _images/hist.png
 
 Constructors
 ------------
@@ -20,23 +37,39 @@ The following constructors are defined for vectors, matrices, and tensors:
 
 Vector
 ------
-- vector<T>({size})
-- vector<T>({size}, {...data...})
+
+.. code-block:: cpp
+
+   size_t size = 5;
+   // Uninitialized vector
+   vector<T> x({size});
+   // Vector initialized with data
+   vector<T> y({size}, {0., 1., 2., 3., 4.});
 
 Static vector
 -------------
-- svector<T, size>()
-- svector<T, size>({...data...})
+
+.. code-block:: cpp
+
+   constexpr size_t size = 10;
+   svector<float, size> x;
+   svector<float, size> y({0., 1., 2., 3., 4.});
 
 Matrix
 ------
-- matrix<T>({rows, cols})
-- matrix<T>({rows, cols}, {...data...})
+
+.. code-block:: cpp
+
+   matrix<float> x({2, 3});
+   matrix<float> y({2, 3}, {0., 1., 2., 3., 4., 5.});
 
 Static matrix
 -------------
-- smatrix<T, rows, cols>()
-- smatrix<T, rows, cols>({...data...})
+
+.. code-block:: cpp
+
+   smatrix<float, 2, 3> x;
+   smatrix<float, 2, 3> y({0., 1., 2., 3., 4., 5.});
 
 Tensor
 ------
