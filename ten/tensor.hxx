@@ -1486,7 +1486,7 @@ template <class __t, class __shape, storage_order __order = default_order,
 template <class __t, size_type rank, storage_order __order = default_order>
 [[nodiscard]] auto fill(const dynamic_shape<rank> &shape, __t value) {
    using shape_type = ::ten::dynamic_shape<rank>;
-   return fill<__t, shape_type, __order>(std::forward<shape>(shape), value);
+   return fill<__t, shape_type, __order>(std::forward<shape_type>(shape), value);
 }
 
 template <class __t, size_type rank, storage_order __order = default_order>
@@ -1544,7 +1544,7 @@ template <class __t, class __shape, storage_order __order = default_order,
 [[nodiscard]] auto zeros(__shape &&dims) {
    using tensor_type =
        ranked_tensor<__t, __shape, __order, __storage, __allocator>;
-   return zeros<tensor_type>(std::forward<shape>(dims));
+   return zeros<tensor_type>(std::forward<__shape>(dims));
 }
 
 template <class __t, class __shape, storage_order __order = default_order,
@@ -1563,9 +1563,9 @@ template <class __t, class __shape, storage_order __order = default_order,
 
 // zeros<__t, __rank>(shape)
 template <class __t, size_type __rank, storage_order __order = default_order>
-[[nodiscard]] auto zeros(const dynamic_shape<__rank> &shape) {
+[[nodiscard]] auto zeros(const dynamic_shape<__rank> &dims) {
    using shape_type = ::ten::dynamic_shape<__rank>;
-   return zeros<__t, shape_type, __order>(std::forward<shape>(shape));
+   return zeros<__t, shape_type, __order>(std::forward<shape_type>(dims));
 }
 
 template <class __t, size_type __rank, storage_order __order = default_order>
@@ -1644,7 +1644,7 @@ template <class __t, class __shape, storage_order __order = default_order,
 template <class __t, size_type __rank, storage_order __order = default_order>
 [[nodiscard]] auto ones(const dynamic_shape<__rank> &shape) {
    using shape_type = ::ten::dynamic_shape<__rank>;
-   return ones<__t, shape_type, __order>(std::forward<shape>(shape));
+   return ones<__t, shape_type, __order>(std::forward<shape_type>(shape));
 }
 
 template <class __t, size_type __rank, storage_order __order = default_order>
@@ -1752,10 +1752,10 @@ template <class __t, class __shape, storage_order __order = default_order,
 template <class __t, size_type __rank = 1,
           storage_order __order = default_order>
    requires(std::is_floating_point_v<__t>)
-[[nodiscard]] auto ones(const dynamic_shape<__rank> &shape,
+[[nodiscard]] auto range(const dynamic_shape<__rank> &shape,
                         __t value = __t(0)) {
    using shape_type = ::ten::dynamic_shape<__rank>;
-   return range<__t, shape_type, __order>(std::forward<shape>(shape), value);
+   return range<__t, shape_type, __order>(std::forward<shape_type>(shape), value);
 }
 
 template <class __t, size_type __rank = 1,
@@ -1871,11 +1871,11 @@ template <class __t, class __shape, storage_order __order = default_order,
 template <class __t, size_type __rank = 1,
           storage_order __order = default_order>
    requires(std::is_floating_point_v<__t>)
-[[nodiscard]] auto ones(__t start, __t stop,
-                        const dynamic_shape<__rank> &shape) {
+[[nodiscard]] auto linear(__t start, __t stop,
+                        const dynamic_shape<__rank> &dims) {
    using shape_type = ::ten::dynamic_shape<__rank>;
    return linear<__t, shape_type, __order>(start, stop,
-                                           std::forward<shape>(shape));
+                                           std::forward<shape_type>(dims));
 }
 
 template <class __t, size_type __rank = 1,
@@ -2038,6 +2038,7 @@ auto tan(__expr &&expr) {
        expr.node());
 }
 
+/// \fn atan
 template <class __expr>
    requires is_expr<std::remove_cvref_t<__expr>>
 auto atan(__expr &&expr) {
@@ -2046,6 +2047,7 @@ auto atan(__expr &&expr) {
        expr.node());
 }
 
+/// \fn tanh
 template <class __expr>
    requires is_expr<std::remove_cvref_t<__expr>>
 auto tanh(__expr &&expr) {
@@ -2085,6 +2087,19 @@ auto log10(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::log10>(
        expr.node());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Parameteric functions
+
+/// \fn pow
+/// Power
+template <class __expr, class T = float>
+   requires is_expr<std::remove_cvref_t<__expr>>
+auto pow(__expr &&expr, T n) {
+   using expr_type = std::remove_cvref_t<__expr>;
+   return unary_expr<typename expr_type::node_type, functional::pow>(
+       expr.node(), n);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
