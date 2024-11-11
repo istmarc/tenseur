@@ -1158,7 +1158,7 @@ __t transposed(const __t &t) {
 /// __transposed static matrix
 template <class __t>
    requires(__t::is_static() && ::ten::is_smatrix<__t>::value)
-__t symmetric(const __t &t) {
+__t transposed(const __t &t) {
    using node_type = __t::node_type;
    auto st = t.storage();
    ::ten::storage_format format = static_cast<storage_format>(

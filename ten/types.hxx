@@ -30,11 +30,11 @@ enum class storage_format : uint16_t {
    /// Upper triangular format
    upper_tr = 0x08,
    /// Symmetric
-   symmetric = 0x08,
+   symmetric = 0x09,
    /// Transposed
-   transposed = 0x09,
+   transposed = 0x010,
    /// Hermitian
-   hermitian = 0x010,
+   hermitian = 0x011,
 };
 
 bool operator&(storage_format a, storage_format b) {
