@@ -50,7 +50,7 @@ Static vector
 
 .. code-block:: cpp
 
-   constexpr size_t size = 10;
+   constexpr size_t size = 5;
    ten::svector<float, size> x;
    ten::svector<float, size> y({0., 1., 2., 3., 4.});
 
@@ -93,7 +93,7 @@ Special matrices
 
 .. code-block:: cpp
 
-   ten::matrix<float> x = ten::range<matrix<float>>({2, 3});
+   ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
    auto y = ten::transposed(x);
    std::cout << y.is_transposed() << std::endl;
 
@@ -101,7 +101,7 @@ Special matrices
 
 .. code-block:: cpp
 
-   ten::matrix<float> x = ten::range<matrix<float>>({2, 3});
+   ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
    auto y = ten::symmetric(x);
    std::cout << y.is_symmetric() << std::endl;
 
@@ -109,7 +109,7 @@ Special matrices
 
 .. code-block:: cpp
 
-   ten::matrix<float> x = ten::range<matrix<float>>({2, 3});
+   ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
    auto y = ten::hermitian(x);
    std::cout << y.is_hermitian() << std::endl;
 
@@ -117,7 +117,7 @@ Special matrices
 
 .. code-block:: cpp
 
-   ten::matrix<float> x = ten::range<matrix<float>>({2, 3});
+   ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
    auto y = ten::lower_tr(x);
    std::cout << y.is_lower_tr() << std::endl;
 
@@ -125,7 +125,7 @@ Special matrices
 
 .. code-block:: cpp
 
-   ten::matrix<float> x = ten::range<matrix<float>>({2, 3});
+   ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
    auto y = ten::upper_tr(x);
    std::cout << y.is_upper_tr() << std::endl;
 
