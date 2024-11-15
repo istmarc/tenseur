@@ -20,10 +20,16 @@ enum class binary_operation;
 namespace ten::functional {
 ////////////////////////////////////////////////////////////////////////////////
 // Functions types
-template <bool __params = false> struct func {};
+template <bool __params = false, bool __with_shape = false> struct func {};
 
 template <class __func> struct has_params {
-   static constexpr bool value = std::is_base_of_v<func<true>, __func>;
+   static constexpr bool value = std::is_base_of_v<func<true, true>, __func> ||
+                                 std::is_base_of_v<func<true, false>, __func>;
+};
+
+template <class __func> struct has_shape {
+   static constexpr bool value = std::is_base_of_v<func<true, true>, __func> ||
+                                 std::is_base_of_v<func<false, true>, __func>;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -667,11 +673,12 @@ template <size_type... __dims>
 using dims_static_reshape = static_reshape<::ten::shape<__dims...>>;
 
 // Dynamic reshape
+// __shape is the target shape type
 template <class __shape> struct dynamic_reshape {
 
    template <class __a,
              class __b = typename details::reshape_result<__a, __shape>::type>
-   struct func : ::ten::functional::func<true> {
+   struct func : ::ten::functional::func<true, true> {
     public:
       using output_type = __b;
 
@@ -757,6 +764,8 @@ template <class __shape> struct dynamic_transpose {
              class __b = typename details::transpose_result<__a, __shape>::type>
    struct func : ::ten::functional::func<true> {
       static_assert(__shape::is_dynamic(), "Shape must be dynamic");
+      // FIXME Currently defined only for matrices
+      static_assert(__shape::rank() == 2, "Shape rank must be 2.");
 
       using output_type = __b;
 

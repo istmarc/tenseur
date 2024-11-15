@@ -5,8 +5,8 @@
 #include <optional>
 #include <type_traits>
 
-#include <ten/types.hxx>
 #include <ten/functional.hxx>
+#include <ten/types.hxx>
 
 namespace ten {
 
@@ -32,15 +32,16 @@ template <class __t> struct node_wrapper<scalar_node<__t>> {
 
 template <class __t, class __shape, storage_order __order, class __storage,
           class __allocator>
-struct node_wrapper<tensor_node<__t, __shape, __order, __storage, __allocator>> {
+struct node_wrapper<
+    tensor_node<__t, __shape, __order, __storage, __allocator>> {
    static auto
-   shape(const std::shared_ptr<tensor_node<__t, __shape, __order, __storage, __allocator>>
-             &node) {
+   shape(const std::shared_ptr<
+         tensor_node<__t, __shape, __order, __storage, __allocator>> &node) {
       return node.get()->shape();
    }
    static auto
-   ptr(const std::shared_ptr<tensor_node<__t, __shape, __order, __storage, __allocator>>
-           &node) {
+   ptr(const std::shared_ptr<
+       tensor_node<__t, __shape, __order, __storage, __allocator>> &node) {
       return node.get();
    }
 };
@@ -49,24 +50,28 @@ template <class __input, class __output, template <typename...> class __f,
           typename... __args>
 struct node_wrapper<unary_node<__input, __output, __f, __args...>> {
    static auto
-   shape(const std::shared_ptr<unary_node<__input, __output, __f, __args...>> &node) {
+   shape(const std::shared_ptr<unary_node<__input, __output, __f, __args...>>
+             &node) {
       return node.get()->node().get()->shape();
    }
    static auto
-   ptr(const std::shared_ptr<unary_node<__input, __output, __f, __args...>> &node) {
+   ptr(const std::shared_ptr<unary_node<__input, __output, __f, __args...>>
+           &node) {
       return node.get()->node().get();
    }
 };
 
-template <class __left, class __right, class __output, template <typename...> class __f,
-          typename... __args>
+template <class __left, class __right, class __output,
+          template <typename...> class __f, typename... __args>
 struct node_wrapper<binary_node<__left, __right, __output, __f, __args...>> {
    static auto
-   shape(const std::shared_ptr<binary_node<__left, __right, __output, __f, __args...>> &node) {
+   shape(const std::shared_ptr<
+         binary_node<__left, __right, __output, __f, __args...>> &node) {
       return node.get()->node().get()->shape();
    }
    static auto
-   ptr(const std::shared_ptr<binary_node<__left, __right, __output, __f, __args...>> &node) {
+   ptr(const std::shared_ptr<
+       binary_node<__left, __right, __output, __f, __args...>> &node) {
       return node.get()->node().get();
    }
 };
@@ -82,22 +87,24 @@ template <class __t> struct output_node_type<scalar_node<__t>> {
 
 template <class __t, class __shape, storage_order __order, class __storage,
           class __allocator>
-struct output_node_type<tensor_node<__t, __shape, __order, __storage, __allocator>> {
+struct output_node_type<
+    tensor_node<__t, __shape, __order, __storage, __allocator>> {
    using type = tensor_node<__t, __shape, __order, __storage, __allocator>;
 };
 
 template <class __input, class __output, template <typename...> class __f,
           class... __args>
 struct output_node_type<::ten::unary_node<__input, __output, __f, __args...>> {
-   using type =
-       typename ::ten::unary_node<__input, __output, __f, __args...>::output_node_type;
+   using type = typename ::ten::unary_node<__input, __output, __f,
+                                           __args...>::output_node_type;
 };
 
-template <class __left, class __right, class __output, template <typename...> class __f,
-          class... __args>
-struct output_node_type<::ten::binary_node<__left, __right, __output, __f, __args...>> {
-   using type =
-       typename ::ten::binary_node<__left, __right, __output, __f, __args...>::output_node_type;
+template <class __left, class __right, class __output,
+          template <typename...> class __f, class... __args>
+struct output_node_type<
+    ::ten::binary_node<__left, __right, __output, __f, __args...>> {
+   using type = typename ::ten::binary_node<__left, __right, __output, __f,
+                                            __args...>::output_node_type;
 };
 } // namespace details
 
@@ -171,8 +178,14 @@ class unary_node {
                            __output::is_static()) {
          _value.reset(new __output());
       } else {
-         _value.reset(
-             new __output(::ten::details::node_wrapper<__input>::shape(_input)));
+         if constexpr (ten::functional::has_shape<func_type>::value) {
+            _value.reset(new __output(_func.value().output_shape(
+                ::ten::details::node_wrapper<__input>::shape(_input))));
+         }
+         if constexpr (!ten::functional::has_shape<func_type>::value) {
+            _value.reset(new __output(func_type::output_shape(
+                ::ten::details::node_wrapper<__input>::shape(_input))));
+         }
       }
 
       // Evaluate
@@ -190,7 +203,8 @@ class unary_expr : ::ten::expr<unary_expr<__expr, __func, __args...>> {
  public:
    /// \typedef input_type
    /// Type of the input type of the function
-   using input_node_type = typename ::ten::details::output_node_type<__expr>::type;
+   using input_node_type =
+       typename ::ten::details::output_node_type<__expr>::type;
 
    /// \typedef output_type
    /// Type of the output type of the function
@@ -222,10 +236,11 @@ class unary_expr : ::ten::expr<unary_expr<__expr, __func, __args...>> {
    /// Construct a ten::unary_node from an expression with a parametric function
    template <typename... func_args>
    explicit unary_expr(const std::shared_ptr<__expr> &exp,
-                      func_args &&...fargs) noexcept
+                       func_args &&...fargs) noexcept
       requires(::ten::functional::has_params<func_type>::value)
        : _node(std::make_shared<node_type>(exp,
-                                           std::forward<func_args>(fargs)...)) {}
+                                           std::forward<func_args>(fargs)...)) {
+   }
 
    // Returns the shared pointer to the node of the expression
    [[nodiscard]] std::shared_ptr<node_type> node() const { return _node; }
@@ -262,7 +277,8 @@ class binary_node {
    /// Output type
    using output_node_type = __output;
 
-   using func_type = __func<left_node_type, right_node_type, __output, __args...>;
+   using func_type =
+       __func<left_node_type, right_node_type, __output, __args...>;
    // using shape_type = typename Output::shape_type;
 
    /// \typedef evaluated_type
@@ -282,13 +298,13 @@ class binary_node {
    binary_node() {}
 
    binary_node(const std::shared_ptr<__left> &l,
-              const std::shared_ptr<__right> &r) noexcept
+               const std::shared_ptr<__right> &r) noexcept
       requires(!::ten::functional::has_params<func_type>::value)
        : _left(l), _right(r), _func(func_type()) {}
 
    template <typename... func_args>
    binary_node(const std::shared_ptr<__left> &l,
-              const std::shared_ptr<__right> &r, func_args... fargs) noexcept
+               const std::shared_ptr<__right> &r, func_args... fargs) noexcept
       requires(::ten::functional::has_params<func_type>::value)
        : _func(func_type(std::forward<func_args>(fargs)...)), _left(l),
          _right(r) {}
@@ -327,6 +343,8 @@ class binary_node {
       if constexpr (__output::is_static()) {
          _value.reset(new __output());
       } else {
+         // FIXME May requires using ten::functional::has_shape when
+         // a binary function has its own shape
          if constexpr (!::ten::is_scalar_node<__left>::value &&
                        !::ten::is_scalar_node<__right>::value) {
             _value.reset(new __output(func_type::output_shape(
@@ -348,7 +366,8 @@ class binary_node {
 
       // Call the function
       _func.value()(*details::node_wrapper<__left>::ptr(_left),
-                    *details::node_wrapper<__right>::ptr(_right), *_value.get());
+                    *details::node_wrapper<__right>::ptr(_right),
+                    *_value.get());
 
       return evaluated_type(_value);
    }
@@ -358,9 +377,10 @@ class binary_node {
 /// Binary expression
 // left and right can be scalar_node, tensor_node or binary_expr
 // left is std::shared_ptr<__left> and right is std::shared_ptr<__right>
-template <typename __left, typename __right, template <typename...> class __func,
-          typename... __args>
-class binary_expr : ::ten::expr<binary_expr<__left, __right, __func, __args...>> {
+template <typename __left, typename __right,
+          template <typename...> class __func, typename... __args>
+class binary_expr
+    : ::ten::expr<binary_expr<__left, __right, __func, __args...>> {
  public:
    /// Left input type
    using left_node_type = typename details::output_node_type<__left>::type;
@@ -373,7 +393,8 @@ class binary_expr : ::ten::expr<binary_expr<__left, __right, __func, __args...>>
        typename __func<left_node_type, right_node_type>::output_type;
 
    // Node type
-   using node_type = binary_node<__left, __right, output_node_type, __func, __args...>;
+   using node_type =
+       binary_node<__left, __right, output_node_type, __func, __args...>;
 
    /// \typedef evaluated_type
    /// Type of the evaluated expression
@@ -388,7 +409,7 @@ class binary_expr : ::ten::expr<binary_expr<__left, __right, __func, __args...>>
  public:
    /// Construct a binary_expr from an expression
    explicit binary_expr(const std::shared_ptr<__left> &l,
-                       const std::shared_ptr<__right> &r) noexcept
+                        const std::shared_ptr<__right> &r) noexcept
        : _node(std::make_shared<node_type>(l, r)) {}
 
    /// Returns a shared pointer to the node of the expression
