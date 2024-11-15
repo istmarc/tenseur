@@ -1,17 +1,17 @@
 #ifndef TENSEUR_TESTS_TENSOR_CAST
 #define TENSEUR_TESTS_TENSOR_CAST
 
-#include <Ten/Tensor.hxx>
-#include <Ten/Tests.hxx>
-#include <Ten/Types.hxx>
+#include <ten/tensor.hxx>
+#include <ten/tests.hxx>
+#include <ten/types.hxx>
 
 template <class From, class To, size_t... dims>
 testing::AssertionResult testCastStaticTensor() {
-   using tensor_type = ::ten::StaticTensor<From, dims...>;
-   tensor_type a = ::ten::iota<tensor_type>();
+   using tensor_type = ::ten::stensor<From, dims...>;
+   tensor_type a = ::ten::range<tensor_type>();
    auto b = ::ten::cast<To>(a);
    // Types
-   testing::StaticAssertTypeEq<decltype(b), ::ten::StaticTensor<To, dims...>>();
+   testing::StaticAssertTypeEq<decltype(b), ::ten::stensor<To, dims...>>();
    // Values
    return ::ten::tests::same_values(a, b);
 }

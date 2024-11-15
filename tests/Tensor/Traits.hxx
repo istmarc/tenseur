@@ -1,7 +1,7 @@
 #ifndef TENSEUR_TESTS_TENSOR_TRAITS
 #define TENSEUR_TESTS_TENSOR_TRAITS
 
-#include <Ten/Tensor>
+#include <ten/tensor>
 
 struct EmptyStruct {};
 
@@ -12,17 +12,17 @@ template <typename...> struct VariadicStruct {};
 TEST(Traits, isTensor) {
    using namespace ten;
 
-   using Tensor_t = Tensor<float, 3>;
-   ASSERT_TRUE(isTensor<Tensor_t>::value);
+   using Tensor_t = ten::tensor<float, 3>;
+   ASSERT_TRUE(is_tensor<Tensor_t>::value);
 
-   ASSERT_TRUE(!isTensor<int>::value);
+   ASSERT_TRUE(!is_tensor<int>::value);
 
-   ASSERT_TRUE(!isTensor<EmptyStruct>::value);
+   ASSERT_TRUE(!is_tensor<EmptyStruct>::value);
 
-   ASSERT_TRUE(!isTensor<TemplatedStruct<size_t>>::value);
+   ASSERT_TRUE(!is_tensor<TemplatedStruct<size_t>>::value);
 
    using VariadicStruct_t = VariadicStruct<float, size_t>;
-   ASSERT_TRUE(!isTensor<VariadicStruct_t>::value);
+   ASSERT_TRUE(!is_tensor<VariadicStruct_t>::value);
 }
 
 #endif

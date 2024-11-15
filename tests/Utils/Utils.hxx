@@ -1,23 +1,23 @@
 #ifndef TENSEUR_TESTS_BINARY_OPS_ADD
 #define TENSEUR_TESTS_BINARY_OPS_ADD
 
-#include <Ten/Distributions.hxx>
-#include <Ten/Tensor.hxx>
-#include <Ten/Tests.hxx>
+#include <ten/distributions.hxx>
+#include <ten/tensor.hxx>
+#include <ten/tests.hxx>
 
 using namespace ten;
 
-TEST(SaveToCsvFile, Vector) {
+TEST(SaveToMtxFile, Vector) {
    size_t n = 10;
-   Vector<float> x = iota<float>({n});
-   x.save("vector.csv");
+   ten::vector<float> x = range<ten::vector<float>>({n});
+   ten::save(x, "vector.mtx");
 }
 
-TEST(SaveToCsvFile, Matrix) {
+TEST(SaveToMtxFile, Matrix) {
    size_t n = 10;
    size_t m = 3;
-   Matrix<float> x = iota<Matrix<float>>({n, m});
-   x.save("matrix.csv");
+   matrix<float> x = range<matrix<float>>({n, m});
+   ten::save(x, "matrix.mtx");
 }
 
 #endif
