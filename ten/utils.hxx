@@ -4,23 +4,27 @@
 #include <ten/types.hxx>
 
 #include <array>
-#include <type_traits>
 #include <complex>
+#include <type_traits>
 
 namespace ten {
 template <class> std::string to_string();
 
 template <> std::string to_string<float>() { return "float"; }
 
+template <> std::string to_string<int>() { return "int"; }
+
+template <> std::string to_string<long>() { return "long int"; }
+
 template <> std::string to_string<double>() { return "double"; }
 
-template <> std::string to_string<std::complex<float>> () {
+template <> std::string to_string<std::complex<float>>() {
    return "complex<float>";
-   }
+}
 
-template <> std::string to_string<std::complex<double>> () {
+template <> std::string to_string<std::complex<double>>() {
    return "complex<double>";
-   }
+}
 
 } // namespace ten
 
@@ -66,7 +70,7 @@ template <typename _d>
 template <class stride>
 [[nodiscard]] inline ::ten::size_type
 linear_index(const stride &strides,
-            const std::array<::ten::size_type, stride::rank()> &indices) {
+             const std::array<::ten::size_type, stride::rank()> &indices) {
    ::ten::size_type index = 0;
    for (::ten::size_type i = 0; i < stride::rank(); i++)
       index += indices[i] * strides.dim(i);
@@ -78,7 +82,7 @@ linear_index(const stride &strides,
 template <class stride, size_type N = 0>
 [[nodiscard]] size_type
 static_linear_index(const std::array<::ten::size_type, stride::rank()> &indices,
-                  size_type index = 0) {
+                    size_type index = 0) {
    index += indices[N] * stride::template static_dim<N>();
    if constexpr (N + 1 < stride::rank()) {
       return static_linear_index<stride, N + 1>(indices, index);
