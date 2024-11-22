@@ -18,12 +18,7 @@ template <class __t = float> class qr {
 
    void factorize(const matrix<__t> &x) {
       // Copy x
-      matrix<__t> a(x.shape());
-      for (size_t i = 0; i < x.dim(0); i++) {
-         for (size_t j = 0; j < x.dim(1); j++) {
-            a(i, j) = x(i, j);
-         }
-      }
+      matrix<__t> a = x.copy();
 
       size_t m = a.dim(0);
       size_t n = a.dim(1);
@@ -68,12 +63,7 @@ template <class __t = float> class lu {
  public:
    void factorize(const matrix<__t> &x) {
       // Copy x
-      matrix<__t> a(x.shape());
-      for (size_t i = 0; i < x.dim(0); i++) {
-         for (size_t j = 0; j < x.dim(1); j++) {
-            a(i, j) = x(i, j);
-         }
-      }
+      matrix<__t> a = x.copy();
 
       size_t m = a.dim(0);
       size_t n = a.dim(1);
@@ -154,7 +144,18 @@ template <class __t = float> class svd {
 };
 
 // TODO Cholesky
-template <class __t = float> class cholesky {};
+template <class __t = float> class cholesky {
+private:
+   matrix<__t> _l;
+   matrix<__t> _u;
+
+public:
+   void factorize(const matrix<__t>& a) {}
+
+   auto l() const {return _l;}
+
+   auto u() const {return _u;}
+};
 
 } // namespace ten
 

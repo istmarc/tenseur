@@ -839,7 +839,7 @@ class ranked_tensor final
    }
 
    // copy
-   auto copy() {
+   auto copy() const {
       auto format = _node.get()->format();
       if constexpr (__shape::is_dynamic()) {
          auto shape = _node.get()->shape();
