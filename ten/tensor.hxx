@@ -838,6 +838,29 @@ class ranked_tensor final
       _node.get()->resize(std::move(dims));
    }
 
+   // copy
+   auto copy() {
+      auto format = _node.get()->format();
+      if constexpr (__shape::is_dynamic()) {
+         auto shape = _node.get()->shape();
+         auto st = std::make_shared<typename node_type::storage_type>(shape);
+         auto node = std::make_shared<node_type>(std::move(st), shape, format);
+         ranked_tensor t(std::move(node));
+         for (size_t i = 0; i < this->size(); i++) {
+            t[i] = (*_node.get())[i];
+         }
+         return t;
+      } else {
+         auto st = std::make_shared<typename node_type::storage_type>();
+         auto node = std::make_shared<node_type>(std::move(st), format);
+         ranked_tensor t(std::move(node));
+         for (size_t i = 0; i < this->size(); i++) {
+            t[i] = (*_node.get())[i];
+         }
+         return t;
+      }
+   }
+
    /// Get the storage format
    [[nodiscard]] storage_format format() const { return _node.get()->format(); }
 
@@ -1486,7 +1509,8 @@ template <class __t, class __shape, storage_order __order = default_order,
 template <class __t, size_type rank, storage_order __order = default_order>
 [[nodiscard]] auto fill(const dynamic_shape<rank> &shape, __t value) {
    using shape_type = ::ten::dynamic_shape<rank>;
-   return fill<__t, shape_type, __order>(std::forward<shape_type>(shape), value);
+   return fill<__t, shape_type, __order>(std::forward<shape_type>(shape),
+                                         value);
 }
 
 template <class __t, size_type rank, storage_order __order = default_order>
@@ -1753,9 +1777,10 @@ template <class __t, size_type __rank = 1,
           storage_order __order = default_order>
    requires(std::is_floating_point_v<__t>)
 [[nodiscard]] auto range(const dynamic_shape<__rank> &shape,
-                        __t value = __t(0)) {
+                         __t value = __t(0)) {
    using shape_type = ::ten::dynamic_shape<__rank>;
-   return range<__t, shape_type, __order>(std::forward<shape_type>(shape), value);
+   return range<__t, shape_type, __order>(std::forward<shape_type>(shape),
+                                          value);
 }
 
 template <class __t, size_type __rank = 1,
@@ -1872,7 +1897,7 @@ template <class __t, size_type __rank = 1,
           storage_order __order = default_order>
    requires(std::is_floating_point_v<__t>)
 [[nodiscard]] auto linear(__t start, __t stop,
-                        const dynamic_shape<__rank> &dims) {
+                          const dynamic_shape<__rank> &dims) {
    using shape_type = ::ten::dynamic_shape<__rank>;
    return linear<__t, shape_type, __order>(start, stop,
                                            std::forward<shape_type>(dims));
