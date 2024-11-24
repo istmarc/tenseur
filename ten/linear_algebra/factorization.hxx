@@ -9,24 +9,27 @@ namespace ten {
 /// QR factorization
 /// Factorize a matrix A = QR
 template <class __t = float> class qr {
+ public:
+   using value_type = __t;
+
  private:
-   matrix<__t> _q;
-   matrix<__t> _r;
+   matrix<value_type> _q;
+   matrix<value_type> _r;
 
  public:
    qr(){};
 
-   void factorize(const matrix<__t> &x) {
+   void factorize(const matrix<value_type> &x) {
       // Copy x
-      matrix<__t> a = x.copy();
+      matrix<value_type> a = x.copy();
 
       size_t m = a.dim(0);
       size_t n = a.dim(1);
       auto layout = a.storage_order();
-      _q = ::ten::zeros<matrix<__t>>({m, n});
-      _r = ::ten::zeros<matrix<__t>>({n, n});
+      _q = ::ten::zeros<matrix<value_type>>({m, n});
+      _r = ::ten::zeros<matrix<value_type>>({n, n});
 
-      ::ten::vector<__t> tau({n});
+      ::ten::vector<value_type> tau({n});
       size_t lda = a.is_transposed() ? n : m;
       ::ten::kernels::lapack::qr_fact(layout, m, n, a.data(), lda, tau.data());
       // Copy R
@@ -55,15 +58,18 @@ template <class __t = float> class qr {
 /// Factorize a matrix PA = LU
 /// P i a permutation matrix, the inverse of P is its transpose
 template <class __t = float> class lu {
+ public:
+   using value_type = __t;
+
  private:
-   matrix<__t> _l;
-   matrix<__t> _u;
+   matrix<value_type> _l;
+   matrix<value_type> _u;
    ::ten::vector<int32_t> _p;
 
  public:
-   void factorize(const matrix<__t> &x) {
+   void factorize(const matrix<value_type> &x) {
       // Copy x
-      matrix<__t> a = x.copy();
+      matrix<value_type> a = x.copy();
 
       size_t m = a.dim(0);
       size_t n = a.dim(1);
@@ -76,12 +82,12 @@ template <class __t = float> class lu {
       size_t q = std::min(m, n);
       _p = ::ten::vector<int32_t>({q});
       for (size_t i = 0; i < q; i++) {
-         _p[i] = __t(i);
+         _p[i] = value_type(i);
       }
       ::ten::vector<int32_t> ipiv({q});
 
-      _l = ::ten::matrix<__t>({m, n});
-      _u = ::ten::matrix<__t>({n, n});
+      _l = ::ten::matrix<value_type>({m, n});
+      _u = ::ten::matrix<value_type>({n, n});
 
       auto layout = a.storage_order();
       size_t lda = a.is_transposed() ? n : m;
@@ -89,7 +95,7 @@ template <class __t = float> class lu {
 
       // Copy L
       for (size_t i = 0; i < m; i++) {
-         _l(i, i) = __t(1.);
+         _l(i, i) = value_type(1.);
       }
       for (size_t i = 1; i < m; i++) {
          for (size_t j = 0; j < i; j++) {
@@ -108,8 +114,6 @@ template <class __t = float> class lu {
       for (size_t i = 0; i < q; i++) {
          std::swap(_p[i], _p[ipiv[i] - 1]);
       }
-      std::cout << ipiv << std::endl;
-      std::cout << _p << std::endl;
    }
 
    auto l() const { return _l; }
@@ -117,8 +121,8 @@ template <class __t = float> class lu {
    auto u() const { return _u; }
 
    auto p() const {
-      matrix<__t> p = ::ten::zeros<matrix<__t>>({_l.dim(0), _l.dim(1)});
-      std::cout << _p << std::endl;
+      matrix<value_type> p =
+          ::ten::zeros<matrix<value_type>>({_l.dim(0), _l.dim(1)});
       for (size_t i = 0; i < _p.size(); i++) {
          p(i, _p(i)) = 1.;
       }
@@ -129,12 +133,12 @@ template <class __t = float> class lu {
 // TODO SVD factorization
 template <class __t = float> class svd {
  private:
-   matrix<__t> _u;
-   diagonal<__t> _sigma;
-   matrix<__t> _vt;
+   matrix<value_type> _u;
+   diagonal<value_type> _sigma;
+   matrix<value_type> _vt;
 
  public:
-   void factorize(matrix<__t> a) {}
+   void factorize(const matrix<value_type> &a) {}
 
    auto u() const { return _u; }
 
@@ -146,13 +150,16 @@ template <class __t = float> class svd {
 // Cholesky factorization
 // Factorize a matrix A = LU = L L^T = U^T U
 template <class __t = float> class cholesky {
+ public:
+   using value_type = __t;
+
  private:
-   matrix<__t> _l;
-   matrix<__t> _u;
+   matrix<value_type> _l;
+   matrix<value_type> _u;
 
  public:
-   void factorize(const matrix<__t> &a) {
-      matrix<__t> x = a.copy();
+   void factorize(const matrix<value_type> &a) {
+      matrix<value_type> x = a.copy();
 
       size_t m = x.dim(0);
       size_t n = x.dim(1);
@@ -164,8 +171,8 @@ template <class __t = float> class cholesky {
       size_t lda = x.is_transposed() ? n : m;
       ::ten::kernels::lapack::cholesky_fact(layout, 'L', n, x.data(), lda);
 
-      _l = ::ten::zeros<ten::matrix<__t>>({n, n});
-      _u = ::ten::zeros<ten::matrix<__t>>({n, n});
+      _l = ::ten::zeros<ten::matrix<value_type>>({n, n});
+      _u = ::ten::zeros<ten::matrix<value_type>>({n, n});
 
       // Copy L
       for (size_t i = 0; i < m; i++) {
