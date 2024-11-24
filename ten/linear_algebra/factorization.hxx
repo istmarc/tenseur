@@ -69,7 +69,7 @@ template <class __t = float> class lu {
       size_t n = a.dim(1);
 
       if (m != n) {
-         std::cout << "LU decomposition: input is not a square matrix"
+         std::cerr << "LU decomposition: input is not a square matrix"
                    << std::endl;
       }
 
@@ -143,18 +143,47 @@ template <class __t = float> class svd {
    auto vt() const { return _vt; }
 };
 
-// TODO Cholesky
+// Cholesky factorization
+// Factorize a matrix A = LU = L L^T = U^T U
 template <class __t = float> class cholesky {
-private:
+ private:
    matrix<__t> _l;
    matrix<__t> _u;
 
-public:
-   void factorize(const matrix<__t>& a) {}
+ public:
+   void factorize(const matrix<__t> &a) {
+      matrix<__t> x = a.copy();
 
-   auto l() const {return _l;}
+      size_t m = x.dim(0);
+      size_t n = x.dim(1);
+      if (m != n) {
+         std::cerr << "Cholesky: input matrix is not square" << std::endl;
+      }
 
-   auto u() const {return _u;}
+      auto layout = x.storage_order();
+      size_t lda = x.is_transposed() ? n : m;
+      ::ten::kernels::lapack::cholesky_fact(layout, 'L', n, x.data(), lda);
+
+      _l = ::ten::zeros<ten::matrix<__t>>({n, n});
+      _u = ::ten::zeros<ten::matrix<__t>>({n, n});
+
+      // Copy L
+      for (size_t i = 0; i < m; i++) {
+         for (size_t j = 0; j < i + 1; j++) {
+            _l(i, j) = x(i, j);
+         }
+      }
+      // Copy U
+      for (size_t i = 0; i < m; i++) {
+         for (size_t j = 0; j < i + 1; j++) {
+            _u(j, i) = x(i, j);
+         }
+      }
+   }
+
+   auto l() const { return _l; }
+
+   auto u() const { return _u; }
 };
 
 } // namespace ten
