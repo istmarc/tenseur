@@ -130,23 +130,6 @@ template <class __t = float> class lu {
    }
 };
 
-// TODO SVD factorization
-template <class __t = float> class svd {
- private:
-   matrix<value_type> _u;
-   diagonal<value_type> _sigma;
-   matrix<value_type> _vt;
-
- public:
-   void factorize(const matrix<value_type> &a) {}
-
-   auto u() const { return _u; }
-
-   auto sigma() const { return _sigma; }
-
-   auto vt() const { return _vt; }
-};
-
 // Cholesky factorization
 // Factorize a matrix A = LU = L L^T = U^T U
 template <class __t = float> class cholesky {
@@ -193,6 +176,43 @@ template <class __t = float> class cholesky {
    auto u() const { return _u; }
 };
 
+/// SVD factorization
+/// Factorize a matrix A = U * Sigma * V^T
+template <class __t = float> class svd {
+ public:
+   using value_type = __t;
+
+ private:
+   matrix<value_type> _u;
+   diagonal<value_type> _sigma;
+   matrix<value_type> _vt;
+
+ public:
+   void factorize(const matrix<value_type> &a) {
+      matrix<value_type> x = a.copy();
+
+      size_t m = x.dim(0);
+      size_t n = x.dim(1);
+      auto layout = x.storage_order();
+      size_t lda = x.is_transposed() ? n : m;
+
+      _u = zeros<ten::matrix<value_type>>({m, m});
+      _sigma = ::ten::diagonal<value_type>({m, n});
+      _vt = zeros<ten::matrix<value_type>>({n, n});
+
+      ::ten::vector<value_type> work({m * n});
+
+      ::ten::kernels::lapack::svd_fact(layout, 'A', 'A', m, n, x.data(), lda,
+                                       _sigma.data(), _u.data(), m, _vt.data(),
+                                       n, work.data());
+   }
+
+   auto u() const { return _u; }
+
+   auto sigma() const { return _sigma; }
+
+   auto vt() const { return _vt; }
+};
 } // namespace ten
 
 #endif
