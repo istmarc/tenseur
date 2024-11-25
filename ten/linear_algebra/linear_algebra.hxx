@@ -2,6 +2,7 @@
 #define TENSEUR_LINEAR_ALGEBRA
 
 #include <ten/kernels/blas_api.hxx>
+#include <ten/kernels/lapack_api.hxx>
 #include <ten/types.hxx>
 
 namespace ten {
@@ -123,7 +124,8 @@ typename V::value_type dot(V &a, V &b) {
 /// outer(a, b)
 /// Outer product between two vectors
 template <class V>
-::ten::matrix<typename V::value_type> outer(const V &a, const V &b) {
+   requires(::ten::is_vector<V>::value)::ten::matrix<typename V::value_type>
+outer(const V &a, const V &b) {
    using value_type = typename V::value_type;
    size_type n = a.size();
    size_type m = b.size();
@@ -139,7 +141,27 @@ template <class V>
    return c;
 }
 
-// TODO inv
+/// Compute the inverse of a matrix
+template <class M>
+   requires(ten::is_matrix<M>::value)
+M inv(const M &a) {
+   if (a.dim(0) != a.dim(1)) {
+      std::cerr << "Matrix inverse: input is not square" << std::endl;
+   }
+
+   using value_type = M::value_type;
+   matrix<value_type> x = a.copy();
+
+   auto layout = x.storage_order();
+   size_t m = x.dim(0);
+   size_t n = x.dim(1);
+   size_t lda = x.is_transposed() ? n : m;
+   ::ten::vector<int32_t> ipiv({n});
+
+   ::ten::kernels::lapack::inv(layout, n, x.data(), lda, ipiv.data());
+
+   return x;
+}
 
 // TODO pinv
 
