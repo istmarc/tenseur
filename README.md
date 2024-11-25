@@ -31,6 +31,8 @@ A header only C++20 tensor library [WIP]
 
 ## Example
 
+- Multiply and add
+
 ```c++
 #include <ten/tensor>
 
@@ -40,6 +42,23 @@ int main() {
    auto c = ten::ones<ten::vector<float>>(3);
 
    ten::vector<float> x = a * b + c;
+}
+```
+
+- QR factorization
+
+```c++
+#include <ten/tensor>
+
+int main() {
+   auto a = ten::range<matrix<float>>({4, 4});
+   ten::qr qr_fact;
+   qr_fact.factorize(a);
+   auto q = qr_fact.q();
+   auto r = qr_fact.r();
+
+   std::cout << q << std::endl;
+   std::cout << r << std::endl;
 }
 ```
 
