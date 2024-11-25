@@ -1,54 +1,136 @@
 #ifndef TENSEUR_LINEAR_ALGEBRA
 #define TENSEUR_LINEAR_ALGEBRA
 
-#include <Ten/Types.hxx>
-#include <Ten/Kernels/BlasAPI.hxx>
+#include <ten/kernels/blas_api.hxx>
+#include <ten/types.hxx>
 
-namespace ten{
+namespace ten {
 
 /// Vector norms
-enum class VectorNorm{
-   L2 = 1,
-   L1 = 2
-};
+enum class vector_norm { l2 = 1, l1 = 2, linf, lp };
 
 /// Norm of a vector
-template<class V>
-requires(::ten::isVector<V>::value)
-typename T::value_type norm(const V& v, const normType = VectorNorm::L2) {
+template <class V>
+   requires(::ten::is_vector<V>::value)
+typename V::value_type norm(const V &v,
+                            const vector_norm norm_type = vector_norm::l2) {
+   using value_type = V::value_type;
+
+   if (norm_type == vector_norm::l2) {
+      value_type r = value_type(0);
+      for (size_t i = 0; i < v.size(); i++) {
+         r += v[i] * v[i];
+      }
+      return std::sqrt(r);
+   }
+   if (norm_type == vector_norm::l1) {
+      value_type r = value_type(0);
+      for (size_t i = 0; i < v.size(); i++) {
+         r += std::abs(v[i]);
+      }
+      return r;
+   }
+   if (norm_type == vector_norm::linf) {
+      value_type r = std::abs(v[0]);
+      for (size_t i = 1; i < v.size(); i++) {
+         r = std::max(r, std::abs(v[i]));
+      }
+      return r;
+   }
+}
+template <class V>
+   requires(::ten::is_vector<V>::value)
+typename V::value_type norm(const V &v, const size_t p = 2) {
+   using value_type = V::value_type;
+
+   if (p == 0) {
+      std::cerr << "Vector norm Lp: p is null" << std::endl;
+   }
+   value_type r = value_type(0);
+   for (size_t i = 0; i < v.size(); i++) {
+      r += std::pow(std::abs(v[i]), p);
+   }
+   r = std::pow(r, value_type(1) / value_type(p));
+   return r;
 }
 
 /// Matrix norms
-enum class MatrixNorm{
-   Frobenius = 1,
+enum class matrix_norm {
+   frobenius = 1,
+   l1 = 2,
+   linf = 3,
 };
 
 /// Norm of a matrix
-template<class M>
-requires(::ten::isMatrix<M>::value)
-typename M::value_type norm(const M& m, const normType = MatrixNorm::Frobenius) {
+template <class M>
+   requires(::ten::is_matrix<M>::value)
+typename M::value_type
+norm(const M &m, const matrix_norm norm_type = matrix_norm::frobenius) {
+   using value_type = M::value_type;
+
+   if (norm_type == matrix_norm::frobenius) {
+      value_type r = value_type(0);
+      for (size_t i = 0; i < m.size(); i++) {
+         r += std::abs(m[i]) * std::abs(m[i]);
+      }
+      return std::sqrt(r);
+   }
+
+   if (norm_type == matrix_norm::l1) {
+      size_t p = m.dim(0);
+      size_t q = m.dim(1);
+      value_type r = std::abs(m(0, 0));
+      for (size_t i = 1; i < p; i++) {
+         r += std::abs(m(i, 0));
+      }
+      for (size_t j = 1; j < q; j++) {
+         value_type s = std::abs(m(0, j));
+         for (size_t i = 1; i < p; i++) {
+            s += std::abs(m(i, j));
+         }
+         r = std::max(r, s);
+      }
+      return r;
+   }
+
+   if (norm_type == matrix_norm::linf) {
+      size_t p = m.dim(0);
+      size_t q = m.dim(1);
+      value_type r = std::abs(m(0, 0));
+      for (size_t j = 1; j < q; j++) {
+         r += std::abs(m(0, j));
+      }
+      for (size_t i = 1; i < p; i++) {
+         value_type s = std::abs(m(i, 0));
+         for (size_t j = 1; j < q; j++) {
+            s += std::abs(m(i, j));
+         }
+         r = std::max(r, s);
+      }
+      return r;
+   }
 }
 
 /// dot(a, b)
 /// Dot porduct between two vectors
-template<typename V>
-requires(::ten::isVector<V>::value)
-typename V::value_type dot(V& a, const V& b) {
+template <typename V>
+   requires(::ten::is_vector<V>::value)
+typename V::value_type dot(V &a, V &b) {
    size_t n = a.size();
    return ten::kernels::blas::dot(n, a.data(), 1, b.data(), 1);
 }
 
 /// outer(a, b)
 /// Outer product between two vectors
-template<class V>
-::ten::Matrix<typename V::value_type> outer(const V& a, const V& b) {
-   using type = typename V::value_type;
+template <class V>
+::ten::matrix<typename V::value_type> outer(const V &a, const V &b) {
+   using value_type = typename V::value_type;
    size_type n = a.size();
    size_type m = b.size();
    if (n != m) {
-      std::cerr << "Tenseur: Outer product, different vector sizes.";
+      std::cerr << "Outer product, different vector sizes.";
    }
-   ::ten::Matrix<type> c = zeros({n, n});
+   ::ten::matrix<value_type> c = zeros<ten::matrix<value_type>>({n, n});
    for (size_type i = 0; i < n; i++) {
       for (size_type j = 0; j < n; j++) {
          c(i, j) = a[i] * b[j];
@@ -65,6 +147,6 @@ template<class V>
 
 // TODO Power
 
-}
+} // namespace ten
 
 #endif

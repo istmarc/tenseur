@@ -1,0 +1,10 @@
+#ifndef TENSEUR_LINALG
+#define TENSEUR_LINALG
+
+// Lapack API
+#include <ten/kernels/lapack_api.hxx>
+// Linear Algebra
+#include <ten/linear_algebra/linear_algebra.hxx>
+#include <ten/linear_algebra/factorization.hxx>
+
+#endif
