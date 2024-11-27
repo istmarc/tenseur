@@ -49,6 +49,7 @@ int main() {
 
 ```c++
 #include <ten/tensor>
+#include <ten/linalg>
 
 int main() {
    auto a = ten::range<matrix<float>>({4, 4});
