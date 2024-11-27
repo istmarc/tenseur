@@ -52,6 +52,8 @@ template <class __t = float> class qr {
    auto q() const { return _q; }
 
    auto r() const { return _r; }
+
+   auto factors() const {return std::make_tuple(_q, _r);}
 };
 
 /// LU factorization
@@ -128,6 +130,8 @@ template <class __t = float> class lu {
       }
       return p;
    }
+
+   auto factors() const {  return std::make_tuple(_l, _u);}
 };
 
 // Cholesky factorization
@@ -174,6 +178,8 @@ template <class __t = float> class cholesky {
    auto l() const { return _l; }
 
    auto u() const { return _u; }
+
+   auto factors() const { return std::make_tuple(_l, _u);}
 };
 
 /// SVD factorization
@@ -212,6 +218,8 @@ template <class __t = float> class svd {
    auto sigma() const { return _sigma; }
 
    auto vt() const { return _vt; }
+
+   auto factors() const {return std::make_tuple(_u, _sigma, _vt);}
 };
 } // namespace ten
 
