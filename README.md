@@ -55,8 +55,7 @@ int main() {
    auto a = ten::range<matrix<float>>({4, 4});
    ten::qr qr_fact;
    qr_fact.factorize(a);
-   auto q = qr_fact.q();
-   auto r = qr_fact.r();
+   auto [q, r] = qr_fact.factors();
 
    std::cout << q << std::endl;
    std::cout << r << std::endl;
