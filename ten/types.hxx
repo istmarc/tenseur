@@ -14,27 +14,27 @@ namespace ten {
 /// Format type
 enum class storage_format : uint16_t {
    /// None
-   none = 0x01,
+   none = 1,
    /// Dense format
-   dense = 0x02,
+   dense = 2,
    /// Sparse coordinate format
-   coo = 0x03,
+   coo = 4,
    /// Compressed sparse colums
-   csc = 0x04,
+   csc = 8,
    /// Compressed sparse rows
-   csr = 0x05,
+   csr = 16,
    /// Diagonal format
-   diagonal = 0x06,
+   diagonal = 32,
    /// Lower triangular format
-   lower_tr = 0x07,
+   lower_tr = 64,
    /// Upper triangular format
-   upper_tr = 0x08,
+   upper_tr = 128,
    /// Symmetric
-   symmetric = 0x09,
+   symmetric = 256,
    /// Transposed
-   transposed = 0x010,
+   transposed = 512,
    /// Hermitian
-   hermitian = 0x011,
+   hermitian = 1024,
 };
 
 bool operator&(storage_format a, storage_format b) {
