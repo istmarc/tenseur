@@ -191,6 +191,7 @@ template <typename T> using default_allocator = std::allocator<T>;
 
 // Special storages
 template <class T, class allocator> class diagonal_storage;
+template <class T, size_type N> class sdiagonal_storage;
 //template <class T, class allocator> class lowertr_storage;
 //template <class T, class allocator> class uppertr_storage;
 
@@ -245,6 +246,10 @@ struct is_dense_matrix<ranked_tensor<T, shape, order, storage, allocator>> {
 
 // Special matrices
 
+template <class> struct is_sdiagonal_storage : std::false_type {};
+template <class T, size_t N>
+struct is_sdiagonal_storage<sdiagonal_storage<T, N>> : std::true_type {};
+
 /// Diagonal matrix
 template <class> struct is_diagonal : std::false_type {};
 template <class T, class shape, storage_order order, class storage,
@@ -253,6 +258,17 @@ struct is_diagonal<
     ranked_tensor<T, shape, order, storage, allocator>> {
    static constexpr bool value =
        is_diagonal_storage<storage>::value && shape::rank() == 2;
+};
+
+/// Static diagonal matrix
+template <class> struct is_sdiagonal : std::false_type {};
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+struct is_sdiagonal<
+    ranked_tensor<T, shape, order, storage, allocator>> {
+   static constexpr bool value =
+       shape::rank() == 2
+         && is_sdiagonal_storage<storage>::value;
 };
 
 /*
@@ -324,32 +340,6 @@ struct is_diagonal_node<
 };
 template <class T>
 concept diagonal_node = is_diagonal_node<T>::value;
-
-/*
-template <class> struct isLowerTrMatrixNode : std::false_type {};
-template <class T, class shape, storage_order order, class storage,
-          class allocator>
-struct isLowerTrMatrixNode<
-    tensor_node<T, shape, order, storage, allocator>> {
-   static constexpr bool value =
-       ::ten::isLowerTrstorage<storage>::value && shape::rank() == 2;
-};
-
-template <class T>
-concept LowerTrMatrixNode = isLowerTrMatrixNode<T>::value;
-
-template <class> struct isUpperTrMatrixNode : std::false_type {};
-template <class T, class shape, storage_order order, class storage,
-          class allocator>
-struct isUpperTrMatrixNode<
-    tensor_node<T, shape, order, storage, allocator>> {
-   static constexpr bool value =
-       ::ten::isUpperTrstorage<storage>::value && shape::rank() == 2;
-};
-
-template <class T>
-concept UpperTrMatrixNode = isUpperTrMatrixNode<T>::value;
-*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // Concepts Same
@@ -426,14 +416,23 @@ template <class> struct is_binary_expr : std::false_type {};
 template <class left, class right, template <typename...> class Func, typename... Args>
 struct is_binary_expr<binary_expr<left, right, Func, Args...>> : std::true_type {};
 
-namespace traits {
+/////////////////////////////////////////////////////////////////////////////////
+// Concepts
+
+/// Diagonal matrix
+template<typename T>
+concept Diagonal = is_diagonal<std::remove_cvref_t<T>>::value;
+
+/// Static diagonal matrix
+template<typename T>
+concept SDiagonal = is_sdiagonal<std::remove_cvref_t<T>>::value;
+
 // Concepts
 template <typename T>
-concept scalar_node = is_scalar_node<T>::value;
+concept ScalarNode = is_scalar_node<T>::value;
 
 template <typename T>
-concept tensor_node = is_tensor_node<T>::value;
-} // namespace traits
+concept TensorNode = is_tensor_node<T>::value;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Operations

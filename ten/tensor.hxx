@@ -1038,6 +1038,34 @@ std::ostream &operator<<(
    return os;
 }
 
+/// Overload << operator for static diagonal matrix
+template <class __t, class __shape, storage_order __order, class __storage,
+          class __allocator>
+   requires(::ten::is_sdiagonal<ranked_tensor<__t, __shape, __order, __storage,
+                                            __allocator>>::value)
+std::ostream &operator<<(
+    std::ostream &os,
+    const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
+   os << "sdiagonal<" << ::ten::to_string<__t>() << ","
+      << __shape::template static_dim<0>() << "x"
+      << __shape::template static_dim<1>() << ">";
+   size_type size = t.size();
+   if (size <= 10) {
+      for (size_type i = 0; i < size; i++) {
+         os << "\n" << t[i];
+      }
+   } else {
+      for (size_type i = 0; i < 5; i++) {
+         os << "\n" << t[i];
+      }
+      os << "⋮\n";
+      for (size_type i = size - 5; i < size; i++) {
+         os << "\n" << t[i];
+      }
+   }
+   return os;
+}
+
 // Save vector to a file
 template <class T>
    requires(::ten::is_vector<T>::value &&
@@ -1165,6 +1193,15 @@ template <class __t, class __shape = dynamic_shape<2>,
    requires(__shape::rank() == 2)
 using diagonal = ranked_tensor<__t, __shape, __order, __storage, __allocator>;
 
+// sdiagonal<__t, rows, cols>
+/// TODO Extend to diagonal triangular matrices
+template <class __t, size_type rows, size_type cols,
+          storage_order __order = default_order,
+          class __storage = sdiagonal_storage<__t, rows>,
+          class __allocator = typename details::allocator_type<__storage>::type>
+requires (rows == cols)
+using sdiagonal = ranked_tensor<__t, ten::shape<rows, cols>, __order, __storage, __allocator>;
+
 /// __transposed matrix
 template <class __t>
    requires(__t::is_dynamic() && ::ten::is_matrix<__t>::value)
@@ -1291,6 +1328,7 @@ __t upper_tr(const __t &t) {
    std::shared_ptr<node_type> node = std::make_shared<node_type>(st, format);
    return __t(std::move(node));
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Basic functions
@@ -1911,6 +1949,42 @@ template <class __t, size_type __rank = 1,
    using shape_type = ::ten::dynamic_shape<__rank>;
    return linear<__t, shape_type, __order>(start, stop,
                                            shape_type(std::move(dims)));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Conversion from special matrices and tensors
+
+/// Convert diagonal matrix to dense
+template <Diagonal T>
+auto dense(T&& x) -> decltype(auto) {
+   using diagonal_type = std::remove_cvref_t<T>;
+   using value_type = diagonal_type::value_type;
+   size_type m = x.dim(0);
+   size_type n = x.dim(1);
+   if (m != n) {
+      std::cerr << "Diagonal matrix must be square\n";
+   }
+   matrix<value_type> y = ten::zeros<ten::matrix<value_type>>({m, n});
+   for (size_t i = 0; i < m; i++) {
+         y(i,i) = x[i];
+   }
+   return y;
+}
+
+/// Convert diagonal matrix to dense
+template <SDiagonal T>
+auto dense(T&& x) -> decltype(auto) {
+   using diagonal_type = std::remove_cvref_t<T>;
+   using value_type = diagonal_type::value_type;
+   using shape_type = diagonal_type::shape_type;
+   constexpr size_type m = shape_type::template static_dim<0>();
+   constexpr size_type n = shape_type::template static_dim<1>();
+   static_assert(m == n, "Matrix must be square");
+   smatrix<value_type, m, n> y = ten::zeros<ten::smatrix<value_type, m, n>>();
+   for (size_t i = 0; i < m; i++) {
+         y(i,i) = x[i];
+   }
+   return y;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

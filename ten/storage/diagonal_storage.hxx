@@ -59,6 +59,43 @@ template <typename T, typename Allocator> class diagonal_storage final {
    }
 };
 
+/// \class sdiagonal_storage
+/// Static diagonal array
+template <typename T, size_t N> class sdiagonal_storage final {
+ public:
+   using value_type = T;
+
+   template <class to> using casted_type = sdiagonal_storage<to, N>;
+
+   using allocator_type = void;
+
+ private:
+   alignas(T) T _data[N];
+
+ public:
+   sdiagonal_storage() noexcept {}
+
+   ~sdiagonal_storage() {}
+
+   [[nodiscard]] inline const T *data() const {
+      return std::launder(reinterpret_cast<const T *>(&_data));
+   }
+
+   [[nodiscard]] inline T *data() {
+      return std::launder(reinterpret_cast<T *>(&_data));
+   }
+
+   [[nodiscard]] inline static constexpr size_type size() {return N;}
+
+   /// Get/Set the element at index
+   [[nodiscard]] inline const T &operator[](size_t index) const noexcept {
+      return *std::launder(reinterpret_cast<const T *>(&_data[index]));
+   }
+   [[nodiscard]] inline T &operator[](size_t index) noexcept {
+      return *std::launder(reinterpret_cast<T *>(&_data[index]));
+   }
+};
+
 } // namespace ten
 
 #endif
