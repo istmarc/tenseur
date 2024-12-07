@@ -10,9 +10,9 @@ A header only C++20 tensor library [WIP]
 - BLAS backend for high performance numerical linear algebra
 - Chain expressions
 - Factory functions: fill, ones, zeros, range, rand
+- Compile to a shared library
 
 ### Todo
-- Compile to a shared library
 - Tests for shared library
 - Generate automatic python bindings
 - Pythonizations
