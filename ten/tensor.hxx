@@ -611,14 +611,6 @@ class tensor_node
    operator()(auto... index) noexcept {
       return at(index...);
    }
-
-   // Resize
-   void resize(std::initializer_list<size_type> &&dims) {
-      // FIXME check for static dims
-      _shape = __shape(std::move(dims));
-      _stride = stride_type(_shape.value());
-      _storage.reset(new __storage(_shape.value()));
-   }
 };
 
 namespace details {
@@ -841,11 +833,6 @@ class ranked_tensor final
    [[nodiscard]] inline typename base_type::value_type &
    operator()(auto... index) noexcept {
       return (*_node.get())(index...);
-   }
-
-   // Resize
-   void resize(std::initializer_list<size_type> &&dims) {
-      _node.get()->resize(std::move(dims));
    }
 
    // copy
