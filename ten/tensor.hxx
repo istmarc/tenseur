@@ -231,7 +231,17 @@ class scalar : public expr<scalar<__t>>, public scalar_operations<scalar<__t>> {
 
    // Returns the shared ptr to the node
    [[nodiscard]] std::shared_ptr<node_type> node() const { return _node; }
+
+   // ostream operator
+   template <class __r>
+   friend std::ostream &operator<<(std::ostream &, const scalar<__r> &);
 };
+
+template <class __t>
+std::ostream &operator<<(std::ostream &os, const scalar<__t> &s) {
+   os << s.value();
+   return os;
+}
 
 /// \class tensor_operations
 /// Tensor operations
@@ -1042,7 +1052,7 @@ std::ostream &operator<<(
 template <class __t, class __shape, storage_order __order, class __storage,
           class __allocator>
    requires(::ten::is_sdiagonal<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value)
+                                              __allocator>>::value)
 std::ostream &operator<<(
     std::ostream &os,
     const ranked_tensor<__t, __shape, __order, __storage, __allocator> &t) {
@@ -1199,8 +1209,9 @@ template <class __t, size_type rows, size_type cols,
           storage_order __order = default_order,
           class __storage = sdiagonal_storage<__t, rows>,
           class __allocator = typename details::allocator_type<__storage>::type>
-requires (rows == cols)
-using sdiagonal = ranked_tensor<__t, ten::shape<rows, cols>, __order, __storage, __allocator>;
+   requires(rows == cols)
+using sdiagonal =
+    ranked_tensor<__t, ten::shape<rows, cols>, __order, __storage, __allocator>;
 
 /// __transposed matrix
 template <class __t>
@@ -1328,7 +1339,6 @@ __t upper_tr(const __t &t) {
    std::shared_ptr<node_type> node = std::make_shared<node_type>(st, format);
    return __t(std::move(node));
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Basic functions
@@ -1955,8 +1965,7 @@ template <class __t, size_type __rank = 1,
 // Conversion from special matrices and tensors
 
 /// Convert diagonal matrix to dense
-template <Diagonal T>
-auto dense(T&& x) -> decltype(auto) {
+template <Diagonal T> auto dense(T &&x) -> decltype(auto) {
    using diagonal_type = std::remove_cvref_t<T>;
    using value_type = diagonal_type::value_type;
    size_type m = x.dim(0);
@@ -1966,14 +1975,13 @@ auto dense(T&& x) -> decltype(auto) {
    }
    matrix<value_type> y = ten::zeros<ten::matrix<value_type>>({m, n});
    for (size_t i = 0; i < m; i++) {
-         y(i,i) = x[i];
+      y(i, i) = x[i];
    }
    return y;
 }
 
 /// Convert diagonal matrix to dense
-template <SDiagonal T>
-auto dense(T&& x) -> decltype(auto) {
+template <SDiagonal T> auto dense(T &&x) -> decltype(auto) {
    using diagonal_type = std::remove_cvref_t<T>;
    using value_type = diagonal_type::value_type;
    using shape_type = diagonal_type::shape_type;
@@ -1982,7 +1990,7 @@ auto dense(T&& x) -> decltype(auto) {
    static_assert(m == n, "Matrix must be square");
    smatrix<value_type, m, n> y = ten::zeros<ten::smatrix<value_type, m, n>>();
    for (size_t i = 0; i < m; i++) {
-         y(i,i) = x[i];
+      y(i, i) = x[i];
    }
    return y;
 }
