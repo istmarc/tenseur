@@ -3,11 +3,11 @@
 #ifndef TENSEUR_TEN_TYPES_HXX
 #define TENSEUR_TEN_TYPES_HXX
 
+#include <complex>
 #include <concepts>
 #include <iostream>
 #include <memory>
 #include <type_traits>
-#include <complex>
 
 namespace ten {
 /// \enum format
@@ -42,11 +42,13 @@ bool operator&(storage_format a, storage_format b) {
 }
 
 storage_format operator|(storage_format a, storage_format b) {
-   return static_cast<storage_format>(static_cast<uint16_t>(a) | static_cast<uint16_t>(b));
+   return static_cast<storage_format>(static_cast<uint16_t>(a) |
+                                      static_cast<uint16_t>(b));
 }
 
-void operator|=(storage_format& a, const storage_format b) {
-   a = static_cast<storage_format>(static_cast<uint16_t>(a) | static_cast<uint16_t>(b));
+void operator|=(storage_format &a, const storage_format b) {
+   a = static_cast<storage_format>(static_cast<uint16_t>(a) |
+                                   static_cast<uint16_t>(b));
 }
 
 #ifndef TENSEUR_SIZE_TYPE
@@ -58,8 +60,8 @@ void operator|=(storage_format& a, const storage_format b) {
 using size_type = TENSEUR_SIZE_TYPE;
 
 /// Traits for std::complex
-template<class> struct is_complex : std::false_type {};
-template<class T> struct is_complex<std::complex<T>> : std::true_type {};
+template <class> struct is_complex : std::false_type {};
+template <class T> struct is_complex<std::complex<T>> : std::true_type {};
 
 // Forward declaration of shape
 template <size_type Dim, size_type... Rest> class shape;
@@ -78,11 +80,16 @@ template <class T, size_t N> class sdense_storage;
 template <class> struct is_dense_storage : std::false_type {};
 template <class T, class Allocator>
 struct is_dense_storage<dense_storage<T, Allocator>> : std::true_type {};
-// template <class T, size_t N>
+
+template <class T>
+concept DenseStorage = is_dense_storage<typename T::storage_type>::value;
 
 template <class> struct is_static_storage : std::false_type {};
 template <class T, size_t N>
 struct is_static_storage<sdense_storage<T, N>> : std::true_type {};
+
+template <class T>
+concept StaticStorage = is_static_storage<typename T::storage_type>::value;
 
 /// \class tensor_base
 /// Base class for tensor types
@@ -192,8 +199,8 @@ template <typename T> using default_allocator = std::allocator<T>;
 // Special storages
 template <class T, class allocator> class diagonal_storage;
 template <class T, size_type N> class sdiagonal_storage;
-//template <class T, class allocator> class lowertr_storage;
-//template <class T, class allocator> class uppertr_storage;
+// template <class T, class allocator> class lowertr_storage;
+// template <class T, class allocator> class uppertr_storage;
 
 // Storage trait for special storages
 template <class> struct is_diagonal_storage : std::false_type {};
@@ -215,7 +222,8 @@ struct is_UpperTrStorage<UpperTrStorage<T, allocator>> : std::true_type {};*/
 /// Default storage type
 template <class T, class shape>
 using default_storage =
-    std::conditional_t<shape::is_dynamic(), dense_storage<T, default_allocator<T>>,
+    std::conditional_t<shape::is_dynamic(),
+                       dense_storage<T, default_allocator<T>>,
                        sdense_storage<T, shape::static_size()>>;
 
 // Dense tensor
@@ -254,8 +262,7 @@ struct is_sdiagonal_storage<sdiagonal_storage<T, N>> : std::true_type {};
 template <class> struct is_diagonal : std::false_type {};
 template <class T, class shape, storage_order order, class storage,
           class allocator>
-struct is_diagonal<
-    ranked_tensor<T, shape, order, storage, allocator>> {
+struct is_diagonal<ranked_tensor<T, shape, order, storage, allocator>> {
    static constexpr bool value =
        is_diagonal_storage<storage>::value && shape::rank() == 2;
 };
@@ -264,11 +271,9 @@ struct is_diagonal<
 template <class> struct is_sdiagonal : std::false_type {};
 template <class T, class shape, storage_order order, class storage,
           class allocator>
-struct is_sdiagonal<
-    ranked_tensor<T, shape, order, storage, allocator>> {
+struct is_sdiagonal<ranked_tensor<T, shape, order, storage, allocator>> {
    static constexpr bool value =
-       shape::rank() == 2
-         && is_sdiagonal_storage<storage>::value;
+       shape::rank() == 2 && is_sdiagonal_storage<storage>::value;
 };
 
 /*
@@ -276,19 +281,115 @@ struct is_sdiagonal<
 template <class> struct isLowerTrMatrix : std::false_type {};
 template <class Scalar, class shape, storage_order order, class Storage,
           class Allocator>
-struct isLowerTrMatrix<ranked_tensor<Scalar, shape, order, Storage, Allocator>> {
-   static constexpr bool value =
-       isLowerTrStorage<Storage>::value && shape::rank() == 2;
+struct isLowerTrMatrix<ranked_tensor<Scalar, shape, order, Storage, Allocator>>
+{ static constexpr bool value = isLowerTrStorage<Storage>::value &&
+shape::rank() == 2;
 };
 
 /// Upper triangular matrix
 template <class> struct isUpperTrMatrix : std::false_type {};
 template <class Scalar, class shape, storage_order order, class Storage,
           class Allocator>
-struct isUpperTrMatrix<ranked_tensor<Scalar, shape, order, Storage, Allocator>> {
-   static constexpr bool value =
-       isUpperTrStorage<Storage>::value && shape::rank() == 2;
+struct isUpperTrMatrix<ranked_tensor<Scalar, shape, order, Storage, Allocator>>
+{ static constexpr bool value = isUpperTrStorage<Storage>::value &&
+shape::rank() == 2;
 };*/
+
+////////////////////////////////////////////////////////////////////////////////
+// Node types
+// template<class> struct Node;
+
+// Scalar node
+template <class T> class scalar_node;
+
+// scalar_node traits
+template <class> struct is_scalar_node : std::false_type {};
+template <class T> struct is_scalar_node<scalar_node<T>> : std::true_type {};
+
+// tensor_node traits
+template <class> struct is_tensor_node : std::false_type {};
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+struct is_tensor_node<tensor_node<T, shape, order, storage, allocator>>
+    : std::true_type {};
+//{
+//   static constexpr bool value = ::ten::is_dense_storage<storage>::value;
+//};
+
+// Unary Node
+template <class input, class output, template <typename...> class Func,
+          typename... Args>
+class unary_node;
+
+template <class> struct is_unary_node : std::false_type {};
+template <class input, class output, template <typename...> class Func,
+          typename... Args>
+struct is_unary_node<unary_node<input, output, Func, Args...>>
+    : std::true_type {};
+
+// Unary Expr
+template <class E, template <typename...> class Func, typename... Args>
+class unary_expr;
+
+template <class> struct is_unary_expr : std::false_type {};
+template <class E, template <typename...> class Func, typename... Args>
+struct is_unary_expr<unary_expr<E, Func, Args...>> : std::true_type {};
+
+// Binary Node
+template <class left, class right, class output,
+          template <typename...> class Func, typename... Args>
+class binary_node;
+
+template <class> struct is_binary_node : std::false_type {};
+template <class left, class right, class O, template <typename...> class Func,
+          typename... Args>
+struct is_binary_node<binary_node<left, right, O, Func, Args...>>
+    : std::true_type {};
+
+// Binary Expr
+template <class left, class right, template <typename...> class Func,
+          typename... Args>
+class binary_expr;
+
+template <class> struct is_binary_expr : std::false_type {};
+template <class left, class right, template <typename...> class Func,
+          typename... Args>
+struct is_binary_expr<binary_expr<left, right, Func, Args...>>
+    : std::true_type {};
+
+/////////////////////////////////////////////////////////////////////////////////
+// Concepts
+
+/// Unary node
+template <class T>
+concept UnaryNode = is_unary_node<T>::value;
+
+/// Binary node
+template <class T>
+concept BinaryNode = is_binary_node<T>::value;
+
+/// Unary or binary node
+template <class T>
+concept Node = UnaryNode<T> || BinaryNode<T>;
+
+/// Diagonal matrix
+template <typename T>
+concept Diagonal = is_diagonal<std::remove_cvref_t<T>>::value;
+
+/// Static diagonal matrix
+template <typename T>
+concept SDiagonal = is_sdiagonal<std::remove_cvref_t<T>>::value;
+
+// Concepts
+
+/// Scalar node
+template <typename T>
+concept ScalarNode = is_scalar_node<T>::value;
+
+////////////////////////////////////////////////////////////////////////////////
+/// Tensor node
+template <typename T>
+concept TensorNode = DenseStorage<T> && is_tensor_node<T>::value;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vector node
@@ -301,7 +402,16 @@ struct is_vector_node<tensor_node<T, shape, order, storage, allocator>> {
 };
 
 template <class T>
-concept vector_node = is_vector_node<T>::value;
+concept VectorShape = T::shape_type::rank() == 1;
+
+template <class T>
+concept VectorNode = VectorShape<T> && TensorNode<T>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Matrix shape
+
+template <class T>
+concept MatrixShape = T::shape_type::rank() == 2;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Matrix node
@@ -314,7 +424,7 @@ struct is_matrix_node<tensor_node<T, shape, order, storage, allocator>> {
 };
 
 template <class T>
-concept matrix_node = is_matrix_node<T>::value;
+concept MatrixNode = MatrixShape<T> && TensorNode<T>;
 
 // Static matrix node
 template <class> struct is_smatrix_node : std::false_type {};
@@ -326,20 +436,23 @@ struct is_smatrix_node<tensor_node<T, shape, order, storage, allocator>> {
 };
 
 template <class T>
-concept smatrix_node = is_smatrix_node<T>::value;
+concept SMatrixNode = MatrixShape<T> && StaticStorage<T> && TensorNode<T>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Special matrices node
 template <class> struct is_diagonal_node : std::false_type {};
 template <class T, class shape, storage_order order, class storage,
           class allocator>
-struct is_diagonal_node<
-    tensor_node<T, shape, order, storage, allocator>> {
+struct is_diagonal_node<tensor_node<T, shape, order, storage, allocator>> {
    static constexpr bool value =
        ::ten::is_diagonal_storage<storage>::value && shape::rank() == 2;
 };
+
 template <class T>
 concept diagonal_node = is_diagonal_node<T>::value;
+
+template <class T>
+concept DiagonalNode = is_diagonal_node<T>::value;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Concepts Same
@@ -361,78 +474,6 @@ concept same_allocator =
 
 template <class A, class B>
 concept same_tensor = std::same_as<A, B>;
-
-////////////////////////////////////////////////////////////////////////////////
-// Node types
-// template<class> struct Node;
-
-// Scalar node
-template <class T> class scalar_node;
-
-// scalar_node traits
-template <class> struct is_scalar_node : std::false_type {};
-template <class T> struct is_scalar_node<scalar_node<T>> : std::true_type {};
-
-// tensor_node traits
-template <class> struct is_tensor_node : std::false_type {};
-template <class T, class shape, storage_order order, class storage,
-          class allocator>
-struct is_tensor_node<tensor_node<T, shape, order, storage, allocator>>
-    : std::true_type {};
-
-// Unary Node
-template <class input, class output, template <typename...> class Func,
-          typename... Args>
-class unary_node;
-
-template <class> struct is_unary_node : std::false_type {};
-template <class input, class output, template <typename...> class Func,
-          typename... Args>
-struct is_unary_node<unary_node<input, output, Func, Args...>> : std::true_type {};
-
-// Unary Expr
-template <class E, template <typename...> class Func, typename... Args>
-class unary_expr;
-
-template <class> struct is_unary_expr : std::false_type {};
-template <class E, template <typename...> class Func, typename... Args>
-struct is_unary_expr<unary_expr<E, Func, Args...>> : std::true_type {};
-
-// Binary Node
-template <class left, class right, class output,
-          template <typename...> class Func, typename... Args>
-class binary_node;
-
-template <class> struct is_binary_node : std::false_type {};
-template <class left, class right, class O, template <typename...> class Func,
-          typename... Args>
-struct is_binary_node<binary_node<left, right, O, Func, Args...>> : std::true_type {};
-
-// Binary Expr
-template <class left, class right, template <typename...> class Func, typename... Args>
-class binary_expr;
-
-template <class> struct is_binary_expr : std::false_type {};
-template <class left, class right, template <typename...> class Func, typename... Args>
-struct is_binary_expr<binary_expr<left, right, Func, Args...>> : std::true_type {};
-
-/////////////////////////////////////////////////////////////////////////////////
-// Concepts
-
-/// Diagonal matrix
-template<typename T>
-concept Diagonal = is_diagonal<std::remove_cvref_t<T>>::value;
-
-/// Static diagonal matrix
-template<typename T>
-concept SDiagonal = is_sdiagonal<std::remove_cvref_t<T>>::value;
-
-// Concepts
-template <typename T>
-concept ScalarNode = is_scalar_node<T>::value;
-
-template <typename T>
-concept TensorNode = is_tensor_node<T>::value;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Operations

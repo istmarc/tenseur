@@ -342,6 +342,13 @@ class binary_node {
 
       if constexpr (__output::is_static()) {
          _value.reset(new __output());
+         // FIXME if right is unary node
+      } else if constexpr (::ten::is_unary_node<__left>::value) {
+         if constexpr (::ten::is_scalar_node<
+                           typename __left::evaluated_type::node_type>::value) {
+            _value.reset(new __output(func_type::output_shape(
+                ::ten::details::node_wrapper<__right>::shape(_right))));
+         }
       } else {
          // FIXME May requires using ten::functional::has_shape when
          // a binary function has its own shape
@@ -350,17 +357,16 @@ class binary_node {
             _value.reset(new __output(func_type::output_shape(
                 ::ten::details::node_wrapper<__left>::shape(_left),
                 ::ten::details::node_wrapper<__right>::shape(_right))));
-         } else {
-            if constexpr (::ten::is_scalar_node<__left>::value &&
-                          !::ten::is_scalar_node<__right>::value) {
-               _value.reset(new __output(func_type::output_shape(
-                   ::ten::details::node_wrapper<__right>::shape(_right))));
-            }
-            if constexpr (!::ten::is_scalar_node<__left>::value &&
-                          ::ten::is_scalar_node<__right>::value) {
-               _value.reset(new __output(func_type::output_shape(
-                   ::ten::details::node_wrapper<__left>::shape(_left))));
-            }
+         }
+         if constexpr (::ten::is_scalar_node<__left>::value &&
+                       !::ten::is_scalar_node<__right>::value) {
+            _value.reset(new __output(func_type::output_shape(
+                ::ten::details::node_wrapper<__right>::shape(_right))));
+         }
+         if constexpr (!::ten::is_scalar_node<__left>::value &&
+                       ::ten::is_scalar_node<__right>::value) {
+            _value.reset(new __output(func_type::output_shape(
+                ::ten::details::node_wrapper<__left>::shape(_left))));
          }
       }
 

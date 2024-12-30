@@ -437,7 +437,7 @@ template <class __a, class __b = __a> struct log10 : func<> {
 namespace details {
 template <class, class> struct common_type;
 
-template <::ten::traits::tensor_node __a, ::ten::traits::tensor_node __b>
+template <TensorNode __a, TensorNode __b>
    requires same_shape<__a, __b> && same_storage_order<__a, __b> &&
             same_storage<__a, __b> && same_allocator<__a, __b>
 struct common_type<__a, __b> {
@@ -479,7 +479,7 @@ namespace details {
 template <class, class> struct mul_result;
 
 // vector * vector
-template <vector_node __a, vector_node __b>
+template <VectorNode __a, VectorNode __b>
    requires same_shape<__a, __b> && same_storage_order<__a, __b> &&
             same_storage<__a, __b> && same_allocator<__a, __b>
 struct mul_result<__a, __b> {
@@ -491,7 +491,7 @@ struct mul_result<__a, __b> {
 };
 
 // matrix * matrix
-template <matrix_node __a, matrix_node __b>
+template <MatrixNode __a, MatrixNode __b>
    requires same_storage_order<__a, __b> && same_storage<__a, __b> &&
             same_allocator<__a, __b>
 struct mul_result<__a, __b> {
@@ -506,7 +506,7 @@ struct mul_result<__a, __b> {
 };
 
 // matrix * vector
-template <matrix_node __a, vector_node __b>
+template <MatrixNode __a, VectorNode __b>
    requires same_storage_order<__a, __b> && same_storage<__a, __b> &&
             same_allocator<__a, __b>
 struct mul_result<__a, __b> {
@@ -519,9 +519,64 @@ struct mul_result<__a, __b> {
 };
 
 // scalar * tensor
-template <traits::scalar_node __a, traits::tensor_node __b>
-struct mul_result<__a, __b> {
+template <ScalarNode __a, TensorNode __b> struct mul_result<__a, __b> {
    using type = __b;
+};
+
+/// scalar * node
+template <ScalarNode __a, Node __b> struct mul_result<__a, __b> {
+   using type = std::remove_cvref_t<__b>::evaluated_type::node_type;
+};
+
+/// node * vector
+template <Node __a, VectorNode __b> struct mul_result<__a, __b> {
+   using evaluated_type = std::remove_cvref_t<__a>::evaluated_type::node_type;
+   using value_type = mul_result<evaluated_type, __b>::value_type;
+   using type = mul_result<evaluated_type, __b>::type;
+};
+
+/// matrix_node * matrix
+template <Node __a, MatrixNode __b>
+   requires(
+       ten::is_matrix_node<
+           typename std::remove_cvref_t<__a>::evaluated_type::node_type>::value)
+struct mul_result<__a, __b> {
+   using evaluated_type = std::remove_cvref_t<__a>::evaluated_type::node_type;
+   using value_type = mul_result<evaluated_type, __b>::value_type;
+   using type = mul_result<evaluated_type, __b>::type;
+};
+
+/// scalar_node * tensor
+template <Node __a, TensorNode __b>
+   requires(
+       ten::is_scalar_node<
+           typename std::remove_cvref_t<__a>::evaluated_type::node_type>::value)
+struct mul_result<__a, __b> {
+   // using evaluated_type =
+   // std::remove_cvref_t<__a>::evaluated_type::node_type; using value_type =
+   // mul_result<evaluated_type, __b>::value_type;
+   using type = __b; // mul_result<evaluated_type, __b>::type;
+};
+
+/// vector * node
+template <VectorNode __a, Node __b> struct mul_result<__a, __b> {
+   using evaluated_type = std::remove_cvref_t<__b>::evaluated_type::node_type;
+   using value_type = mul_result<evaluated_type, __a>::value_type;
+   using type = mul_result<evaluated_type, __a>::type;
+};
+
+/// matrix * node
+template <MatrixNode __a, Node __b> struct mul_result<__a, __b> {
+   using evaluated_type = std::remove_cvref_t<__b>::evaluated_type::node_type;
+   using value_type = mul_result<evaluated_type, __a>::value_type;
+   using type = mul_result<evaluated_type, __a>::type;
+};
+
+/// tensor * node
+template <TensorNode __a, Node __b> struct mul_result<__a, __b> {
+   using evaluated_type = std::remove_cvref_t<__b>::evaluated_type::node_type;
+   using value_type = mul_result<evaluated_type, __a>::value_type;
+   using type = mul_result<evaluated_type, __a>::type;
 };
 
 } // namespace details
@@ -531,20 +586,20 @@ template <class __a, class __b,
 struct mul;
 
 // vector * vector
-template <vector_node __x, vector_node __y, vector_node __z>
+template <VectorNode __x, VectorNode __y, VectorNode __z>
 struct mul<__x, __y, __z> {
 
-   template <vector_node __a, vector_node __b,
-             vector_node __c = typename details::mul_result<__a, __b>::type>
+   template <VectorNode __a, VectorNode __b,
+             VectorNode __c = typename details::mul_result<__a, __b>::type>
    using func = binary_func<::ten::binary_operation::mul>::func<__a, __b, __c>;
 };
 
 // matrix * matrix
-template <matrix_node __x, matrix_node __y, matrix_node __z>
+template <MatrixNode __x, MatrixNode __y, MatrixNode __z>
 struct mul<__x, __y, __z> {
 
-   template <matrix_node __a, matrix_node __b,
-             matrix_node __c = typename details::mul_result<__a, __b>::type>
+   template <MatrixNode __a, MatrixNode __b,
+             MatrixNode __c = typename details::mul_result<__a, __b>::type>
    struct func : ::ten::functional::func<> {
       using output_type = __c;
 
@@ -563,11 +618,11 @@ struct mul<__x, __y, __z> {
 };
 
 // matrix * vector
-template <matrix_node __x, vector_node __y, vector_node __z>
+template <MatrixNode __x, VectorNode __y, VectorNode __z>
 struct mul<__x, __y, __z> {
 
-   template <matrix_node __a, vector_node __b,
-             vector_node __c = typename details::mul_result<__a, __b>::type>
+   template <MatrixNode __a, VectorNode __b,
+             VectorNode __c = typename details::mul_result<__a, __b>::type>
    struct func : ::ten::functional::func<> {
       using output_type = __c;
 
@@ -586,13 +641,11 @@ struct mul<__x, __y, __z> {
 };
 
 // scalar * tensor
-template <traits::scalar_node __x, traits::tensor_node __y,
-          traits::tensor_node __z>
+template <ScalarNode __x, TensorNode __y, TensorNode __z>
 struct mul<__x, __y, __z> {
 
-   template <traits::scalar_node __a, traits::tensor_node __b,
-             traits::tensor_node __c =
-                 typename details::mul_result<__a, __b>::type>
+   template <ScalarNode __a, TensorNode __b,
+             TensorNode __c = typename details::mul_result<__a, __b>::type>
    struct func : ::ten::functional::func<> {
       using output_type = __c;
 
@@ -610,6 +663,31 @@ struct mul<__x, __y, __z> {
          }
       }
    };
+};
+
+// matrix_node * matrix
+template <Node __x, MatrixNode __y, MatrixNode __z>
+   requires(
+       ten::is_matrix_node<
+           typename std::remove_cvref_t<__x>::evaluated_type::node_type>::value)
+struct mul<__x, __y, __z> {
+   using evaluated_type = std::remove_cvref_t<__x>::evaluated_type::node_type;
+   // matrix_node * matrix_node
+   template <MatrixNode __a, MatrixNode __b,
+             MatrixNode __c = typename details::mul_result<__a, __b>::type>
+   using func = mul<__a, __b, __c>::template func<__a, __b, __c>;
+};
+
+// scalar_node * tensor
+template <Node __x, TensorNode __y, TensorNode __z>
+   requires(
+       ten::is_scalar_node<
+           typename std::remove_cvref_t<__x>::evaluated_type::node_type>::value)
+struct mul<__x, __y, __z> {
+   using evaluated_type = std::remove_cvref_t<__x>::evaluated_type::node_type;
+   template <ScalarNode __a, TensorNode __b,
+             TensorNode __c = typename details::mul_result<__a, __b>::type>
+   using func = mul<__a, __b, __c>::template func<__a, __b, __c>;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
