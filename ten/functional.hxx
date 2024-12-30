@@ -432,6 +432,40 @@ template <class __a, class __b = __a> struct log10 : func<> {
    }
 };
 
+/// Floor
+template <class __a, class __b = __a> struct floor : func<> {
+   using output_type = __b;
+
+   void operator()(const __a &a, __b &b) {
+      using type = typename __b::value_type;
+      for (size_t i = 0; i < a.size(); i++) {
+         b[i] = std::floor(static_cast<type>(a[i]));
+      }
+   }
+
+   static typename __b::shape_type
+   output_shape(const typename __b::shape_type &right) {
+      return right;
+   }
+};
+
+/// Ceil
+template <class __a, class __b = __a> struct ceil : func<> {
+   using output_type = __b;
+
+   void operator()(const __a &a, __b &b) {
+      using type = typename __b::value_type;
+      for (size_t i = 0; i < a.size(); i++) {
+         b[i] = std::ceil(static_cast<type>(a[i]));
+      }
+   }
+
+   static typename __b::shape_type
+   output_shape(const typename __b::shape_type &right) {
+      return right;
+   }
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 // __binary functions (__add, Sub, Mul and Div)
 namespace details {

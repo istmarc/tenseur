@@ -2183,6 +2183,24 @@ auto log10(__expr &&expr) {
        expr.node());
 }
 
+/// \fn floor
+template <class __expr>
+   requires is_expr<std::remove_cvref_t<__expr>>
+auto floor(__expr &&expr) {
+   using expr_type = std::remove_cvref_t<__expr>;
+   return unary_expr<typename expr_type::node_type, functional::floor>(
+       expr.node());
+}
+
+/// \fn ceil
+template <class __expr>
+   requires is_expr<std::remove_cvref_t<__expr>>
+auto ceil(__expr &&expr) {
+   using expr_type = std::remove_cvref_t<__expr>;
+   return unary_expr<typename expr_type::node_type, functional::ceil>(
+       expr.node());
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Parameteric functions
 
