@@ -102,9 +102,14 @@ class tensor_base {
 // BinaryExpr)
 template <class Derived> class expr;
 
+
+template<class T> struct is_expr {
+   static constexpr bool value = std::is_base_of_v<::ten::expr<T>, T>;
+};
+
 // Concept for Expression type
-template <typename T>
-concept is_expr = std::is_base_of_v<::ten::expr<T>, T>;
+template<class T>
+concept Expr = is_expr<std::remove_cvref_t<T>>::value;
 
 // Scalar type
 template <class T> class scalar;
@@ -134,6 +139,9 @@ template <class Scalar, class Shape, storage_order order, class Storage,
 struct is_tensor<ranked_tensor<Scalar, Shape, order, Storage, Allocator>> {
    static constexpr bool value = true;
 };
+
+template<class T>
+concept Tensor = is_tensor<std::remove_cvref_t<T>>::value;
 
 template <typename> struct is_vector : std::false_type {};
 template <class Scalar, class Shape, storage_order order, class Storage,
@@ -168,6 +176,9 @@ struct is_dtensor<ranked_tensor<T, shape, order, allocator, storage>> {
    static constexpr bool value = shape::is_dynamic();
 };
 
+template<class T>
+concept DynamicTensor = is_dtensor<T>::value;
+
 // Static tensor
 template <typename> struct is_stensor : std::false_type {};
 template <class T, class shape, storage_order order, class storage,
@@ -175,6 +186,9 @@ template <class T, class shape, storage_order order, class storage,
 struct is_stensor<ranked_tensor<T, shape, order, storage, allocator>> {
    static constexpr bool value = shape::is_static();
 };
+
+template<class T>
+concept StaticTensor = is_stensor<T>::value;
 
 // Dynamic vector
 template <typename> struct is_dvector : std::false_type {};
