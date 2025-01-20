@@ -51,13 +51,25 @@ auto div(const A &a, const B &b) {
 
 // Static tensors
 template <class A, class B>
-   requires std::same_as<A, B> && ::ten::is_dense_vector<A>::value &&
+   requires std::same_as<A, B> && ten::is_vector<A>::value &&
             ::ten::is_stensor<A>::value &&
             (A::static_size() == B::static_size())
 auto adds(const A &a, const B &b) {
    A c;
    for (size_t i = 0; i < A::static_size(); i++) {
       c[i] = a[i] + b[i];
+   }
+   return c;
+}
+
+template <class A, class B>
+   requires std::same_as<A, B> && ten::is_vector<A>::value &&
+            ::ten::is_stensor<A>::value &&
+            (A::static_size() == B::static_size())
+auto subs(const A &a, const B &b) {
+   A c;
+   for (size_t i = 0; i < A::static_size(); i++) {
+      c[i] = a[i] - b[i];
    }
    return c;
 }

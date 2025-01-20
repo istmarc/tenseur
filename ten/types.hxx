@@ -169,15 +169,15 @@ struct is_smatrix<ranked_tensor<T, shape, order, storage, allocator>> {
 };
 
 // Dynamic tensor
-template <typename> struct is_dtensor : std::false_type {};
+template <typename> struct is_dynamic_tensor : std::false_type {};
 template <class T, class shape, storage_order order, class storage,
           class allocator>
-struct is_dtensor<ranked_tensor<T, shape, order, allocator, storage>> {
+struct is_dynamic_tensor<ranked_tensor<T, shape, order, allocator, storage>> {
    static constexpr bool value = shape::is_dynamic();
 };
 
 template<class T>
-concept DynamicTensor = is_dtensor<T>::value;
+concept DynamicTensor = is_dynamic_tensor<T>::value;
 
 // Static tensor
 template <typename> struct is_stensor : std::false_type {};
@@ -402,8 +402,9 @@ concept ScalarNode = is_scalar_node<T>::value;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Tensor node
+// DenseStorage<T>
 template <typename T>
-concept TensorNode = DenseStorage<T> && is_tensor_node<T>::value;
+concept TensorNode = is_tensor_node<T>::value;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vector node

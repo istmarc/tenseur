@@ -18,6 +18,16 @@ TEST(Add, Vector_Vector) {
    ASSERT_TRUE(tests::equal(c, c_ref));
 }
 
+TEST(Add, StaticVector_StaticVector) {
+   constexpr size_t size = 10;
+   auto a = range<ten::svector<float, size>>();
+   auto b = range<ten::svector<float, size>>();
+   auto c_ref = ten::tests::adds(a, b);
+   ten::svector<float, size> c = a + b;
+
+   ASSERT_TRUE(tests::equal(c, c_ref));
+}
+
 TEST(Sub, Vector_Vector) {
    size_t size = 10;
    ten::vector<float> a = range<ten::vector<float>>({size});
@@ -30,6 +40,17 @@ TEST(Sub, Vector_Vector) {
 
    ASSERT_TRUE(tests::equal(c, c_ref));
 }
+
+TEST(Sub, StaticVector_StaticVector) {
+   constexpr size_t size = 10;
+   auto a = range<ten::svector<float, size>>();
+   auto b = range<ten::svector<float, size>>();
+   auto c_ref = ten::tests::subs(a, b);
+   ten::svector<float, size> c = a - b;
+
+   ASSERT_TRUE(tests::equal(c, c_ref));
+}
+
 
 TEST(Mul, Vector_Vector) {
    size_t size = 10;
