@@ -10,7 +10,7 @@
 namespace ten {
 
 /// Distribution
-template <class __t> struct distribution {
+template <class __t> class distribution {
    static_assert(std::is_floating_point_v<__t>, "__t must be a floating point.");
 };
 
