@@ -817,7 +817,7 @@ template <class __shape> struct dynamic_reshape {
 namespace details {
 // static transpose result
 template <class __a, class __shape> struct static_transpose_result {
-   static_assert(__shape::isStatic(), "Shape must be static.");
+   static_assert(__shape::is_static(), "Shape must be static.");
    static_assert(__shape::rank() == 2, "Shape rank must be 2.");
 
    using type = tensor_node<typename __a::value_type,

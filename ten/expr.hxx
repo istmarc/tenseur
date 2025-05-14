@@ -183,7 +183,7 @@ class unary_node {
                 ::ten::details::node_wrapper<__input>::shape(_input))));
          }
          if constexpr (!ten::functional::has_shape<func_type>::value) {
-            _value.reset(new __output(func_type::output_shape(
+            _value.reset(new __output(_func.value().output_shape(
                 ::ten::details::node_wrapper<__input>::shape(_input))));
          }
       }

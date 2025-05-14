@@ -1,36 +1,36 @@
 #ifndef TRENCH_LEASTSQUARES_LINEAR
 #define TRENCH_LEASTSQUARES_LINEAR
 
-#include <Ten/Tensor.hxx>
+#include <ten/types.hxx>
 #include <type_traits>
 
 namespace tr{
 
-enum class LSMethod{
-   QR = 1,
-   LU = 2,
-   SVD = 3
+enum class ls_method{
+   qr = 1,
+   lu = 2,
+   svd = 3
 };
 
-struct LSOptions{
-   const LSMethod method = LSMethod::QR;
+struct ls_options{
+   ls_method method = ls_method::qr;
 };
 
-template<class T = float>
-class LS{
-   static_assert(std::is_floating_point_v<T>,
+template<class __t = float>
+class ls{
+   static_assert(std::is_floating_point_v<__t>,
       "T must be floating point");
 private:
-   Matrix<T> _A;
-   Vector<T> _b;
-   Vector<T> _x;
-   LSOptions _options;
+   matrix<__t> _A;
+   vector<__t> _b;
+   vector<__t> _x;
+   ls_options _options;
 
 public:
-   explicit LS(LSOptions options) : _options(options) {}
+   explicit ls(ls_options options) : _options(options) {}
 
    /// Solve Ax=b
-   void solve(const Matrix<T>& A, const Vector<T>& b) {
+   void solve(const matrix<__t>& A, const vector<__t>& b) {
    }
 };
 

@@ -88,7 +88,7 @@ static void svd_fact(storage_order layout, char jobu, char jobvt, size_t m,
                   work);
 }
 
-
+// Inverse of a matrix
 template<typename T>
 static void inv(storage_order layout, size_t n, T* a, size_t lda, int32_t* ipiv);
 

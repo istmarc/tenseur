@@ -11,7 +11,9 @@
 namespace ten {
 /// Random tensor
 /// rand<tensor<...>, ...>(shape)
-template <DynamicTensor __t, class __distribution = std::uniform_real_distribution<typename __t::value_type>>
+template <DynamicTensor __t,
+          class __distribution =
+              std::uniform_real_distribution<typename __t::value_type>>
 auto rand(std::initializer_list<size_t> &&dims) {
    __t x(std::move(dims));
    __distribution dist;
@@ -26,7 +28,9 @@ auto rand(std::initializer_list<size_t> &&dims) {
 
 /// Random tensor with seed
 /// rand<tensor<...>, ...>(shape)
-template <DynamicTensor __t, class __distribution = std::uniform_real_distribution<typename __t::value_type>>
+template <DynamicTensor __t,
+          class __distribution =
+              std::uniform_real_distribution<typename __t::value_type>>
 auto rand(std::initializer_list<size_t> &&dims, size_t seed) {
    __t x(std::move(dims));
    __distribution dist;
@@ -51,7 +55,9 @@ auto rand(std::initializer_list<size_t> &&dims) {
 
 /// Random static tensor
 /// rand<stensor<...>>
-template <StaticTensor __t, class __distribution = std::uniform_real_distribution<typename __t::value_type>>
+template <StaticTensor __t,
+          class __distribution =
+              std::uniform_real_distribution<typename __t::value_type>>
 auto rand() {
    __t x;
    __distribution dist;
@@ -66,7 +72,9 @@ auto rand() {
 
 /// Random static tensor with seed
 /// rand<stensor<...>>
-template <StaticTensor __t, class __distribution = std::uniform_real_distribution<typename __t::value_type>>
+template <StaticTensor __t,
+          class __distribution =
+              std::uniform_real_distribution<typename __t::value_type>>
 auto rand(size_t seed) {
    __t x;
    __distribution dist;

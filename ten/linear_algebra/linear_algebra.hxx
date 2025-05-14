@@ -4,6 +4,7 @@
 #include <ten/kernels/blas_api.hxx>
 #include <ten/kernels/lapack_api.hxx>
 #include <ten/types.hxx>
+#include <ten/linear_algebra/factorization.hxx>
 
 namespace ten {
 
@@ -163,9 +164,38 @@ M inv(const M &a) {
    return x;
 }
 
+// Determinant
+template<class M>
+   requires(ten::is_matrix<M>::value)
+typename M::value_type det(const M& m) {
+   using value_type = M::value_type;
+
+   ten::lu<value_type> lufact;
+   lufact.factorize(m);
+   auto [p, l, u] = lufact.factors();
+
+   value_type d = 1.;
+   // Number of rows exchange
+   size_t n = 0;
+   // Find the determinant of p
+   for (size_t i = 0; i < m.dim(0); i++) {
+      if (p(i,i) == 0.) {
+         n += 1;
+      }
+   }
+   if (n % 2 == 1) {
+      d = -1;
+   }
+   std::cout << "det P  = " << d << std::endl;
+   // Multiply by det(l) and det(u)
+   for (size_t i = 0; i < m.dim(0); i++) {
+      d *= l(i,i) * u(i,i);
+   }
+   return d;
+}
+
 // TODO pinv
 
-// TODO determinant
 
 // TODO Power
 

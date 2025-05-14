@@ -126,12 +126,12 @@ template <class __t = float> class lu {
       matrix<value_type> p =
           ::ten::zeros<matrix<value_type>>({_l.dim(0), _l.dim(1)});
       for (size_t i = 0; i < _p.size(); i++) {
-         p(i, _p(i)) = 1.;
+         p(_p(i), i) = 1.;
       }
       return p;
    }
 
-   auto factors() const {  return std::make_tuple(_l, _u);}
+   auto factors() const {  return std::make_tuple(p(), _l, _u);}
 };
 
 // Cholesky factorization
