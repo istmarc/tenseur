@@ -3,4 +3,5 @@ build-tests/
 build-examples/
 build-benchmarks/
 build-docs/
+build-shared-lib/
 
