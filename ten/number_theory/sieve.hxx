@@ -16,7 +16,7 @@ auto sieve(std::size_t n) {
    for (size_t k = 2; k <= sqrtn; k++) {
       if (primes[k-2]) {
          for (size_t l = k*k; l <= n; l += k) {
-            primes[l] = false;
+            primes[l - 2] = false;
          }
       }
    }
