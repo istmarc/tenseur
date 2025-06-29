@@ -7,6 +7,7 @@
 //#include <ten/shared_lib.hxx>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
@@ -33,7 +34,7 @@ using matrix_double = ten::matrix<double>;
 using tensor3_float = ten::tensor<float, 3>;
 
 PYBIND11_MODULE(tenseur, m) {
-    m.doc() = "pybind11 example plugin"; // optional module docstring
+    m.doc() = "Tenseur";
 
    // Shape
    py::class_<vector_shape>(m, "vector_shape")
