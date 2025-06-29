@@ -1,2 +1,0 @@
-from tenseur.Tensor import *
-
