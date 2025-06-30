@@ -885,6 +885,11 @@ class ranked_tensor final
       return _node.get()->is_sparse_csr();
    }
 
+   // Data type
+   [[nodiscard]] inline ten::data_type data_type() noexcept {
+      return to_data_type<__t>();
+   }
+
    /// std::ostream friend function
    template <class __type, class __shape_type, storage_order __storage_order,
              class __storage_type, class __allocator_type>

@@ -10,6 +10,18 @@
 #include <type_traits>
 
 namespace ten {
+
+/// \enum data_type
+enum class data_type : uint16_t {
+   none = 1,
+   dfloat = 2,
+   ddouble = 4,
+   dint32 = 8,
+   dint64 = 16,
+   dcomplexfloat = 32,
+   dcomplexdouble = 64,
+};
+
 /// \enum format
 /// Format type
 enum class storage_format : uint16_t {

@@ -12,9 +12,9 @@ template <class> std::string to_string();
 
 template <> std::string to_string<float>() { return "float"; }
 
-template <> std::string to_string<int>() { return "int"; }
+template <> std::string to_string<int>() { return "int32"; }
 
-template <> std::string to_string<long>() { return "long int"; }
+template <> std::string to_string<long>() { return "int64"; }
 
 template <> std::string to_string<double>() { return "double"; }
 
@@ -24,6 +24,42 @@ template <> std::string to_string<std::complex<float>>() {
 
 template <> std::string to_string<std::complex<double>>() {
    return "complex<double>";
+}
+
+template<class> ten::data_type to_data_type();
+
+template<> ten::data_type to_data_type<float>() { return ten::data_type::dfloat;}
+template<> ten::data_type to_data_type<double>() { return ten::data_type::ddouble;}
+template<> ten::data_type to_data_type<int>() { return ten::data_type::dint32;}
+template<> ten::data_type to_data_type<long>() { return ten::data_type::dint64;}
+template<> ten::data_type to_data_type<std::complex<float>>() { return ten::data_type::dcomplexfloat;}
+template<> ten::data_type to_data_type<std::complex<double>>() { return ten::data_type::dcomplexdouble;}
+
+inline std::ostream& operator<<(std::ostream& os, const data_type d) {
+   switch(d) {
+      case data_type::none:
+         os << "none";
+         break;
+      case data_type::dfloat:
+         os << "float";
+         break;
+      case data_type::ddouble:
+         os << "double";
+         break;
+      case data_type::dint32:
+         os << "int32";
+         break;
+      case data_type::dint64:
+         os << "int64";
+         break;
+      case data_type::dcomplexfloat:
+         os << "std::complex<float>";
+         break;
+      case data_type::dcomplexdouble:
+         os << "std::complex<double>";
+         break;
+   }
+   return os;
 }
 
 } // namespace ten
