@@ -11,10 +11,10 @@ A header only C++20 tensor library [WIP]
 - Chain expressions
 - Factory functions: fill, ones, zeros, range, rand
 - Compile to a shared library
-
-### Todo
 - Tests for shared library
 - Generate automatic python bindings
+
+### Todo
 - Pythonizations
 - CI/CD with tests
 - Sparse tensors
