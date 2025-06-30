@@ -885,6 +885,12 @@ class ranked_tensor final
       return _node.get()->is_sparse_csr();
    }
 
+   /// Returns whether the tensor is sparse
+   [[nodiscard]] bool is_sparse() const {
+      return _node.get()->is_sparse_coo() || _node.get()->is_sparse_csc()
+         || _node.get()->is_sparse_csr();
+   }
+
    // Data type
    [[nodiscard]] inline ten::data_type data_type() noexcept {
       return to_data_type<__t>();
