@@ -1,5 +1,5 @@
 # Project
-project(tenseur LANGUAGES CXX)
+project(tenseurbackend LANGUAGES CXX)
 
 # Compiler options
 set(CMAKE_CXX_STANDARD 20)
@@ -17,8 +17,7 @@ message("BLAS vendor : ${BLA_VENDOR}")
 find_package(Python COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG REQUIRED)
 
-pybind11_add_module(tenseur ../../ten/tensor.cxx)
+pybind11_add_module(tenseurbackend ../../ten/tensor.cxx)
 
-install(TARGETS tenseur DESTINATION lib)
-
+install(TARGETS tenseurbackend DESTINATION lib)
 

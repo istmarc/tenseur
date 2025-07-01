@@ -1,3 +1,4 @@
+#include "functional.hxx"
 #include "types.hxx"
 #include <cmath>
 #include <initializer_list>
@@ -7,6 +8,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/operators.h>
 
 namespace py = pybind11;
 
@@ -37,12 +39,157 @@ using tensor4_double = ten::tensor<double, 4>;
 using tensor5_float = ten::tensor<float, 5>;
 using tensor5_double = ten::tensor<double, 5>;
 
-PYBIND11_MODULE(tenseur, m) {
-    m.doc() = "Tenseur";
+// Scalars
+using scalar_float = ten::scalar<float>;
+using scalar_double = ten::scalar<double>;
+
+// Scalar nodes
+using scalarnode_float = scalar_float::node_type;
+using scalarnode_double = scalar_double::node_type;
+
+// Tensor nodes
+using vectornode_float = vector_float::node_type;
+using vectornode_double = vector_double::node_type;
+using matrixnode_float = matrix_float::node_type;
+using matrixnode_double = matrix_double::node_type;
+using tensor3node_float = tensor3_float::node_type;
+using tensor3node_double = tensor3_double::node_type;
+using tensor4node_float = tensor4_float::node_type;
+using tensor4node_double = tensor4_double::node_type;
+using tensor5node_float = tensor5_float::node_type;
+using tensor5node_double = tensor5_double::node_type;
+
+// TODO Functions
+
+// Unary expr
+//using mul_scalar_vector_float = ten::binary_expr<scalarnode_float, vectornode_float, ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+
+
+// Binary expr
+using add_vector_float = ten::binary_expr<vectornode_float, vectornode_float,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_vector_float = ten::binary_expr<vectornode_float, vectornode_float,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_vector_float = ten::binary_expr<vectornode_float, vectornode_float,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_vector_float = ten::binary_expr<vectornode_float, vectornode_float,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_vector_double = ten::binary_expr<vectornode_double, vectornode_double,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_vector_double = ten::binary_expr<vectornode_double, vectornode_double,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_vector_double = ten::binary_expr<vectornode_double, vectornode_double,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_vector_double = ten::binary_expr<vectornode_double, vectornode_double,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_matrix_float = ten::binary_expr<matrixnode_float, matrixnode_float,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_matrix_float = ten::binary_expr<matrixnode_float, matrixnode_float,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_matrix_float = ten::binary_expr<matrixnode_float, matrixnode_float,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_matrix_float = ten::binary_expr<matrixnode_float, matrixnode_float,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_matrix_double = ten::binary_expr<matrixnode_double, matrixnode_double,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_matrix_double = ten::binary_expr<matrixnode_double, matrixnode_double,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_matrix_double = ten::binary_expr<matrixnode_double, matrixnode_double,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_matrix_double = ten::binary_expr<matrixnode_double, matrixnode_double,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_tensor3_float = ten::binary_expr<tensor3node_float, tensor3node_float,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_tensor3_float = ten::binary_expr<tensor3node_float, tensor3node_float,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_tensor3_float = ten::binary_expr<tensor3node_float, tensor3node_float,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_tensor3_float = ten::binary_expr<tensor3node_float, tensor3node_float,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_tensor3_double = ten::binary_expr<tensor3node_double, tensor3node_double,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_tensor3_double = ten::binary_expr<tensor3node_double, tensor3node_double,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_tensor3_double = ten::binary_expr<tensor3node_double, tensor3node_double,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_tensor3_double = ten::binary_expr<tensor3node_double, tensor3node_double,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_tensor4_float = ten::binary_expr<tensor4node_float, tensor4node_float,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_tensor4_float = ten::binary_expr<tensor4node_float, tensor4node_float,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_tensor4_float = ten::binary_expr<tensor4node_float, tensor4node_float,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_tensor4_float = ten::binary_expr<tensor4node_float, tensor4node_float,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_tensor4_double = ten::binary_expr<tensor4node_double, tensor4node_double,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_tensor4_double = ten::binary_expr<tensor4node_double, tensor4node_double,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_tensor4_double = ten::binary_expr<tensor4node_double, tensor4node_double,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_tensor4_double = ten::binary_expr<tensor4node_double, tensor4node_double,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_tensor5_float = ten::binary_expr<tensor5node_float, tensor5node_float,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_tensor5_float = ten::binary_expr<tensor5node_float, tensor5node_float,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_tensor5_float = ten::binary_expr<tensor5node_float, tensor5node_float,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_tensor5_float = ten::binary_expr<tensor5node_float, tensor5node_float,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_double,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_double,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_double,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_double,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+PYBIND11_MODULE(tenseurbackend, m) {
+    m.doc() = "Tenseur Backend";
+
+   /*py::class_<std::initializer_list<std::size_t>>(m, "list")
+      .def(py::init<std::size_t>())
+      .def(py::init<std::size_t, std::size_t>())
+      .def(py::init<std::size_t, std::size_t, std::size_t>())
+      .def(py::init<std::size_t, std::size_t, std::size_t, std::size_t>())
+      .def(py::init<std::size_t, std::size_t, std::size_t, std::size_t, std::size_t>());
+   */
+
+   // Scalars
+   py::class_<scalar_float>(m, "scalar_float")
+      .def(py::init<float>())
+      .def("value", &scalar_float::value)
+      .def("__repr__", [](const scalar_float& s){
+         std::stringstream ss;
+         ss << s;
+         return ss.str();
+      });
+
+   py::class_<scalar_double>(m, "scalar_double")
+      .def(py::init<float>())
+      .def("value", &scalar_double::value)
+      .def("__repr__", [](const scalar_double& s){
+         std::stringstream ss;
+         ss << s;
+         return ss.str();
+      });
 
    // Shape
    py::class_<vector_shape>(m, "vector_shape")
       .def(py::init<std::initializer_list<size_t>>())
+      //.def(py::init<std::vector<size_t>>())
       .def("rank", &vector_shape::rank)
       .def("size", &vector_shape::size)
       .def("dim", &vector_shape::dim)
@@ -54,6 +201,7 @@ PYBIND11_MODULE(tenseur, m) {
 
    py::class_<matrix_shape>(m, "matrix_shape")
       .def(py::init<std::initializer_list<size_t>>())
+      //.def(py::init<std::vector<size_t>>())
       .def("rank", &matrix_shape::rank)
       .def("size", &matrix_shape::size)
       .def("dim", &matrix_shape::dim)
@@ -66,6 +214,7 @@ PYBIND11_MODULE(tenseur, m) {
 
    py::class_<tensor3_shape>(m, "tensor3_shape")
       .def(py::init<std::initializer_list<size_t>>())
+      //.def(py::init<std::vector<size_t>>())
       .def("rank", &tensor3_shape::rank)
       .def("size", &tensor3_shape::size)
       .def("dim", &tensor3_shape::dim)
@@ -77,6 +226,7 @@ PYBIND11_MODULE(tenseur, m) {
 
    py::class_<tensor4_shape>(m, "tensor4_shape")
       .def(py::init<std::initializer_list<size_t>>())
+      //.def(py::init<std::vector<size_t>>())
       .def("rank", &tensor4_shape::rank)
       .def("size", &tensor4_shape::size)
       .def("dim", &tensor4_shape::dim)
@@ -89,6 +239,7 @@ PYBIND11_MODULE(tenseur, m) {
 
    py::class_<tensor5_shape>(m, "tensor5_shape")
       .def(py::init<std::initializer_list<size_t>>())
+      //.def(py::init<std::vector<size_t>>())
       .def("rank", &tensor5_shape::rank)
       .def("size", &tensor5_shape::size)
       .def("dim", &tensor5_shape::dim)
@@ -176,6 +327,145 @@ PYBIND11_MODULE(tenseur, m) {
       .value("transposed", ten::storage_format::transposed)
       .value("hermitian", ten::storage_format::hermitian);
 
+
+   // Unary expr
+   /*py::class_<mul_scalar_vector_float>(m, "mul_scalar_vector_float")
+      .def("value", &mul_scalar_vector_float::value)
+      .def("eval", ::&mul_scalar_vector_float::eval);
+   */
+
+   // Binar expr
+   py::class_<add_vector_float>(m, "add_vector_float")
+      .def("value", &add_vector_float::value)
+      .def("eval", &add_vector_float::eval);
+   py::class_<sub_vector_float>(m, "sub_vector_float")
+      .def("value", &sub_vector_float::value)
+      .def("eval", &sub_vector_float::eval);
+   py::class_<mul_vector_float>(m, "mul_vector_float")
+      .def("value", &mul_vector_float::value)
+      .def("eval", &mul_vector_float::eval);
+   py::class_<div_vector_float>(m, "div_vector_float")
+      .def("value", &div_vector_float::value)
+      .def("eval", &div_vector_float::eval);
+
+   py::class_<add_vector_double>(m, "add_vector_double")
+      .def("value", &add_vector_double::value)
+      .def("eval", &add_vector_double::eval);
+   py::class_<sub_vector_double>(m, "sub_vector_double")
+      .def("value", &sub_vector_double::value)
+      .def("eval", &sub_vector_double::eval);
+   py::class_<mul_vector_double>(m, "mul_vector_double")
+      .def("value", &mul_vector_double::value)
+      .def("eval", &mul_vector_double::eval);
+   py::class_<div_vector_double>(m, "div_vector_double")
+      .def("value", &div_vector_double::value)
+      .def("eval", &div_vector_double::eval);
+
+   py::class_<add_matrix_float>(m, "add_matrix_float")
+      .def("value", &add_matrix_float::value)
+      .def("eval", &add_matrix_float::eval);
+   py::class_<sub_matrix_float>(m, "sub_matrix_float")
+      .def("value", &sub_matrix_float::value)
+      .def("eval", &sub_matrix_float::eval);
+   py::class_<mul_matrix_float>(m, "mul_matrix_float")
+      .def("value", &mul_matrix_float::value)
+      .def("eval", &mul_matrix_float::eval);
+   py::class_<div_matrix_float>(m, "div_matrix_float")
+      .def("value", &div_matrix_float::value)
+      .def("eval", &div_matrix_float::eval);
+
+   py::class_<add_matrix_double>(m, "add_matrix_double")
+      .def("value", &add_matrix_double::value)
+      .def("eval", &add_matrix_double::eval);
+   py::class_<sub_matrix_double>(m, "sub_matrix_double")
+      .def("value", &sub_matrix_double::value)
+      .def("eval", &sub_matrix_double::eval);
+   py::class_<mul_matrix_double>(m, "mul_matrix_double")
+      .def("value", &mul_matrix_double::value)
+      .def("eval", &mul_matrix_double::eval);
+   py::class_<div_matrix_double>(m, "div_matrix_double")
+      .def("value", &div_matrix_double::value)
+      .def("eval", &div_matrix_double::eval);
+
+
+   py::class_<add_tensor3_float>(m, "add_tensor3_float")
+      .def("value", &add_tensor3_float::value)
+      .def("eval", &add_tensor3_float::eval);
+   py::class_<sub_tensor3_float>(m, "sub_tensor3_float")
+      .def("value", &sub_tensor3_float::value)
+      .def("eval", &sub_tensor3_float::eval);
+   py::class_<mul_tensor3_float>(m, "mul_tensor3_float")
+      .def("value", &mul_tensor3_float::value)
+      .def("eval", &mul_tensor3_float::eval);
+   py::class_<div_tensor3_float>(m, "div_tensor3_float")
+      .def("value", &div_tensor3_float::value)
+      .def("eval", &div_tensor3_float::eval);
+
+   py::class_<add_tensor3_double>(m, "add_tensor3_double")
+      .def("value", &add_tensor3_double::value)
+      .def("eval", &add_tensor3_double::eval);
+   py::class_<sub_tensor3_double>(m, "sub_tensor3_double")
+      .def("value", &sub_tensor3_double::value)
+      .def("eval", &sub_tensor3_double::eval);
+   py::class_<mul_tensor3_double>(m, "mul_tensor3_double")
+      .def("value", &mul_tensor3_double::value)
+      .def("eval", &mul_tensor3_double::eval);
+   py::class_<div_tensor3_double>(m, "div_tensor3_double")
+      .def("value", &div_tensor3_double::value)
+      .def("eval", &div_tensor3_double::eval);
+
+   py::class_<add_tensor4_float>(m, "add_tensor4_float")
+      .def("value", &add_tensor4_float::value)
+      .def("eval", &add_tensor4_float::eval);
+   py::class_<sub_tensor4_float>(m, "sub_tensor4_float")
+      .def("value", &sub_tensor4_float::value)
+      .def("eval", &sub_tensor4_float::eval);
+   py::class_<mul_tensor4_float>(m, "mul_tensor4_float")
+      .def("value", &mul_tensor4_float::value)
+      .def("eval", &mul_tensor4_float::eval);
+   py::class_<div_tensor4_float>(m, "div_tensor4_float")
+      .def("value", &div_tensor4_float::value)
+      .def("eval", &div_tensor4_float::eval);
+
+   py::class_<add_tensor4_double>(m, "add_tensor4_double")
+      .def("value", &add_tensor4_double::value)
+      .def("eval", &add_tensor4_double::eval);
+   py::class_<sub_tensor4_double>(m, "sub_tensor4_double")
+      .def("value", &sub_tensor4_double::value)
+      .def("eval", &sub_tensor4_double::eval);
+   py::class_<mul_tensor4_double>(m, "mul_tensor4_double")
+      .def("value", &mul_tensor4_double::value)
+      .def("eval", &mul_tensor4_double::eval);
+   py::class_<div_tensor4_double>(m, "div_tensor4_double")
+      .def("value", &div_tensor4_double::value)
+      .def("eval", &div_tensor4_double::eval);
+
+   py::class_<add_tensor5_float>(m, "add_tensor5_float")
+      .def("value", &add_tensor5_float::value)
+      .def("eval", &add_tensor5_float::eval);
+   py::class_<sub_tensor5_float>(m, "sub_tensor5_float")
+      .def("value", &sub_tensor5_float::value)
+      .def("eval", &sub_tensor5_float::eval);
+   py::class_<mul_tensor5_float>(m, "mul_tensor5_float")
+      .def("value", &mul_tensor5_float::value)
+      .def("eval", &mul_tensor5_float::eval);
+   py::class_<div_tensor5_float>(m, "div_tensor5_float")
+      .def("value", &div_tensor5_float::value)
+      .def("eval", &div_tensor5_float::eval);
+
+   py::class_<add_tensor5_double>(m, "add_tensor5_double")
+      .def("value", &add_tensor5_double::value)
+      .def("eval", &add_tensor5_double::eval);
+   py::class_<sub_tensor5_double>(m, "sub_tensor5_double")
+      .def("value", &sub_tensor5_double::value)
+      .def("eval", &sub_tensor5_double::eval);
+   py::class_<mul_tensor5_double>(m, "mul_tensor5_double")
+      .def("value", &mul_tensor5_double::value)
+      .def("eval", &mul_tensor5_double::eval);
+   py::class_<div_tensor5_double>(m, "div_tensor5_double")
+      .def("value", &div_tensor5_double::value)
+      .def("eval", &div_tensor5_double::eval);
+
    // Vector float
    py::class_<vector_float>(m, "vector_float")
       .def(py::init<std::size_t>())
@@ -194,6 +484,11 @@ PYBIND11_MODULE(tenseur, m) {
       .def("copy", &vector_float::copy)
       .def("format", &vector_float::format)
       .def("data_type", &vector_float::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      .def(py::self * py::self)
+      .def(py::self / py::self)
+      //.def(float() * py::self)
       .def("__repr__", [](const vector_float& v) {
          std::stringstream ss;
          ss << v;
@@ -216,6 +511,10 @@ PYBIND11_MODULE(tenseur, m) {
       .def("copy", &vector_double::copy)
       .def("format", &vector_double::format)
       .def("data_type", &vector_double::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      .def(py::self * py::self)
+      .def(py::self / py::self)
       .def("__repr__", [](const vector_double& v) {
          std::stringstream ss;
          ss << v;
@@ -243,6 +542,10 @@ PYBIND11_MODULE(tenseur, m) {
       .def("copy", &matrix_float::copy)
       .def("format", &matrix_float::format)
       .def("data_type", &matrix_float::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      .def(py::self * py::self)
+      .def(py::self / py::self)
       .def("is_transposed", &matrix_float::is_transposed)
       .def("is_symmetric", &matrix_float::is_symmetric)
       .def("is_hermitian", &matrix_float::is_hermitian)
@@ -280,6 +583,10 @@ PYBIND11_MODULE(tenseur, m) {
       .def("copy", &matrix_double::copy)
       .def("format", &matrix_double::format)
       .def("data_type", &matrix_double::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      .def(py::self * py::self)
+      .def(py::self / py::self)
       .def("is_transposed", &matrix_double::is_transposed)
       .def("is_symmetric", &matrix_double::is_symmetric)
       .def("is_hermitian", &matrix_double::is_hermitian)
@@ -319,6 +626,10 @@ PYBIND11_MODULE(tenseur, m) {
       .def("copy", &tensor3_float::copy)
       .def("format", &tensor3_float::format)
       .def("data_type", &tensor3_float::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      //.def(py::self * py::self)
+      .def(py::self / py::self)
       .def("is_transposed", &tensor3_float::is_transposed)
       .def("is_symmetric", &tensor3_float::is_symmetric)
       .def("is_hermitian", &tensor3_float::is_hermitian)
@@ -350,6 +661,10 @@ PYBIND11_MODULE(tenseur, m) {
       .def("copy", &tensor3_double::copy)
       .def("format", &tensor3_double::format)
       .def("data_type", &tensor3_double::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      //.def(py::self * py::self)
+      .def(py::self / py::self)
       .def("is_transposed", &tensor3_double::is_transposed)
       .def("is_symmetric", &tensor3_double::is_symmetric)
       .def("is_hermitian", &tensor3_double::is_hermitian)
@@ -382,6 +697,10 @@ PYBIND11_MODULE(tenseur, m) {
       .def("copy", &tensor4_float::copy)
       .def("format", &tensor4_float::format)
       .def("data_type", &tensor4_float::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      //.def(py::self * py::self)
+      .def(py::self / py::self)
       .def("is_transposed", &tensor4_float::is_transposed)
       .def("is_symmetric", &tensor4_float::is_symmetric)
       .def("is_hermitian", &tensor4_float::is_hermitian)
@@ -414,6 +733,10 @@ PYBIND11_MODULE(tenseur, m) {
       .def("copy", &tensor4_double::copy)
       .def("format", &tensor4_double::format)
       .def("data_type", &tensor4_double::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      //.def(py::self * py::self)
+      .def(py::self / py::self)
       .def("is_transposed", &tensor4_double::is_transposed)
       .def("is_symmetric", &tensor4_double::is_symmetric)
       .def("is_hermitian", &tensor4_double::is_hermitian)
@@ -446,6 +769,10 @@ PYBIND11_MODULE(tenseur, m) {
       .def("copy", &tensor5_float::copy)
       .def("format", &tensor5_float::format)
       .def("data_type", &tensor5_float::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      //.def(py::self * py::self)
+      .def(py::self / py::self)
       .def("is_transposed", &tensor5_float::is_transposed)
       .def("is_symmetric", &tensor5_float::is_symmetric)
       .def("is_hermitian", &tensor5_float::is_hermitian)
@@ -477,6 +804,10 @@ PYBIND11_MODULE(tenseur, m) {
       .def("copy", &tensor5_double::copy)
       .def("format", &tensor5_double::format)
       .def("data_type", &tensor5_double::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      //.def(py::self * py::self)
+      .def(py::self / py::self)
       .def("is_transposed", &tensor5_double::is_transposed)
       .def("is_symmetric", &tensor5_double::is_symmetric)
       .def("is_hermitian", &tensor5_double::is_hermitian)
@@ -487,9 +818,6 @@ PYBIND11_MODULE(tenseur, m) {
       .def("is_sparse_csc", &tensor5_double::is_sparse_csc)
       .def("is_sparse_csr", &tensor5_double::is_sparse_csr)
       .def("is_sparse", &tensor5_double::is_sparse);
-
-
-
 
 }
 
