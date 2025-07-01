@@ -148,6 +148,43 @@ using div_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_doub
 // Binary func mul
 using mul_vector_float_vector_float = ten::binary_expr<vectornode_float, vectornode_float,
    ten::functional::mul<vectornode_float, vectornode_float, vectornode_float>::template func>;
+using mul_vector_double_vector_double = ten::binary_expr<vectornode_double, vectornode_double,
+   ten::functional::mul<vectornode_double, vectornode_double, vectornode_double>::template func>;
+
+using mul_matrix_float_matrix_float = ten::binary_expr<matrixnode_float, matrixnode_float,
+   ten::functional::mul<matrixnode_float, matrixnode_float, matrixnode_float>::template func>;
+using mul_matrix_double_matrix_double = ten::binary_expr<matrixnode_double, matrixnode_double,
+   ten::functional::mul<matrixnode_double, matrixnode_double, matrixnode_double>::template func>;
+
+using mul_matrix_float_vector_float = ten::binary_expr<matrixnode_float, vectornode_float,
+   ten::functional::mul<matrixnode_float, vectornode_float, vectornode_float>::template func>;
+using mul_matrix_double_vector_double = ten::binary_expr<matrixnode_double, vectornode_double,
+   ten::functional::mul<matrixnode_double, vectornode_double, vectornode_double>::template func>;
+
+using mul_scalar_float_vector_float = ten::binary_expr<scalarnode_float, vectornode_float,
+   ten::functional::mul<scalarnode_float, vectornode_float, vectornode_float>::template func>;
+using mul_scalar_double_vector_double = ten::binary_expr<scalarnode_double, vectornode_double,
+   ten::functional::mul<scalarnode_double, vectornode_double, vectornode_double>::template func>;
+
+using mul_scalar_float_matrix_float = ten::binary_expr<scalarnode_float, matrixnode_float,
+   ten::functional::mul<scalarnode_float, matrixnode_float, matrixnode_float>::template func>;
+using mul_scalar_double_matrix_double = ten::binary_expr<scalarnode_double, matrixnode_double,
+   ten::functional::mul<scalarnode_double, matrixnode_double, matrixnode_double>::template func>;
+
+using mul_scalar_float_tensor3_float = ten::binary_expr<scalarnode_float, tensor3node_float,
+   ten::functional::mul<scalarnode_float, tensor3node_float, tensor3node_float>::template func>;
+using mul_scalar_double_tensor3_double = ten::binary_expr<scalarnode_double, tensor3node_double,
+   ten::functional::mul<scalarnode_double, tensor3node_double, tensor3node_double>::template func>;
+
+using mul_scalar_float_tensor4_float = ten::binary_expr<scalarnode_float, tensor4node_float,
+   ten::functional::mul<scalarnode_float, tensor4node_float, tensor4node_float>::template func>;
+using mul_scalar_double_tensor4_double = ten::binary_expr<scalarnode_double, tensor4node_double,
+   ten::functional::mul<scalarnode_double, tensor4node_double, tensor4node_double>::template func>;
+
+using mul_scalar_float_tensor5_float = ten::binary_expr<scalarnode_float, tensor5node_float,
+   ten::functional::mul<scalarnode_float, tensor5node_float, tensor5node_float>::template func>;
+using mul_scalar_double_tensor5_double = ten::binary_expr<scalarnode_double, tensor5node_double,
+   ten::functional::mul<scalarnode_double, tensor5node_double, tensor5node_double>::template func>;
 
 // Others binary functions
 
@@ -446,6 +483,58 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<mul_vector_float_vector_float>(m ,"mul_vector_float_vector_float")
       .def("value", &mul_vector_float_vector_float::value)
       .def("eval",  &mul_vector_float_vector_float::eval);
+   py::class_<mul_vector_float_vector_float>(m ,"mul_vector_float_vector_float")
+      .def("value", &mul_vector_float_vector_float::value)
+      .def("eval",  &mul_vector_float_vector_float::eval);
+
+   py::class_<mul_matrix_float_matrix_float>(m ,"mul_matrix_float_matrix_float")
+      .def("value", &mul_matrix_float_matrix_float::value)
+      .def("eval",  &mul_matrix_float_matrix_float::eval);
+   py::class_<mul_matrix_double_matrix_double>(m ,"mul_matrix_double_matrix_double")
+      .def("value", &mul_matrix_double_matrix_double::value)
+      .def("eval",  &mul_matrix_double_matrix_double::eval);
+
+   py::class_<mul_matrix_float_vector_float>(m ,"mul_matrix_float_vector_float")
+      .def("value", &mul_matrix_float_vector_float::value)
+      .def("eval",  &mul_matrix_float_vector_float::eval);
+   py::class_<mul_matrix_double_vector_double>(m ,"mul_matrix_double_vector_double")
+      .def("value", &mul_matrix_double_vector_double::value)
+      .def("eval",  &mul_matrix_double_vector_double::eval);
+
+   py::class_<mul_scalar_float_vector_float>(m ,"mul_scalar_float_vector_float")
+      .def("value", &mul_scalar_float_vector_float::value)
+      .def("eval",  &mul_scalar_float_vector_float::eval);
+   py::class_<mul_scalar_double_vector_double>(m ,"mul_scalar_double_vector_double")
+      .def("value", &mul_scalar_double_vector_double::value)
+      .def("eval",  &mul_scalar_double_vector_double::eval);
+
+   py::class_<mul_scalar_float_matrix_float>(m ,"mul_scalar_float_matrix_float")
+      .def("value", &mul_scalar_float_matrix_float::value)
+      .def("eval",  &mul_scalar_float_matrix_float::eval);
+   py::class_<mul_scalar_double_matrix_double>(m ,"mul_scalar_double_matrix_double")
+      .def("value", &mul_scalar_double_matrix_double::value)
+      .def("eval",  &mul_scalar_double_matrix_double::eval);
+
+   py::class_<mul_scalar_float_tensor3_float>(m ,"mul_scalar_float_tensor3_float")
+      .def("value", &mul_scalar_float_tensor3_float::value)
+      .def("eval",  &mul_scalar_float_tensor3_float::eval);
+   py::class_<mul_scalar_double_tensor3_double>(m ,"mul_scalar_double_tensor3_double")
+      .def("value", &mul_scalar_double_tensor3_double::value)
+      .def("eval",  &mul_scalar_double_tensor3_double::eval);
+
+   py::class_<mul_scalar_float_tensor4_float>(m ,"mul_scalar_float_tensor4_float")
+      .def("value", &mul_scalar_float_tensor4_float::value)
+      .def("eval",  &mul_scalar_float_tensor4_float::eval);
+   py::class_<mul_scalar_double_tensor4_double>(m ,"mul_scalar_double_tensor4_double")
+      .def("value", &mul_scalar_double_tensor4_double::value)
+      .def("eval",  &mul_scalar_double_tensor4_double::eval);
+
+   py::class_<mul_scalar_float_tensor5_float>(m ,"mul_scalar_float_tensor5_float")
+      .def("value", &mul_scalar_float_tensor5_float::value)
+      .def("eval",  &mul_scalar_float_tensor5_float::eval);
+   py::class_<mul_scalar_double_tensor5_double>(m ,"mul_scalar_double_tensor5_double")
+      .def("value", &mul_scalar_double_tensor5_double::value)
+      .def("eval",  &mul_scalar_double_tensor5_double::eval);
 
    // Vector float
    py::class_<vector_float>(m, "vector_float")

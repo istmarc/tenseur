@@ -17,7 +17,11 @@ message("BLAS vendor : ${BLA_VENDOR}")
 find_package(Python COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG REQUIRED)
 
+
+
 pybind11_add_module(tenseurbackend ../../ten/tensor.cxx)
+
+target_link_libraries(tenseurbackend PRIVATE pybind11::module ${BLAS_LIBRARIES})
 
 install(TARGETS tenseurbackend DESTINATION lib)
 
