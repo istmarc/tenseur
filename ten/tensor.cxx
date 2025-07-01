@@ -1,5 +1,6 @@
-#include "functional.hxx"
-#include "types.hxx"
+#include <ten/functional.hxx>
+#include <ten/types.hxx>
+
 #include <cmath>
 #include <initializer_list>
 #include <iostream>
@@ -106,8 +107,6 @@ using add_tensor3_float = ten::binary_expr<tensor3node_float, tensor3node_float,
    ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor3_float = ten::binary_expr<tensor3node_float, tensor3node_float,
    ten::functional::binary_func<ten::binary_operation::sub>::template func>;
-using mul_tensor3_float = ten::binary_expr<tensor3node_float, tensor3node_float,
-   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_tensor3_float = ten::binary_expr<tensor3node_float, tensor3node_float,
    ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
@@ -115,8 +114,6 @@ using add_tensor3_double = ten::binary_expr<tensor3node_double, tensor3node_doub
    ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor3_double = ten::binary_expr<tensor3node_double, tensor3node_double,
    ten::functional::binary_func<ten::binary_operation::sub>::template func>;
-using mul_tensor3_double = ten::binary_expr<tensor3node_double, tensor3node_double,
-   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_tensor3_double = ten::binary_expr<tensor3node_double, tensor3node_double,
    ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
@@ -124,8 +121,6 @@ using add_tensor4_float = ten::binary_expr<tensor4node_float, tensor4node_float,
    ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor4_float = ten::binary_expr<tensor4node_float, tensor4node_float,
    ten::functional::binary_func<ten::binary_operation::sub>::template func>;
-using mul_tensor4_float = ten::binary_expr<tensor4node_float, tensor4node_float,
-   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_tensor4_float = ten::binary_expr<tensor4node_float, tensor4node_float,
    ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
@@ -133,8 +128,6 @@ using add_tensor4_double = ten::binary_expr<tensor4node_double, tensor4node_doub
    ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor4_double = ten::binary_expr<tensor4node_double, tensor4node_double,
    ten::functional::binary_func<ten::binary_operation::sub>::template func>;
-using mul_tensor4_double = ten::binary_expr<tensor4node_double, tensor4node_double,
-   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_tensor4_double = ten::binary_expr<tensor4node_double, tensor4node_double,
    ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
@@ -142,8 +135,6 @@ using add_tensor5_float = ten::binary_expr<tensor5node_float, tensor5node_float,
    ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor5_float = ten::binary_expr<tensor5node_float, tensor5node_float,
    ten::functional::binary_func<ten::binary_operation::sub>::template func>;
-using mul_tensor5_float = ten::binary_expr<tensor5node_float, tensor5node_float,
-   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_tensor5_float = ten::binary_expr<tensor5node_float, tensor5node_float,
    ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
@@ -151,10 +142,14 @@ using add_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_doub
    ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_double,
    ten::functional::binary_func<ten::binary_operation::sub>::template func>;
-using mul_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_double,
-   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_double,
    ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+// Binary func mul
+using mul_vector_float_vector_float = ten::binary_expr<vectornode_float, vectornode_float,
+   ten::functional::mul<vectornode_float, vectornode_float, vectornode_float>::template func>;
+
+// Others binary functions
 
 PYBIND11_MODULE(tenseurbackend, m) {
     m.doc() = "Tenseur Backend";
@@ -387,16 +382,12 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def("value", &div_matrix_double::value)
       .def("eval", &div_matrix_double::eval);
 
-
    py::class_<add_tensor3_float>(m, "add_tensor3_float")
       .def("value", &add_tensor3_float::value)
       .def("eval", &add_tensor3_float::eval);
    py::class_<sub_tensor3_float>(m, "sub_tensor3_float")
       .def("value", &sub_tensor3_float::value)
       .def("eval", &sub_tensor3_float::eval);
-   py::class_<mul_tensor3_float>(m, "mul_tensor3_float")
-      .def("value", &mul_tensor3_float::value)
-      .def("eval", &mul_tensor3_float::eval);
    py::class_<div_tensor3_float>(m, "div_tensor3_float")
       .def("value", &div_tensor3_float::value)
       .def("eval", &div_tensor3_float::eval);
@@ -407,9 +398,6 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<sub_tensor3_double>(m, "sub_tensor3_double")
       .def("value", &sub_tensor3_double::value)
       .def("eval", &sub_tensor3_double::eval);
-   py::class_<mul_tensor3_double>(m, "mul_tensor3_double")
-      .def("value", &mul_tensor3_double::value)
-      .def("eval", &mul_tensor3_double::eval);
    py::class_<div_tensor3_double>(m, "div_tensor3_double")
       .def("value", &div_tensor3_double::value)
       .def("eval", &div_tensor3_double::eval);
@@ -420,9 +408,6 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<sub_tensor4_float>(m, "sub_tensor4_float")
       .def("value", &sub_tensor4_float::value)
       .def("eval", &sub_tensor4_float::eval);
-   py::class_<mul_tensor4_float>(m, "mul_tensor4_float")
-      .def("value", &mul_tensor4_float::value)
-      .def("eval", &mul_tensor4_float::eval);
    py::class_<div_tensor4_float>(m, "div_tensor4_float")
       .def("value", &div_tensor4_float::value)
       .def("eval", &div_tensor4_float::eval);
@@ -433,9 +418,6 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<sub_tensor4_double>(m, "sub_tensor4_double")
       .def("value", &sub_tensor4_double::value)
       .def("eval", &sub_tensor4_double::eval);
-   py::class_<mul_tensor4_double>(m, "mul_tensor4_double")
-      .def("value", &mul_tensor4_double::value)
-      .def("eval", &mul_tensor4_double::eval);
    py::class_<div_tensor4_double>(m, "div_tensor4_double")
       .def("value", &div_tensor4_double::value)
       .def("eval", &div_tensor4_double::eval);
@@ -446,9 +428,6 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<sub_tensor5_float>(m, "sub_tensor5_float")
       .def("value", &sub_tensor5_float::value)
       .def("eval", &sub_tensor5_float::eval);
-   py::class_<mul_tensor5_float>(m, "mul_tensor5_float")
-      .def("value", &mul_tensor5_float::value)
-      .def("eval", &mul_tensor5_float::eval);
    py::class_<div_tensor5_float>(m, "div_tensor5_float")
       .def("value", &div_tensor5_float::value)
       .def("eval", &div_tensor5_float::eval);
@@ -459,12 +438,14 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<sub_tensor5_double>(m, "sub_tensor5_double")
       .def("value", &sub_tensor5_double::value)
       .def("eval", &sub_tensor5_double::eval);
-   py::class_<mul_tensor5_double>(m, "mul_tensor5_double")
-      .def("value", &mul_tensor5_double::value)
-      .def("eval", &mul_tensor5_double::eval);
    py::class_<div_tensor5_double>(m, "div_tensor5_double")
       .def("value", &div_tensor5_double::value)
       .def("eval", &div_tensor5_double::eval);
+
+   // Binary expr mul
+   py::class_<mul_vector_float_vector_float>(m ,"mul_vector_float_vector_float")
+      .def("value", &mul_vector_float_vector_float::value)
+      .def("eval",  &mul_vector_float_vector_float::eval);
 
    // Vector float
    py::class_<vector_float>(m, "vector_float")
