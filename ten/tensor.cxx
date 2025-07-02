@@ -210,7 +210,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
       });
 
    py::class_<scalar_double>(m, "scalar_double")
-      .def(py::init<float>())
+      .def(py::init<double>())
       .def("value", &scalar_double::value)
       .def("__repr__", [](const scalar_double& s){
          std::stringstream ss;
@@ -483,9 +483,9 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<mul_vector_float_vector_float>(m ,"mul_vector_float_vector_float")
       .def("value", &mul_vector_float_vector_float::value)
       .def("eval",  &mul_vector_float_vector_float::eval);
-   py::class_<mul_vector_float_vector_float>(m ,"mul_vector_float_vector_float")
-      .def("value", &mul_vector_float_vector_float::value)
-      .def("eval",  &mul_vector_float_vector_float::eval);
+   py::class_<mul_vector_double_vector_double>(m ,"mul_vector_double_vector_double")
+      .def("value", &mul_vector_double_vector_double::value)
+      .def("eval",  &mul_vector_double_vector_double::eval);
 
    py::class_<mul_matrix_float_matrix_float>(m ,"mul_matrix_float_matrix_float")
       .def("value", &mul_matrix_float_matrix_float::value)
@@ -539,6 +539,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Vector float
    py::class_<vector_float>(m, "vector_float")
       .def(py::init<std::size_t>())
+      .def("rank", &vector_float::rank)
       .def("size", &vector_float::size)
       .def("shape", &vector_float::shape)
       .def("strides", &vector_float::strides)
@@ -567,6 +568,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Vector double
    py::class_<vector_double>(m, "vector_double")
       .def(py::init<std::size_t>())
+      .def("rank", &vector_double::rank)
       .def("size", &vector_double::size)
       .def("strides", &vector_double::strides)
       .def("__getitem__", [](const vector_double& v, size_t index){
@@ -585,6 +587,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       .def(py::self * py::self)
       .def(py::self / py::self)
+      //.def(double() * py::self)
       .def("__repr__", [](const vector_double& v) {
          std::stringstream ss;
          ss << v;
@@ -594,6 +597,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Matrix float
    py::class_<matrix_float>(m, "matrix_float")
       .def(py::init<std::size_t, std::size_t>())
+      .def("rank", &matrix_float::rank)
       .def("size", &matrix_float::size)
       .def("shape", &matrix_float::shape)
       .def("strides", &matrix_float::strides)
@@ -616,6 +620,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       .def(py::self * py::self)
       .def(py::self / py::self)
+      //.def(float() * py::self)
       .def("is_transposed", &matrix_float::is_transposed)
       .def("is_symmetric", &matrix_float::is_symmetric)
       .def("is_hermitian", &matrix_float::is_hermitian)
@@ -635,6 +640,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Matrix double
    py::class_<matrix_double>(m, "matrix_double")
       .def(py::init<std::size_t, std::size_t>())
+      .def("rank", &matrix_double::rank)
       .def("size", &matrix_double::size)
       .def("shape", &matrix_double::shape)
       .def("strides", &matrix_double::strides)
@@ -657,6 +663,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       .def(py::self * py::self)
       .def(py::self / py::self)
+      //.def(double() * py::self)
       .def("is_transposed", &matrix_double::is_transposed)
       .def("is_symmetric", &matrix_double::is_symmetric)
       .def("is_hermitian", &matrix_double::is_hermitian)
@@ -678,6 +685,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Tensor 3d
    py::class_<tensor3_float>(m, "tensor3_float")
       .def(py::init<std::size_t, std::size_t, std::size_t>())
+      .def("rank", &tensor3_float::rank)
       .def("size", &tensor3_float::size)
       .def("shape", &tensor3_float::shape)
       .def("strides", &tensor3_float::strides)
@@ -700,6 +708,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       //.def(py::self * py::self)
       .def(py::self / py::self)
+      //.def(float() * py::self)
       .def("is_transposed", &tensor3_float::is_transposed)
       .def("is_symmetric", &tensor3_float::is_symmetric)
       .def("is_hermitian", &tensor3_float::is_hermitian)
@@ -713,6 +722,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    py::class_<tensor3_double>(m, "tensor3_double")
       .def(py::init<std::size_t, std::size_t, std::size_t>())
+      .def("rank", &tensor3_double::rank)
       .def("size", &tensor3_double::size)
       .def("shape", &tensor3_double::shape)
       .def("strides", &tensor3_double::strides)
@@ -735,6 +745,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       //.def(py::self * py::self)
       .def(py::self / py::self)
+      //.def(double() * py::self)
       .def("is_transposed", &tensor3_double::is_transposed)
       .def("is_symmetric", &tensor3_double::is_symmetric)
       .def("is_hermitian", &tensor3_double::is_hermitian)
@@ -749,6 +760,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Tensor 4d
    py::class_<tensor4_float>(m, "tensor4_float")
       .def(py::init<std::size_t, std::size_t, std::size_t, std::size_t>())
+      .def("rank", &tensor4_float::rank)
       .def("size", &tensor4_float::size)
       .def("shape", &tensor4_float::shape)
       .def("strides", &tensor4_float::strides)
@@ -771,6 +783,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       //.def(py::self * py::self)
       .def(py::self / py::self)
+      //.def(float() * py::self)
       .def("is_transposed", &tensor4_float::is_transposed)
       .def("is_symmetric", &tensor4_float::is_symmetric)
       .def("is_hermitian", &tensor4_float::is_hermitian)
@@ -785,6 +798,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    py::class_<tensor4_double>(m, "tensor4_double")
       .def(py::init<std::size_t, std::size_t, std::size_t, std::size_t>())
+      .def("rank", &tensor4_double::rank)
       .def("size", &tensor4_double::size)
       .def("shape", &tensor4_double::shape)
       .def("strides", &tensor4_double::strides)
@@ -807,6 +821,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       //.def(py::self * py::self)
       .def(py::self / py::self)
+      //.def(double() * py::self)
       .def("is_transposed", &tensor4_double::is_transposed)
       .def("is_symmetric", &tensor4_double::is_symmetric)
       .def("is_hermitian", &tensor4_double::is_hermitian)
@@ -821,6 +836,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Tensor 5d
    py::class_<tensor5_float>(m, "tensor5_float")
       .def(py::init<std::size_t, std::size_t, std::size_t, std::size_t, std::size_t>())
+      .def("rank", &tensor5_float::rank)
       .def("size", &tensor5_float::size)
       .def("shape", &tensor5_float::shape)
       .def("strides", &tensor5_float::strides)
@@ -843,6 +859,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       //.def(py::self * py::self)
       .def(py::self / py::self)
+      //.def(float() * py::self)
       .def("is_transposed", &tensor5_float::is_transposed)
       .def("is_symmetric", &tensor5_float::is_symmetric)
       .def("is_hermitian", &tensor5_float::is_hermitian)
@@ -856,6 +873,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    py::class_<tensor5_double>(m, "tensor5_double")
       .def(py::init<std::size_t, std::size_t, std::size_t, std::size_t, std::size_t>())
+      .def("rank", &tensor5_double::rank)
       .def("size", &tensor5_double::size)
       .def("shape", &tensor5_double::shape)
       .def("strides", &tensor5_double::strides)
@@ -878,6 +896,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       //.def(py::self * py::self)
       .def(py::self / py::self)
+      //.def(double() * py::self)
       .def("is_transposed", &tensor5_double::is_transposed)
       .def("is_symmetric", &tensor5_double::is_symmetric)
       .def("is_hermitian", &tensor5_double::is_hermitian)

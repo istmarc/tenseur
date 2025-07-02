@@ -103,14 +103,15 @@ auto operator*(left_expr &&left, right_expr &&right) {
 template <typename T, Expr E>
 auto operator*(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   return ::ten::scalar<T>(scalar) * std::forward<R>(expr);
+   return ::ten::scalar<T>(scalar) * std::forward<
+      std::remove_cvref_t<E>>(expr);
 }
 
-template <Expr E, typename T>
+/*template <Expr E, typename T>
 auto operator*(E &&expr, T &&scalar) {
    using R = std::remove_cvref_t<E>;
    return std::forward<R>(expr) * ::ten::scalar<T>(scalar);
-}
+}*/
 
 // Divide two expressions
 template <Expr left_expr, Expr right_expr>
@@ -173,7 +174,7 @@ class scalar_node : public scalar_operations<scalar_node<__t>> {
    scalar_node() : _value(__t()) {}
 
    explicit scalar_node(const __t &value) : _value(value) {}
-   explicit scalar_node(__t &&value) : _value(std::move(value)) {}
+   //explicit scalar_node(__t &&value) : _value(std::move(value)) {}
 
    const __t &value() const { return _value; }
 
@@ -198,8 +199,8 @@ class scalar : public expr<scalar<__t>>, public scalar_operations<scalar<__t>> {
    explicit scalar(const __t &value)
        : _node(std::make_shared<node_type>(value)) {}
 
-   explicit scalar(__t &&value)
-       : _node(std::make_shared<node_type>(std::move(value))) {}
+   //explicit scalar(__t value)
+   //    : _node(std::make_shared<node_type>(std::move(value))) {}
 
    explicit scalar(std::shared_ptr<node_type> node) : _node(node) {}
 
