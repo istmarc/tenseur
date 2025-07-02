@@ -1,0 +1,8 @@
+#ifndef TENSEUR_GRAPH
+#define TENSEUR_GRAPH
+
+#include <ten/graph_theory/types.hxx>
+#include <ten/graph_theory/gmatrix.hxx>
+
+
+#endif
