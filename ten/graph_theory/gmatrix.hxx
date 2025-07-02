@@ -12,7 +12,7 @@ class gmatrix{
    private:
       size_t _vertices;
       ten::matrix<T> _m;
-      ten::graph_type _gtype;
+      graph_type _gtype;
 
    public:
       gmatrix(const size_t vertices, const graph_type gtype = graph_type::undirected):
