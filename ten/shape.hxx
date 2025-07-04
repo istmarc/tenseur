@@ -101,6 +101,17 @@ template <size_type __first, size_type... __rest> class shape {
       requires(!_is_dynamic)
    {}
 
+   /*explicit shape(std::vector<size_type> &&dims) noexcept
+      requires(_is_dynamic)
+   {
+      size_type index = 0;
+      _size = 1;
+      for (auto value = dims.begin(); value != dims.end(); value++, index++) {
+         _dims[index] = *value;
+         _size *= *value;
+      }
+   }*/
+
    explicit shape(std::initializer_list<size_type> &&dims) noexcept
       requires(_is_dynamic)
    {

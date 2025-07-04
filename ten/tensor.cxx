@@ -1074,5 +1074,29 @@ PYBIND11_MODULE(tenseurbackend, m) {
          ss << m;
          return ss.str();
       });
+
+   // Transform diagonal to dense
+   m.def("dense_float", &ten::dense<diagonal_float>);
+   m.def("dense_double", &ten::dense<diagonal_double>);
+
+   // Transposed, symmetric, lower_tr and upper_tr
+   m.def("transposed_float", &ten::transposed<matrix_float>);
+   m.def("transposed_double", &ten::transposed<matrix_double>);
+   m.def("symmetric_float", &ten::symmetric<matrix_float>);
+   m.def("symmetric_double", &ten::symmetric<matrix_double>);
+   m.def("lower_tr_float", &ten::lower_tr<matrix_float>);
+   m.def("lower_tr_double", &ten::lower_tr<matrix_double>);
+   m.def("upper_tr_float", &ten::upper_tr<matrix_float>);
+   m.def("upper_tr_double", &ten::upper_tr<matrix_double>);
+
+   // Cast
+   //m.def("cast_vector_float", &ten::cast<vector_double, vector_float>);
+   //m.def("cast_vector_double", &ten::cast<vector_float, vector_double>);
+   //m.def("cast_matrix_float", &ten::cast<matrix_float, matrix_float>);
+   //m.def("cast_matrix_double", &ten::cast<matrix_double, matrix_float>);
+
+   // Initializations
+   
+
 }
 

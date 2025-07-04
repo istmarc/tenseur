@@ -1941,7 +1941,7 @@ template <class __t, size_type __rank = 1,
 // Conversion from special matrices and tensors
 
 /// Convert diagonal matrix to dense
-template <Diagonal T> auto dense(T &&x) -> decltype(auto) {
+template <Diagonal T> auto dense(T x) -> decltype(auto) {
    using diagonal_type = std::remove_cvref_t<T>;
    using value_type = diagonal_type::value_type;
    size_type m = x.dim(0);
@@ -1957,7 +1957,7 @@ template <Diagonal T> auto dense(T &&x) -> decltype(auto) {
 }
 
 /// Convert diagonal matrix to dense
-template <SDiagonal T> auto dense(T &&x) -> decltype(auto) {
+template <SDiagonal T> auto dense(T x) -> decltype(auto) {
    using diagonal_type = std::remove_cvref_t<T>;
    using value_type = diagonal_type::value_type;
    using shape_type = diagonal_type::shape_type;
