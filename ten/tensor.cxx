@@ -39,6 +39,8 @@ using tensor4_float = ten::tensor<float, 4>;
 using tensor4_double = ten::tensor<double, 4>;
 using tensor5_float = ten::tensor<float, 5>;
 using tensor5_double = ten::tensor<double, 5>;
+using diagonal_float = ten::diagonal<float>;
+using diagonal_double = ten::diagonal<double>;
 
 // Scalars
 using scalar_float = ten::scalar<float>;
@@ -59,6 +61,8 @@ using tensor4node_float = tensor4_float::node_type;
 using tensor4node_double = tensor4_double::node_type;
 using tensor5node_float = tensor5_float::node_type;
 using tensor5node_double = tensor5_double::node_type;
+using diagonalnode_float = diagonal_float::node_type;
+using diagonalnode_double = diagonal_double::node_type;
 
 // TODO Functions
 
@@ -145,6 +149,24 @@ using sub_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_doub
 using div_tensor5_double = ten::binary_expr<tensor5node_double, tensor5node_double,
    ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
+using add_diagonal_float = ten::binary_expr<diagonalnode_float, diagonalnode_float,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_diagonal_float = ten::binary_expr<diagonalnode_float, diagonalnode_float,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+//using mul_diagonal_float = ten::binary_expr<diagonalnode_float, diagonalnode_float,
+//   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_diagonal_float = ten::binary_expr<diagonalnode_float, diagonalnode_float,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_diagonal_double = ten::binary_expr<diagonalnode_double, diagonalnode_double,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_diagonal_double = ten::binary_expr<diagonalnode_double, diagonalnode_double,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+//using mul_diagonal_double = ten::binary_expr<diagonalnode_double, diagonalnode_double,
+//   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_diagonal_double = ten::binary_expr<diagonalnode_double, diagonalnode_double,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
 // Binary func mul
 using mul_vector_float_vector_float = ten::binary_expr<vectornode_float, vectornode_float,
    ten::functional::mul<vectornode_float, vectornode_float, vectornode_float>::template func>;
@@ -185,6 +207,11 @@ using mul_scalar_float_tensor5_float = ten::binary_expr<scalarnode_float, tensor
    ten::functional::mul<scalarnode_float, tensor5node_float, tensor5node_float>::template func>;
 using mul_scalar_double_tensor5_double = ten::binary_expr<scalarnode_double, tensor5node_double,
    ten::functional::mul<scalarnode_double, tensor5node_double, tensor5node_double>::template func>;
+
+using mul_diagonal_float_diagonal_float = ten::binary_expr<diagonalnode_float, diagonalnode_float,
+   ten::functional::mul<diagonalnode_float, diagonalnode_float, diagonalnode_float>::template func>;
+using mul_diagonal_double_diagonal_double = ten::binary_expr<diagonalnode_double, diagonalnode_double,
+   ten::functional::mul<diagonalnode_double, diagonalnode_double, diagonalnode_double>::template func>;
 
 // Others binary functions
 
@@ -479,6 +506,32 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def("value", &div_tensor5_double::value)
       .def("eval", &div_tensor5_double::eval);
 
+   py::class_<add_diagonal_float>(m, "add_diagonal_float")
+      .def("value", &add_diagonal_float::value)
+      .def("eval", &add_diagonal_float::eval);
+   py::class_<sub_diagonal_float>(m, "sub_diagonal_float")
+      .def("value", &sub_diagonal_float::value)
+      .def("eval", &sub_diagonal_float::eval);
+   //py::class_<mul_diagonal_float>(m, "mul_diagonal_float")
+   //   .def("value", &mul_diagonal_float::value)
+   //   .def("eval", &mul_diagonal_float::eval);
+   py::class_<div_diagonal_float>(m, "div_diagonal_float")
+      .def("value", &div_diagonal_float::value)
+      .def("eval", &div_diagonal_float::eval);
+
+   py::class_<add_diagonal_double>(m, "add_diagonal_double")
+      .def("value", &add_diagonal_double::value)
+      .def("eval", &add_diagonal_double::eval);
+   py::class_<sub_diagonal_double>(m, "sub_diagonal_double")
+      .def("value", &sub_diagonal_double::value)
+      .def("eval", &sub_diagonal_double::eval);
+   //py::class_<mul_diagonal_double>(m, "mul_diagonal_double")
+   //   .def("value", &mul_diagonal_double::value)
+   //   .def("eval", &mul_diagonal_double::eval);
+   py::class_<div_diagonal_double>(m, "div_diagonal_double")
+      .def("value", &div_diagonal_double::value)
+      .def("eval", &div_diagonal_double::eval);
+
    // Binary expr mul
    py::class_<mul_vector_float_vector_float>(m ,"mul_vector_float_vector_float")
       .def("value", &mul_vector_float_vector_float::value)
@@ -535,6 +588,14 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<mul_scalar_double_tensor5_double>(m ,"mul_scalar_double_tensor5_double")
       .def("value", &mul_scalar_double_tensor5_double::value)
       .def("eval",  &mul_scalar_double_tensor5_double::eval);
+
+   /*
+   py::class_<mul_diagonal_float_diagonal_float>(m ,"mul_diagonal_float_diagonal_float")
+      .def("value", &mul_diagonal_float_diagonal_float::value)
+      .def("eval",  &mul_diagonal_float_diagonal_float::eval);
+   py::class_<mul_diagonal_double_diagonal_double>(m ,"mul_diagonal_double_diagonal_double")
+      .def("value", &mul_diagonal_double_diagonal_double::value)
+      .def("eval",  &mul_diagonal_double_diagonal_double::eval);*/
 
    // Vector float
    py::class_<vector_float>(m, "vector_float")
@@ -620,6 +681,13 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       .def(py::self * py::self)
       .def(py::self / py::self)
+      .def("__mul__", [](matrix_float& self, vector_float&other) {
+         return self * other;
+      }, py::is_operator())
+      /*
+      .def("__mul__", [](float f, matrix_float& self) {
+         return scalar_float(f) * self;
+      }, py::is_operator())*/
       //.def(float() * py::self)
       .def("is_transposed", &matrix_float::is_transposed)
       .def("is_symmetric", &matrix_float::is_symmetric)
@@ -663,6 +731,10 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self - py::self)
       .def(py::self * py::self)
       .def(py::self / py::self)
+      .def("__mul__", [](matrix_double& self, vector_double&other) {
+         return self * other;
+      }, py::is_operator())
+      //.def(py::self * vector_double)
       //.def(double() * py::self)
       .def("is_transposed", &matrix_double::is_transposed)
       .def("is_symmetric", &matrix_double::is_symmetric)
@@ -908,5 +980,99 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def("is_sparse_csr", &tensor5_double::is_sparse_csr)
       .def("is_sparse", &tensor5_double::is_sparse);
 
+   // Diagonal
+   py::class_<diagonal_float>(m, "diagonal_float")
+      .def(py::init<std::size_t, std::size_t>())
+      .def("rank", &diagonal_float::rank)
+      .def("size", &diagonal_float::size)
+      .def("shape", &diagonal_float::shape)
+      .def("strides", &diagonal_float::strides)
+      .def("__getitem__", [](const diagonal_float& m, size_t index){
+         return m[index];
+      })
+      .def("__setitem__", [](diagonal_float& m, size_t index, float value){
+         m[index] = value;
+      })
+      .def("__call__", [](const diagonal_float& m, size_t rows, size_t cols) {
+         return m(rows, cols);
+      })
+      .def("set", [](diagonal_float& m, size_t rows, size_t cols, float value) {
+         m(rows, cols) = value;
+      })
+      .def("copy", &diagonal_float::copy)
+      .def("format", &diagonal_float::format)
+      .def("data_type", &diagonal_float::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      //.def(py::self * py::self)
+      .def(py::self / py::self)
+      //.def("__mul__", [](diagonal_float& self, vector_float&other) {
+      //   return self * other;
+      //}, py::is_operator())
+      /*
+      .def("__mul__", [](float f, diagonal_float& self) {
+         return scalar_float(f) * self;
+      }, py::is_operator())*/
+      //.def(float() * py::self)
+      .def("is_transposed", &diagonal_float::is_transposed)
+      .def("is_symmetric", &diagonal_float::is_symmetric)
+      .def("is_hermitian", &diagonal_float::is_hermitian)
+      .def("is_diagonal", &diagonal_float::is_diagonal)
+      .def("is_lower_tr", &diagonal_float::is_lower_tr)
+      .def("is_upper_tr", &diagonal_float::is_upper_tr)
+      .def("is_sparse_coo", &diagonal_float::is_sparse_coo)
+      .def("is_sparse_csc", &diagonal_float::is_sparse_csc)
+      .def("is_sparse_csr", &diagonal_float::is_sparse_csr)
+      .def("is_sparse", &diagonal_float::is_sparse)
+      .def("__repr__", [](const diagonal_float& m) {
+         std::stringstream ss;
+         ss << m;
+         return ss.str();
+      });
+
+   // diagonal double
+   py::class_<diagonal_double>(m, "diagonal_double")
+      .def(py::init<std::size_t, std::size_t>())
+      .def("rank", &diagonal_double::rank)
+      .def("size", &diagonal_double::size)
+      .def("shape", &diagonal_double::shape)
+      .def("strides", &diagonal_double::strides)
+      .def("__getitem__", [](const diagonal_double& m, size_t index){
+         return m[index];
+      })
+      .def("__setitem__", [](diagonal_double& m, size_t index, double value){
+         m[index] = value;
+      })
+      .def("__call__", [](const diagonal_double& m, size_t rows, size_t cols) {
+         return m(rows, cols);
+      })
+      .def("set", [](diagonal_double& m, size_t rows, size_t cols, double value) {
+         m(rows, cols) = value;
+      })
+      .def("copy", &diagonal_double::copy)
+      .def("format", &diagonal_double::format)
+      .def("data_type", &diagonal_double::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      //.def(py::self * py::self)
+      .def(py::self / py::self)
+      //.def("__mul__", [](diagonal_double& self, diagonal_double&other) {
+      //   return self * other;
+      //}, py::is_operator())
+      .def("is_transposed", &diagonal_double::is_transposed)
+      .def("is_symmetric", &diagonal_double::is_symmetric)
+      .def("is_hermitian", &diagonal_double::is_hermitian)
+      .def("is_diagonal", &diagonal_double::is_diagonal)
+      .def("is_lower_tr", &diagonal_double::is_lower_tr)
+      .def("is_upper_tr", &diagonal_double::is_upper_tr)
+      .def("is_sparse_coo", &diagonal_double::is_sparse_coo)
+      .def("is_sparse_csc", &diagonal_double::is_sparse_csc)
+      .def("is_sparse_csr", &diagonal_double::is_sparse_csr)
+      .def("is_sparse", &diagonal_double::is_sparse)
+      .def("__repr__", [](const diagonal_double& m) {
+         std::stringstream ss;
+         ss << m;
+         return ss.str();
+      });
 }
 
