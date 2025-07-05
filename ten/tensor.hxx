@@ -1388,7 +1388,7 @@ auto reshape(__expr &&expr, std::initializer_list<size_type> &&dims) {
 
 // flatten(x)
 template <Expr __expr>
-auto flatten(__expr &&expr) {
+auto flatten(__expr expr) {
    using expr_type = std::remove_cvref_t<__expr>;
 
    // tensor

@@ -1089,14 +1089,26 @@ PYBIND11_MODULE(tenseurbackend, m) {
    m.def("upper_tr_float", &ten::upper_tr<matrix_float>);
    m.def("upper_tr_double", &ten::upper_tr<matrix_double>);
 
-   // Cast
+   // FIXME Cast
    //m.def("cast_vector_float", &ten::cast<vector_double, vector_float>);
    //m.def("cast_vector_double", &ten::cast<vector_float, vector_double>);
    //m.def("cast_matrix_float", &ten::cast<matrix_float, matrix_float>);
    //m.def("cast_matrix_double", &ten::cast<matrix_double, matrix_float>);
 
-   // Initializations
-   
+   // FIXME Reshape
+
+   // FIXME Flatten
+   //m.def("flatten_matrix_float", &ten::flatten<matrix_float>);
+
+   // FIXME Initializations
+   //m.def("fill_vector_float", &ten::fill<vector_float>);
+   //m.def("fill_matrix_float", &ten::fill<matrix_float>);
+
+   // Save to a file
+   m.def("save_vector_float", &ten::save<vector_float>);
+   m.def("save_vector_double", &ten::save<vector_double>);
+   m.def("save_matrix_float", &ten::save<matrix_float>);
+   m.def("save_matrix_double", &ten::save<matrix_double>);
 
 }
 

@@ -17,4 +17,7 @@ int main() {
    auto b = ten::dense(a);
    std::cout << b << std::endl;
 
+   auto z = (b * b).eval();
+   std::cout << "z = " << z << std::endl;
+
 }
