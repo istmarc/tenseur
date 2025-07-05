@@ -1,0 +1,6 @@
+#ifndef TENSEUR_NTHEORY
+#define TENSEUR_NTHEORY
+
+#include <ten/number_theory/sieve.hxx>
+
+#endif
