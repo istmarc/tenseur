@@ -28,34 +28,34 @@ template <> std::string to_string<std::complex<double>>() {
 
 template<class> ten::data_type to_data_type();
 
-template<> ten::data_type to_data_type<float>() { return ten::data_type::dfloat;}
-template<> ten::data_type to_data_type<double>() { return ten::data_type::ddouble;}
-template<> ten::data_type to_data_type<int>() { return ten::data_type::dint32;}
-template<> ten::data_type to_data_type<long>() { return ten::data_type::dint64;}
-template<> ten::data_type to_data_type<std::complex<float>>() { return ten::data_type::dcomplexfloat;}
-template<> ten::data_type to_data_type<std::complex<double>>() { return ten::data_type::dcomplexdouble;}
+template<> ten::data_type to_data_type<float>() { return ten::data_type::float32;}
+template<> ten::data_type to_data_type<double>() { return ten::data_type::float64;}
+template<> ten::data_type to_data_type<int>() { return ten::data_type::int32;}
+template<> ten::data_type to_data_type<long>() { return ten::data_type::int64;}
+template<> ten::data_type to_data_type<std::complex<float>>() { return ten::data_type::complexfloat;}
+template<> ten::data_type to_data_type<std::complex<double>>() { return ten::data_type::complexdouble;}
 
 inline std::ostream& operator<<(std::ostream& os, const data_type d) {
    switch(d) {
       case data_type::none:
          os << "none";
          break;
-      case data_type::dfloat:
+      case data_type::float32:
          os << "float";
          break;
-      case data_type::ddouble:
+      case data_type::float64:
          os << "double";
          break;
-      case data_type::dint32:
+      case data_type::int32:
          os << "int32";
          break;
-      case data_type::dint64:
+      case data_type::int64:
          os << "int64";
          break;
-      case data_type::dcomplexfloat:
+      case data_type::complexfloat:
          os << "std::complex<float>";
          break;
-      case data_type::dcomplexdouble:
+      case data_type::complexdouble:
          os << "std::complex<double>";
          break;
    }

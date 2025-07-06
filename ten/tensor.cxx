@@ -246,6 +246,60 @@ using mul_diagonal_double_diagonal_double = ten::binary_expr<diagonalnode_double
 
 // Others binary functions
 
+// Initialization
+// fill<tensor<...>>(__shape, value)
+template <class __t>
+   requires(::ten::is_dynamic_tensor<__t>::value &&
+            ::ten::is_dense_storage<typename __t::storage_type>::value)
+[[nodiscard]] auto fill_py(typename __t::shape_type shape,
+                        typename __t::value_type value) {
+   using value_type = typename __t::value_type;
+   using shape_type = typename __t::shape_type;
+   __t x(std::forward<shape_type>(shape));
+   for (ten::size_type i = 0; i < x.size(); i++) {
+      x[i] = value;
+   }
+   return x;
+}
+
+// zeros<tensor<...>>(shape)
+template <class __t>
+   requires(::ten::is_dynamic_tensor<__t>::value &&
+            ::ten::is_dense_storage<typename __t::storage_type>::value)
+[[nodiscard]] auto zeros_py(typename __t::shape_type shape) {
+   using value_type = typename __t::value_type;
+   using shape_type = typename __t::shape_type;
+   return fill<__t>(std::forward<shape_type>(shape), value_type(0));
+}
+
+// ones<tensor<...>>(shape)
+template <class __t>
+   requires(::ten::is_dynamic_tensor<__t>::value &&
+            ::ten::is_dense_storage<typename __t::storage_type>::value)
+[[nodiscard]] auto ones_py(typename __t::shape_type shape) {
+   using value_type = typename __t::value_type;
+   using shape_type = typename __t::shape_type;
+   return fill<__t>(std::forward<shape_type>(shape), value_type(1));
+}
+
+// range<tensor<...>>(__shape, value)
+template <class __t>
+   requires(::ten::is_dynamic_tensor<__t>::value &&
+            ::ten::is_dense_storage<typename __t::storage_type>::value)
+[[nodiscard]] auto
+range_py(typename __t::shape_type shape,
+      typename __t::value_type value = typename __t::value_type(0)) {
+   using value_type = typename __t::value_type;
+   using shape_type = typename __t::shape_type;
+   __t x(std::forward<shape_type>(shape));
+   x[0] = value;
+   for (ten::size_type i = 1; i < x.size(); i++) {
+      x[i] = x[i - 1] + value_type(1);
+   }
+   return x;
+}
+
+
 PYBIND11_MODULE(tenseurbackend, m) {
     m.doc() = "Tenseur Backend";
 
@@ -297,7 +351,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Shape
    py::class_<vector_shape>(m, "vector_shape")
       .def(py::init<std::initializer_list<size_t>>())
-      //.def(py::init<std::vector<size_t>>())
+      .def(py::init<size_t>())
       .def("rank", &vector_shape::rank)
       .def("size", &vector_shape::size)
       .def("dim", &vector_shape::dim)
@@ -309,7 +363,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    py::class_<matrix_shape>(m, "matrix_shape")
       .def(py::init<std::initializer_list<size_t>>())
-      //.def(py::init<std::vector<size_t>>())
+      .def(py::init<size_t, size_t>())
       .def("rank", &matrix_shape::rank)
       .def("size", &matrix_shape::size)
       .def("dim", &matrix_shape::dim)
@@ -322,7 +376,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    py::class_<tensor3_shape>(m, "tensor3_shape")
       .def(py::init<std::initializer_list<size_t>>())
-      //.def(py::init<std::vector<size_t>>())
+      .def(py::init<size_t, size_t, size_t>())
       .def("rank", &tensor3_shape::rank)
       .def("size", &tensor3_shape::size)
       .def("dim", &tensor3_shape::dim)
@@ -334,7 +388,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    py::class_<tensor4_shape>(m, "tensor4_shape")
       .def(py::init<std::initializer_list<size_t>>())
-      //.def(py::init<std::vector<size_t>>())
+      .def(py::init<size_t, size_t, size_t, size_t>())
       .def("rank", &tensor4_shape::rank)
       .def("size", &tensor4_shape::size)
       .def("dim", &tensor4_shape::dim)
@@ -347,7 +401,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    py::class_<tensor5_shape>(m, "tensor5_shape")
       .def(py::init<std::initializer_list<size_t>>())
-      //.def(py::init<std::vector<size_t>>())
+      .def(py::init<size_t, size_t, size_t, size_t, size_t>())
       .def("rank", &tensor5_shape::rank)
       .def("size", &tensor5_shape::size)
       .def("dim", &tensor5_shape::dim)
@@ -1243,9 +1297,12 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // FIXME Flatten
    //m.def("flatten_matrix_float", &ten::flatten<matrix_float>);
 
-   // FIXME Initializations
-   //m.def("fill_vector_float", &ten::fill<vector_float>);
-   //m.def("fill_matrix_float", &ten::fill<matrix_float>);
+   // Initializations
+   // FIXME Valeur par défaut pour range
+   m.def("fill_vector_float", &fill_py<vector_float>);
+   m.def("zeros_vector_float", &zeros_py<vector_float>);
+   m.def("ones_vector_float", &ones_py<vector_float>);
+   m.def("range_vector_float", &range_py<vector_float>);
 
    // Save to a file
    m.def("save_vector_float", &ten::save<vector_float>);
