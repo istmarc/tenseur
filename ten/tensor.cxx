@@ -31,6 +31,8 @@ using tensor5_stride = ten::stride<ten::shape<0, 0, 0, 0, 0>, ten::storage_order
 // vector, matrix and tensor
 using vector_float = ten::vector<float>;
 using vector_double = ten::vector<double>;
+using vector_int32 = ten::vector<int>;
+using vector_int64 = ten::vector<long int>;
 using matrix_float = ten::matrix<float>;
 using matrix_double = ten::matrix<double>;
 using tensor3_float = ten::tensor<float, 3>;
@@ -45,14 +47,20 @@ using diagonal_double = ten::diagonal<double>;
 // Scalars
 using scalar_float = ten::scalar<float>;
 using scalar_double = ten::scalar<double>;
+using scalar_int32 = ten::scalar<int>;
+using scalar_int64 = ten::scalar<long int>;
 
 // Scalar nodes
 using scalarnode_float = scalar_float::node_type;
 using scalarnode_double = scalar_double::node_type;
+using scalarnode_int32 = scalar_int32::node_type;
+using scalarnode_int64 = scalar_int64::node_type;
 
 // Tensor nodes
 using vectornode_float = vector_float::node_type;
 using vectornode_double = vector_double::node_type;
+using vectornode_int32 = vector_int32::node_type;
+using vectornode_int64 = vector_int64::node_type;
 using matrixnode_float = matrix_float::node_type;
 using matrixnode_double = matrix_double::node_type;
 using tensor3node_float = tensor3_float::node_type;
@@ -87,6 +95,24 @@ using sub_vector_double = ten::binary_expr<vectornode_double, vectornode_double,
 using mul_vector_double = ten::binary_expr<vectornode_double, vectornode_double,
    ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_vector_double = ten::binary_expr<vectornode_double, vectornode_double,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_vector_int32 = ten::binary_expr<vectornode_int32, vectornode_int32,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_vector_int32 = ten::binary_expr<vectornode_int32, vectornode_int32,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_vector_int32 = ten::binary_expr<vectornode_int32, vectornode_int32,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_vector_int32 = ten::binary_expr<vectornode_int32, vectornode_int32,
+   ten::functional::binary_func<ten::binary_operation::div>::template func>;
+
+using add_vector_int64 = ten::binary_expr<vectornode_int64, vectornode_int64,
+   ten::functional::binary_func<ten::binary_operation::add>::template func>;
+using sub_vector_int64 = ten::binary_expr<vectornode_int64, vectornode_int64,
+   ten::functional::binary_func<ten::binary_operation::sub>::template func>;
+using mul_vector_int64 = ten::binary_expr<vectornode_int64, vectornode_int64,
+   ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+using div_vector_int64 = ten::binary_expr<vectornode_int64, vectornode_int64,
    ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_matrix_float = ten::binary_expr<matrixnode_float, matrixnode_float,
@@ -173,6 +199,11 @@ using mul_vector_float_vector_float = ten::binary_expr<vectornode_float, vectorn
 using mul_vector_double_vector_double = ten::binary_expr<vectornode_double, vectornode_double,
    ten::functional::mul<vectornode_double, vectornode_double, vectornode_double>::template func>;
 
+using mul_vector_int32_vector_int32 = ten::binary_expr<vectornode_int32, vectornode_int32,
+   ten::functional::mul<vectornode_int32, vectornode_int32, vectornode_int32>::template func>;
+using mul_vector_int64_vector_int64 = ten::binary_expr<vectornode_int64, vectornode_int64,
+   ten::functional::mul<vectornode_int64, vectornode_int64, vectornode_int64>::template func>;
+
 using mul_matrix_float_matrix_float = ten::binary_expr<matrixnode_float, matrixnode_float,
    ten::functional::mul<matrixnode_float, matrixnode_float, matrixnode_float>::template func>;
 using mul_matrix_double_matrix_double = ten::binary_expr<matrixnode_double, matrixnode_double,
@@ -240,6 +271,24 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::init<double>())
       .def("value", &scalar_double::value)
       .def("__repr__", [](const scalar_double& s){
+         std::stringstream ss;
+         ss << s;
+         return ss.str();
+      });
+
+   py::class_<scalar_int32>(m, "scalar_int32")
+      .def(py::init<int>())
+      .def("value", &scalar_int32::value)
+      .def("__repr__", [](const scalar_int32& s){
+         std::stringstream ss;
+         ss << s;
+         return ss.str();
+      });
+
+   py::class_<scalar_int64>(m, "scalar_int64")
+      .def(py::init<long int>())
+      .def("value", &scalar_int64::value)
+      .def("__repr__", [](const scalar_int64& s){
          std::stringstream ss;
          ss << s;
          return ss.str();
@@ -366,12 +415,12 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    // Data type
    py::enum_<ten::data_type>(m, "data_type", py::arithmetic())
-      .value("dfloat", ten::data_type::dfloat)
-      .value("ddouble", ten::data_type::ddouble)
-      .value("dint32", ten::data_type::dint32)
-      .value("dint64", ten::data_type::dint64)
-      .value("dcomplexfloat", ten::data_type::dcomplexfloat)
-      .value("dcomplexdouble", ten::data_type::dcomplexdouble);
+      .value("float32", ten::data_type::float32)
+      .value("float64", ten::data_type::float64)
+      .value("int32", ten::data_type::int32)
+      .value("int64", ten::data_type::int64)
+      .value("complexfloat", ten::data_type::complexfloat)
+      .value("complexdouble", ten::data_type::complexdouble);
 
    // Format
    py::enum_<ten::storage_format>(m, "storage_format", py::arithmetic())
@@ -419,6 +468,32 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<div_vector_double>(m, "div_vector_double")
       .def("value", &div_vector_double::value)
       .def("eval", &div_vector_double::eval);
+
+   py::class_<add_vector_int32>(m, "add_vector_int32")
+      .def("value", &add_vector_int32::value)
+      .def("eval", &add_vector_int32::eval);
+   py::class_<sub_vector_int32>(m, "sub_vector_int32")
+      .def("value", &sub_vector_int32::value)
+      .def("eval", &sub_vector_int32::eval);
+   py::class_<mul_vector_int32>(m, "mul_vector_int32")
+      .def("value", &mul_vector_int32::value)
+      .def("eval", &mul_vector_int32::eval);
+   py::class_<div_vector_int32>(m, "div_vector_int32")
+      .def("value", &div_vector_int32::value)
+      .def("eval", &div_vector_int32::eval);
+
+   py::class_<add_vector_int64>(m, "add_vector_int64")
+      .def("value", &add_vector_int64::value)
+      .def("eval", &add_vector_int64::eval);
+   py::class_<sub_vector_int64>(m, "sub_vector_int64")
+      .def("value", &sub_vector_int64::value)
+      .def("eval", &sub_vector_int64::eval);
+   py::class_<mul_vector_int64>(m, "mul_vector_int64")
+      .def("value", &mul_vector_int64::value)
+      .def("eval", &mul_vector_int64::eval);
+   py::class_<div_vector_int64>(m, "div_vector_int64")
+      .def("value", &div_vector_int64::value)
+      .def("eval", &div_vector_int64::eval);
 
    py::class_<add_matrix_float>(m, "add_matrix_float")
       .def("value", &add_matrix_float::value)
@@ -540,6 +615,13 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def("value", &mul_vector_double_vector_double::value)
       .def("eval",  &mul_vector_double_vector_double::eval);
 
+   py::class_<mul_vector_int32_vector_int32>(m ,"mul_vector_int32_vector_int32")
+      .def("value", &mul_vector_int32_vector_int32::value)
+      .def("eval",  &mul_vector_int32_vector_int32::eval);
+   py::class_<mul_vector_int64_vector_int64>(m ,"mul_vector_int64_vector_int64")
+      .def("value", &mul_vector_int64_vector_int64::value)
+      .def("eval",  &mul_vector_int64_vector_int64::eval);
+
    py::class_<mul_matrix_float_matrix_float>(m ,"mul_matrix_float_matrix_float")
       .def("value", &mul_matrix_float_matrix_float::value)
       .def("eval",  &mul_matrix_float_matrix_float::eval);
@@ -626,6 +708,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
          ss << v;
          return ss.str();
       });
+
    // Vector double
    py::class_<vector_double>(m, "vector_double")
       .def(py::init<std::size_t>())
@@ -650,6 +733,66 @@ PYBIND11_MODULE(tenseurbackend, m) {
       .def(py::self / py::self)
       //.def(double() * py::self)
       .def("__repr__", [](const vector_double& v) {
+         std::stringstream ss;
+         ss << v;
+         return ss.str();
+      });
+
+   // Vector int32
+   py::class_<vector_int32>(m, "vector_int32")
+      .def(py::init<std::size_t>())
+      .def("rank", &vector_int32::rank)
+      .def("size", &vector_int32::size)
+      .def("shape", &vector_int32::shape)
+      .def("strides", &vector_int32::strides)
+      .def("__getitem__", [](const vector_int32& v, size_t index){
+         return v[index];
+      })
+      .def("__setitem__", [](vector_int32& v, size_t index, int value){
+         v[index] = value;
+      })
+      .def("__call__", [](const vector_int32& v, size_t index) {
+         return v[index];
+      })
+      .def("copy", &vector_int32::copy)
+      .def("format", &vector_int32::format)
+      .def("data_type", &vector_int32::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      .def(py::self * py::self)
+      .def(py::self / py::self)
+      //.def(int32() * py::self)
+      .def("__repr__", [](const vector_int32& v) {
+         std::stringstream ss;
+         ss << v;
+         return ss.str();
+      });
+
+   // Vector int64
+   py::class_<vector_int64>(m, "vector_int64")
+      .def(py::init<std::size_t>())
+      .def("rank", &vector_int64::rank)
+      .def("size", &vector_int64::size)
+      .def("shape", &vector_int64::shape)
+      .def("strides", &vector_int64::strides)
+      .def("__getitem__", [](const vector_int64& v, size_t index){
+         return v[index];
+      })
+      .def("__setitem__", [](vector_int64& v, size_t index, int value){
+         v[index] = value;
+      })
+      .def("__call__", [](const vector_int64& v, size_t index) {
+         return v[index];
+      })
+      .def("copy", &vector_int64::copy)
+      .def("format", &vector_int64::format)
+      .def("data_type", &vector_int64::data_type)
+      .def(py::self + py::self)
+      .def(py::self - py::self)
+      .def(py::self * py::self)
+      .def(py::self / py::self)
+      //.def(int64() * py::self)
+      .def("__repr__", [](const vector_int64& v) {
          std::stringstream ss;
          ss << v;
          return ss.str();
