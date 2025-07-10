@@ -1116,13 +1116,17 @@ void save(const T &t, std::string filename) {
    file << "%\n";
    file << m << " " << n << "\n";
 
+   for (size_t k = 0; k < m*n; k++) {
+      file << t[k] << "\n";
+   }
+   /*
    for (size_t i = 0; i < m; i++) {
       file << t(i, 0);
       for (size_t j = 1; j < n; j++) {
          file << " " << t(i, j);
       }
       file << "\n";
-   }
+   }*/
 }
 
 // vector<__t>
