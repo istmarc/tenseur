@@ -71,7 +71,9 @@ template <class __t = float> class normal : distribution<__t> {
 
  public:
    explicit normal(__t mean = 0., __t std = 1.)
-       : _mean(mean), _std(std), dist(dist_type(mean, std)) {}
+       : _mean(mean), _std(std) {
+      dist = dist_type{mean, std};
+   }
 
    __t mean() const { return _mean; }
 
@@ -91,6 +93,40 @@ template <class __t = float> class normal : distribution<__t> {
 /// \class mv_normal
 /// Multivariate normal distribution
 template <class __t = float> class mv_normal : distribution<__t> {};
+
+/// \class gamma
+/// Gamma distribution
+template <class T = float> class gamma : distribution<T> {
+ public:
+   using type = T;
+   using dist_type = std::gamma_distribution<T>;
+
+ private:
+   T _alpha;
+   T _beta;
+   dist_type dist;
+
+ public:
+   explicit gamma(T alpha, T beta)
+       : _alpha(alpha), _beta(beta) {
+      dist = dist_type{alpha, beta};
+   }
+
+   T alpha() const { return _alpha; }
+
+   T beta() const { return _beta; }
+
+   T sample() { return dist(::ten::random_engine); }
+
+   vector<T> sample(size_t n) {
+      vector<T> s(n);
+      for (size_t i = 0; i < n; i++) {
+         s[i] = sample();
+      }
+      return s;
+   }
+};
+
 
 } // namespace ten
 
