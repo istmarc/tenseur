@@ -1303,6 +1303,46 @@ PYBIND11_MODULE(tenseurbackend, m) {
    m.def("zeros_vector_float", &zeros_py<vector_float>);
    m.def("ones_vector_float", &ones_py<vector_float>);
    m.def("range_vector_float", &range_py<vector_float>);
+   m.def("fill_vector_double", &fill_py<vector_double>);
+   m.def("zeros_vector_double", &zeros_py<vector_double>);
+   m.def("ones_vector_double", &ones_py<vector_double>);
+   m.def("range_vector_double", &range_py<vector_double>);
+
+   m.def("fill_matrix_float", &fill_py<matrix_float>);
+   m.def("zeros_matrix_float", &zeros_py<matrix_float>);
+   m.def("ones_matrix_float", &ones_py<matrix_float>);
+   m.def("range_matrix_float", &range_py<matrix_float>);
+   m.def("fill_matrix_double", &fill_py<matrix_double>);
+   m.def("zeros_matrix_double", &zeros_py<matrix_double>);
+   m.def("ones_matrix_double", &ones_py<matrix_double>);
+   m.def("range_matrix_double", &range_py<matrix_double>);
+
+   m.def("fill_tensor3_float", &fill_py<tensor3_float>);
+   m.def("zeros_tensor3_float", &zeros_py<tensor3_float>);
+   m.def("ones_tensor3_float", &ones_py<tensor3_float>);
+   m.def("range_tensor3_float", &range_py<tensor3_float>);
+   m.def("fill_tensor3_double", &fill_py<tensor3_double>);
+   m.def("zeros_tensor3_double", &zeros_py<tensor3_double>);
+   m.def("ones_tensor3_double", &ones_py<tensor3_double>);
+   m.def("range_tensor3_double", &range_py<tensor3_double>);
+
+   m.def("fill_tensor4_float", &fill_py<tensor4_float>);
+   m.def("zeros_tensor4_float", &zeros_py<tensor4_float>);
+   m.def("ones_tensor4_float", &ones_py<tensor4_float>);
+   m.def("range_tensor4_float", &range_py<tensor4_float>);
+   m.def("fill_tensor4_double", &fill_py<tensor4_double>);
+   m.def("zeros_tensor4_double", &zeros_py<tensor4_double>);
+   m.def("ones_tensor4_double", &ones_py<tensor4_double>);
+   m.def("range_tensor4_double", &range_py<tensor4_double>);
+
+   m.def("fill_tensor5_float", &fill_py<tensor5_float>);
+   m.def("zeros_tensor5_float", &zeros_py<tensor5_float>);
+   m.def("ones_tensor5_float", &ones_py<tensor5_float>);
+   m.def("range_tensor5_float", &range_py<tensor5_float>);
+   m.def("fill_tensor5_double", &fill_py<tensor5_double>);
+   m.def("zeros_tensor5_double", &zeros_py<tensor5_double>);
+   m.def("ones_tensor5_double", &ones_py<tensor5_double>);
+   m.def("range_tensor5_double", &range_py<tensor5_double>);
 
    // Save to a file
    m.def("save_vector_float", &ten::save<vector_float>);

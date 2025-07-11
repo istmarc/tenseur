@@ -40,9 +40,10 @@ typename V::value_type norm(const V &v,
       return r;
    }
 }
+
 template <class V>
    requires(::ten::is_vector<V>::value)
-typename V::value_type norm(const V &v, const size_t p = 2) {
+typename V::value_type pnorm(const V &v, const size_t p = 2) {
    using value_type = V::value_type;
 
    if (p == 0) {
