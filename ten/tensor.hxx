@@ -51,8 +51,7 @@ auto operator+(left_expr &&left, right_expr &&right) {
        left.node(), right.node());
 }
 
-template <typename T, Expr E>
-auto operator+(T &&scalar, E &&expr) {
+template <typename T, Expr E> auto operator+(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
    return ::ten::scalar<T>(scalar) + std::forward<R>(expr);
 }
@@ -82,8 +81,7 @@ auto operator-(T &&scalar, E &&expr) {
    return ::ten::scalar<T>(scalar) - std::forward<R>(expr);
 }*/
 
-template <Expr E, typename T>
-auto operator-(E &&expr, T &&scalar) {
+template <Expr E, typename T> auto operator-(E &&expr, T &&scalar) {
    using R = std::remove_cvref_t<E>;
    return std::forward<R>(expr) - ::ten::scalar<T>(scalar);
 }
@@ -100,11 +98,9 @@ auto operator*(left_expr &&left, right_expr &&right) {
        left.node(), right.node());
 }
 
-template <typename T, Expr E>
-auto operator*(T &&scalar, E &&expr) {
+template <typename T, Expr E> auto operator*(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   return ::ten::scalar<T>(scalar) * std::forward<
-      std::remove_cvref_t<E>>(expr);
+   return ::ten::scalar<T>(scalar) * std::forward<std::remove_cvref_t<E>>(expr);
 }
 
 /*template <Expr E, typename T>
@@ -131,8 +127,7 @@ auto operator/(T &&scalar, E &&expr) {
    return scalar<T>(scalar) / std::forward<R>(expr);
 }*/
 
-template <Expr E, typename T>
-auto operator/(E &&expr, T &&scalar) {
+template <Expr E, typename T> auto operator/(E &&expr, T &&scalar) {
    using R = std::remove_cvref_t<E>;
    return std::forward<R>(expr) / ::ten::scalar<T>(scalar);
 }
@@ -174,7 +169,7 @@ class scalar_node : public scalar_operations<scalar_node<__t>> {
    scalar_node() : _value(__t()) {}
 
    explicit scalar_node(const __t &value) : _value(value) {}
-   //explicit scalar_node(__t &&value) : _value(std::move(value)) {}
+   // explicit scalar_node(__t &&value) : _value(std::move(value)) {}
 
    const __t &value() const { return _value; }
 
@@ -199,8 +194,8 @@ class scalar : public expr<scalar<__t>>, public scalar_operations<scalar<__t>> {
    explicit scalar(const __t &value)
        : _node(std::make_shared<node_type>(value)) {}
 
-   //explicit scalar(__t value)
-   //    : _node(std::make_shared<node_type>(std::move(value))) {}
+   // explicit scalar(__t value)
+   //     : _node(std::make_shared<node_type>(std::move(value))) {}
 
    explicit scalar(std::shared_ptr<node_type> node) : _node(node) {}
 
@@ -390,6 +385,13 @@ class tensor_node
    }
 
  public:
+   // For deserialization
+   tensor_node(::ten::storage_format format, std::optional<__shape> &&shape,
+               std::optional<stride_type> &&stride,
+               std::shared_ptr<__storage> &&storage)
+       : _format(format), _shape(std::move(shape)), _stride(std::move(stride)),
+         _storage(std::move(storage)) {}
+
    /// Construct a static tensor_node
    tensor_node() noexcept
        : _shape(std::nullopt), _stride(std::nullopt),
@@ -597,7 +599,56 @@ class tensor_node
    operator()(auto... index) noexcept {
       return at(index...);
    }
+
+   template <class T, class Shape, storage_order Order, class Storage,
+             class Allocator>
+   friend bool
+   serialize(std::ostream &os,
+             tensor_node<T, Shape, Order, Storage, Allocator> &node);
+
+   template <class TensorNode>
+      requires(::ten::is_tensor_node<TensorNode>::value)
+   friend TensorNode deserialize(std::istream &os);
 };
+
+template <class T, class Shape, storage_order Order, class Storage,
+          class Allocator>
+bool serialize(std::ostream &os,
+               tensor_node<T, Shape, Order, Storage, Allocator> &node) {
+   os.write(reinterpret_cast<char *>(&node._format), sizeof(node._format));
+   os.write(reinterpret_cast<char *>(&node._shape.value()),
+            sizeof(node._shape.value()));
+   os.write(reinterpret_cast<char *>(&node._stride.value()),
+            sizeof(node._stride.value()));
+
+   Storage *storage_pointer = node._storage.get();
+   if (storage_pointer == nullptr) {
+      std::cerr << "Error: Serialization of null storage pointer\n";
+      return false;
+   }
+   return serialize(os, *storage_pointer);
+}
+
+template <class TensorNode>
+   requires(::ten::is_tensor_node<TensorNode>::value)
+TensorNode deserialize(std::istream &is) {
+   ::ten::storage_format format;
+   is.read(reinterpret_cast<char *>(&format), sizeof(format));
+
+   using Shape = typename TensorNode::shape_type;
+   Shape shape_value = deserialize<Shape>(is);
+   std::optional<Shape> shape(shape_value);
+
+   using stride_type = typename TensorNode::stride_type;
+   stride_type stride_value = deserialize<stride_type>(is);
+   std::optional<stride_type> stride(stride_value);
+
+   using Storage = typename TensorNode::storage_type;
+   auto st = std::shared_ptr<Storage>(new Storage(deserialize<Storage>(is)));
+
+   return TensorNode(format, std::move(shape), std::move(stride),
+                     std::move(st));
+}
 
 namespace details {
 /// Type of the allocator
@@ -888,8 +939,8 @@ class ranked_tensor final
 
    /// Returns whether the tensor is sparse
    [[nodiscard]] bool is_sparse() const {
-      return _node.get()->is_sparse_coo() || _node.get()->is_sparse_csc()
-         || _node.get()->is_sparse_csr();
+      return _node.get()->is_sparse_coo() || _node.get()->is_sparse_csc() ||
+             _node.get()->is_sparse_csr();
    }
 
    // Data type
@@ -1116,7 +1167,7 @@ void save(const T &t, std::string filename) {
    file << "%\n";
    file << m << " " << n << "\n";
 
-   for (size_t k = 0; k < m*n; k++) {
+   for (size_t k = 0; k < m * n; k++) {
       file << t[k] << "\n";
    }
    /*
@@ -1332,8 +1383,7 @@ __t upper_tr(const __t &t) {
 // Basic functions
 
 // Cast a tensor
-template <class __to, DynamicTensor __t>
-auto cast(const __t &x) {
+template <class __to, DynamicTensor __t> auto cast(const __t &x) {
    using tensor_type = typename __t::template casted_type<__to>;
    tensor_type r(x.shape());
    for (size_type i = 0; i < x.size(); i++) {
@@ -1343,8 +1393,7 @@ auto cast(const __t &x) {
 }
 
 // Cast a static tensor
-template <class __to, StaticTensor __t>
-auto cast(const __t &x) {
+template <class __to, StaticTensor __t> auto cast(const __t &x) {
    using tensor_type = typename __t::template casted_type<__to>;
    tensor_type r;
    for (size_type i = 0; i < x.size(); i++) {
@@ -1354,8 +1403,7 @@ auto cast(const __t &x) {
 }
 
 // reshape<shape>(x)
-template <class __shape, Expr __expr>
-auto reshape(__expr &&expr) {
+template <class __shape, Expr __expr> auto reshape(__expr &&expr) {
    using node_type = typename std::remove_cvref_t<__expr>::node_type;
    return ::ten::unary_expr<
        node_type, ::ten::functional::static_reshape<__shape>::template func>(
@@ -1363,8 +1411,7 @@ auto reshape(__expr &&expr) {
 }
 
 // reshape<dims...>(x)
-template <size_type... dims, Expr __expr>
-auto reshape(__expr &&expr) {
+template <size_type... dims, Expr __expr> auto reshape(__expr &&expr) {
    using node_type = typename std::remove_cvref_t<__expr>::node_type;
    return ::ten::unary_expr<node_type, ::ten::functional::dims_static_reshape<
                                            dims...>::template func>(
@@ -1391,8 +1438,7 @@ auto reshape(__expr &&expr, std::initializer_list<size_type> &&dims) {
 }
 
 // flatten(x)
-template <Expr __expr>
-auto flatten(__expr expr) {
+template <Expr __expr> auto flatten(__expr expr) {
    using expr_type = std::remove_cvref_t<__expr>;
 
    // tensor
@@ -1420,8 +1466,7 @@ auto flatten(__expr expr) {
 }
 
 // transpose(x)
-template <Expr __expr>
-auto transpose(__expr &&expr) {
+template <Expr __expr> auto transpose(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
 
    // tensor
@@ -1510,8 +1555,8 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<__t, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value &&
+   requires(::ten::is_dynamic_tensor<ranked_tensor<
+                __t, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto fill(__shape &&dims, __t value) {
    using tensor_type =
@@ -1523,8 +1568,8 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<__t, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value &&
+   requires(::ten::is_dynamic_tensor<ranked_tensor<
+                __t, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto fill(std::initializer_list<size_type> &&dims, __t value) {
    using tensor_type =
@@ -1590,8 +1635,8 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<__t, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value &&
+   requires(::ten::is_dynamic_tensor<ranked_tensor<
+                __t, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto zeros(__shape &&dims) {
    using tensor_type =
@@ -1603,8 +1648,8 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<__t, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value &&
+   requires(::ten::is_dynamic_tensor<ranked_tensor<
+                __t, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto zeros(std::initializer_list<size_type> &&dims) {
    using tensor_type =
@@ -1669,8 +1714,8 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<__t, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value &&
+   requires(::ten::is_dynamic_tensor<ranked_tensor<
+                __t, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto ones(__shape &&dims) {
    using tensor_type =
@@ -1682,8 +1727,8 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<__t, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value &&
+   requires(::ten::is_dynamic_tensor<ranked_tensor<
+                __t, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto ones(std::initializer_list<size_type> &&dims) {
    using tensor_type =
@@ -1776,8 +1821,8 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<__t, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value &&
+   requires(::ten::is_dynamic_tensor<ranked_tensor<
+                __t, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto range(__shape &&dims, __t value = __t(0)) {
    using tensor_type =
@@ -1789,8 +1834,8 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<__t, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value &&
+   requires(::ten::is_dynamic_tensor<ranked_tensor<
+                __t, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto range(std::initializer_list<size_type> &&dims,
                          __t value = __t(0)) {
@@ -1896,8 +1941,8 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<__t, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value &&
+   requires(::ten::is_dynamic_tensor<ranked_tensor<
+                __t, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto linear(__t start, __t stop, __shape &&dims) {
    using tensor_type =
@@ -1909,8 +1954,8 @@ template <class __t, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<__t, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<__t, __shape, __order, __storage,
-                                            __allocator>>::value &&
+   requires(::ten::is_dynamic_tensor<ranked_tensor<
+                __t, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto linear(__t start, __t stop,
                           std::initializer_list<size_type> &&dims) {
@@ -1980,8 +2025,7 @@ template <SDiagonal T> auto dense(T x) -> decltype(auto) {
 
 /// \fn min
 /// Returns the maximum of an expression
-template <Expr __expr>
-auto min(__expr &&expr) {
+template <Expr __expr> auto min(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::min>(
        expr.node());
@@ -1989,8 +2033,7 @@ auto min(__expr &&expr) {
 
 /// \fn max
 /// Return the maximum of an tensor or an expression
-template <Expr __expr>
-auto max(__expr &&expr) {
+template <Expr __expr> auto max(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::max>(
        expr.node());
@@ -1998,8 +2041,7 @@ auto max(__expr &&expr) {
 
 /// \fn sum
 /// Return the maximum of an tensor or an expression
-template <Expr __expr>
-auto sum(__expr &&expr) {
+template <Expr __expr> auto sum(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::sum>(
        expr.node());
@@ -2007,16 +2049,14 @@ auto sum(__expr &&expr) {
 
 /// \fn cum_sum
 /// Return the maximum of an tensor or an expression
-template <Expr __expr>
-auto cum_sum(__expr &&expr) {
+template <Expr __expr> auto cum_sum(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::cum_sum>(
        expr.node());
 }
 /// \fn sum
 /// Return the maximum of an tensor or an expression
-template <Expr __expr>
-auto prod(__expr &&expr) {
+template <Expr __expr> auto prod(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::prod>(
        expr.node());
@@ -2024,8 +2064,7 @@ auto prod(__expr &&expr) {
 
 /// \fn abs
 /// Returns the absolute value of a scalar, a tensor or an expression
-template <Expr __expr>
-auto abs(__expr &&expr) {
+template <Expr __expr> auto abs(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::abs>(
        expr.node());
@@ -2033,8 +2072,7 @@ auto abs(__expr &&expr) {
 
 /// \fn sqrt
 /// Returns the square root of a scalar, a tensor or an expression
-template <Expr __expr>
-auto sqrt(__expr &&expr) {
+template <Expr __expr> auto sqrt(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::sqrt>(
        expr.node());
@@ -2042,8 +2080,7 @@ auto sqrt(__expr &&expr) {
 
 /// \fn sqr
 /// Returns the square of an expression
-template <Expr __expr>
-auto sqr(__expr &&expr) {
+template <Expr __expr> auto sqr(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::sqr>(
        expr.node());
@@ -2051,8 +2088,7 @@ auto sqr(__expr &&expr) {
 
 /// \fn sin
 /// Returns the sine of a scalar, a tensor or an expression
-template <Expr __expr>
-auto sin(__expr &&expr) {
+template <Expr __expr> auto sin(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::sin>(
        expr.node());
@@ -2060,8 +2096,7 @@ auto sin(__expr &&expr) {
 
 /// \fn sinh
 /// Hyperbolic sine
-template <Expr __expr>
-auto sinh(__expr &&expr) {
+template <Expr __expr> auto sinh(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::sinh>(
        expr.node());
@@ -2069,8 +2104,7 @@ auto sinh(__expr &&expr) {
 
 /// \fn asin
 /// Arc sine
-template <Expr __expr>
-auto asin(__expr &&expr) {
+template <Expr __expr> auto asin(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::asin>(
        expr.node());
@@ -2078,24 +2112,21 @@ auto asin(__expr &&expr) {
 
 /// \fn cos
 /// Returns the cosine of a scalar, a tensor or an expression
-template <Expr __expr>
-auto cos(__expr &&expr) {
+template <Expr __expr> auto cos(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::cos>(
        expr.node());
 }
 
 /// \fn acos
-template <Expr __expr>
-auto acos(__expr &&expr) {
+template <Expr __expr> auto acos(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::acos>(
        expr.node());
 }
 
 /// \fn cosh
-template <Expr __expr>
-auto cosh(__expr &&expr) {
+template <Expr __expr> auto cosh(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::cosh>(
        expr.node());
@@ -2103,24 +2134,21 @@ auto cosh(__expr &&expr) {
 
 /// \fn tan
 /// Returns the tangent of a scalar, a tensor or an expression
-template <Expr __expr>
-auto tan(__expr &&expr) {
+template <Expr __expr> auto tan(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::tan>(
        expr.node());
 }
 
 /// \fn atan
-template <Expr __expr>
-auto atan(__expr &&expr) {
+template <Expr __expr> auto atan(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::atan>(
        expr.node());
 }
 
 /// \fn tanh
-template <Expr __expr>
-auto tanh(__expr &&expr) {
+template <Expr __expr> auto tanh(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::tanh>(
        expr.node());
@@ -2128,8 +2156,7 @@ auto tanh(__expr &&expr) {
 
 /// \fn exp
 /// Returns the tangent of a scalar, a tensor or an expression
-template <Expr __expr>
-auto exp(__expr &&expr) {
+template <Expr __expr> auto exp(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::exp>(
        expr.node());
@@ -2137,8 +2164,7 @@ auto exp(__expr &&expr) {
 
 /// \fn log
 /// Returns the tangent of a scalar, a tensor or an expression
-template <Expr __expr>
-auto log(__expr &&expr) {
+template <Expr __expr> auto log(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    using node_type = expr_type::node_type;
    return unary_expr<typename expr_type::node_type, functional::log>(
@@ -2146,24 +2172,21 @@ auto log(__expr &&expr) {
 }
 
 /// \fn log10
-template <Expr __expr>
-auto log10(__expr &&expr) {
+template <Expr __expr> auto log10(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::log10>(
        expr.node());
 }
 
 /// \fn floor
-template <Expr __expr>
-auto floor(__expr &&expr) {
+template <Expr __expr> auto floor(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::floor>(
        expr.node());
 }
 
 /// \fn ceil
-template <Expr __expr>
-auto ceil(__expr &&expr) {
+template <Expr __expr> auto ceil(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::ceil>(
        expr.node());
@@ -2174,8 +2197,7 @@ auto ceil(__expr &&expr) {
 
 /// \fn pow
 /// Power
-template <Expr __expr, class T = float>
-auto pow(__expr &&expr, T n) {
+template <Expr __expr, class T = float> auto pow(__expr &&expr, T n) {
    using expr_type = std::remove_cvref_t<__expr>;
    return unary_expr<typename expr_type::node_type, functional::pow>(
        expr.node(), n);
@@ -2184,8 +2206,7 @@ auto pow(__expr &&expr, T n) {
 ////////////////////////////////////////////////////////////////////////////////
 // Tensor functions
 
-template <Tensor __t>
-bool all_close(const __t &t, double eps = 1e-5) {
+template <Tensor __t> bool all_close(const __t &t, double eps = 1e-5) {
    bool res = true;
    for (size_t i = 0; i < t.size(); i++) {
       if (std::abs(t[i]) >= eps) {
