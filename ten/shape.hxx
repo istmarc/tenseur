@@ -43,7 +43,8 @@ template <size_type... __index> struct dynamic_sequence {
 //                                                       N times
 template <typename, typename> struct concat_dynamic_sequence;
 template <size_type... __a, size_type... __b>
-struct concat_dynamic_sequence<dynamic_sequence<__a...>, dynamic_sequence<__b...>> {
+struct concat_dynamic_sequence<dynamic_sequence<__a...>,
+                               dynamic_sequence<__b...>> {
    using type = dynamic_sequence<__a..., __b...>;
 };
 
@@ -52,9 +53,9 @@ template <> struct make_dynamic_sequence<1> {
    using type = dynamic_sequence<dynamic>;
 };
 template <size_type __n> struct make_dynamic_sequence {
-   using type =
-       typename concat_dynamic_sequence<typename make_dynamic_sequence<__n - 1>::type,
-                                      make_dynamic_sequence<1>::type>::type;
+   using type = typename concat_dynamic_sequence<
+       typename make_dynamic_sequence<__n - 1>::type,
+       make_dynamic_sequence<1>::type>::type;
 };
 
 } // namespace details
@@ -81,7 +82,8 @@ template <size_type __first, size_type... __rest> class shape {
    static constexpr size_type _rank = 1 + sizeof...(__rest);
 
    /// Chek if one of the dimensions is dynamic
-   static constexpr bool _is_dynamic = details::is_dynamic<__first, __rest...>();
+   static constexpr bool _is_dynamic =
+       details::is_dynamic<__first, __rest...>();
 
    /// Shape known at compile time
    static constexpr size_type _static_size{
@@ -89,7 +91,8 @@ template <size_type __first, size_type... __rest> class shape {
 
    /// Stores the dimensions known at compile time
    /// The shape is equal to 0 for dynamic shapes
-   static constexpr std::array<size_type, _rank> _static_dims{__first, __rest...};
+   static constexpr std::array<size_type, _rank> _static_dims{__first,
+                                                              __rest...};
 
    // Dynamic shape size
    size_type _size;
@@ -97,9 +100,15 @@ template <size_type __first, size_type... __rest> class shape {
    std::array<size_type, _rank> _dims{__first, __rest...};
 
  public:
+   // For deserialization
+   shape(size_type size, std::array<size_type, _rank> &&dims)
+       : _size(size), _dims(std::move(dims)) {}
+
    shape() noexcept
       requires(!_is_dynamic)
    {}
+
+   shape() noexcept {}
 
    /*explicit shape(std::vector<size_type> &&dims) noexcept
       requires(_is_dynamic)
@@ -127,10 +136,14 @@ template <size_type __first, size_type... __rest> class shape {
    [[nodiscard]] inline static constexpr size_type rank() { return _rank; }
 
    /// Returns whether all the dimensions are statics
-   [[nodiscard]] inline static constexpr bool is_static() { return !_is_dynamic; }
+   [[nodiscard]] inline static constexpr bool is_static() {
+      return !_is_dynamic;
+   }
 
    /// Return whether all the dimensions are dynamics
-   [[nodiscard]] inline static constexpr bool is_dynamic() { return _is_dynamic; }
+   [[nodiscard]] inline static constexpr bool is_dynamic() {
+      return _is_dynamic;
+   }
 
    /// Returns the size known at compile time
    [[nodiscard]] inline static constexpr size_type static_size() {
@@ -196,7 +209,34 @@ template <size_type __first, size_type... __rest> class shape {
    // overload << operator
    template <size_type... Ts>
    friend std::ostream &operator<<(std::ostream &, const shape<Ts...> &);
+
+   template <size_type... Ts>
+   friend bool serialize(std::ostream &os, shape<Ts...> &s);
+
+   template <class Shape>
+      requires(::ten::is_shape<Shape>::value)
+   friend Shape deserialize(std::istream &is);
 };
+
+template <size_type... Ts> bool serialize(std::ostream &os, shape<Ts...> &s) {
+   os.write(reinterpret_cast<char *>(&s._size), sizeof(s._size));
+   os.write(reinterpret_cast<char *>(s._dims.data()),
+            s._rank * sizeof(s._dims[0]));
+
+   return os.good();
+}
+
+template <class Shape>
+   requires(::ten::is_shape<Shape>::value)
+Shape deserialize(std::istream &is) {
+   constexpr size_t rank = Shape::rank();
+   size_t size;
+   std::array<size_type, rank> dims;
+   is.read(reinterpret_cast<char *>(&size), sizeof(size));
+   is.read(reinterpret_cast<char *>(dims.data()), rank * sizeof(dims[0]));
+
+   return Shape(size, std::move(dims));
+}
 
 namespace details {
 template <size_type __n, size_type... __ts>
@@ -226,7 +266,8 @@ namespace details {
 // Compute the Nth static stride
 template <size_type __n, class __shape> struct nth_static_stride {
    static constexpr size_type value =
-       nth_static_stride<__n - 1, __shape>::value * __shape::template static_dim<__n - 1>();
+       nth_static_stride<__n - 1, __shape>::value *
+       __shape::template static_dim<__n - 1>();
 };
 template <class __shape> struct nth_static_stride<0, __shape> {
    static constexpr size_type value = 1;
@@ -241,9 +282,11 @@ struct static_stride_array<__shape, std::index_sequence<__index...>> {
 };
 
 // Compute the static strides
-template <class __shape, storage_order __order> consteval auto compute_static_strides() {
+template <class __shape, storage_order __order>
+consteval auto compute_static_strides() {
    if constexpr (__order == storage_order::col_major) {
-      return static_stride_array<__shape, std::make_index_sequence<__shape::rank()>>::value;
+      return static_stride_array<
+          __shape, std::make_index_sequence<__shape::rank()>>::value;
    }
    if constexpr (__order == storage_order::row_major) {
       std::array<size_type, __shape::rank()> res{};
@@ -252,7 +295,8 @@ template <class __shape, storage_order __order> consteval auto compute_static_st
 }
 
 // Dynamic strides
-template <typename __shape, storage_order __order> auto compute_strides(const __shape &dims) {
+template <typename __shape, storage_order __order>
+auto compute_strides(const __shape &dims) {
    constexpr size_type n = __shape::rank();
    std::array<size_type, n> strides{};
    if constexpr (__order == storage_order::row_major) {
@@ -286,6 +330,11 @@ template <class __shape, storage_order __order> class stride {
    std::array<size_type, __shape::rank()> _strides;
 
  public:
+   stride(std::array<size_type, shape_type::rank()> &&dims)
+       : _strides(std::move(dims)) {}
+
+   stride() noexcept {}
+
    stride() noexcept
       requires(__shape::is_static())
    {}
@@ -301,12 +350,43 @@ template <class __shape, storage_order __order> class stride {
    size_type dim(size_type index) const { return _strides[index]; }
 
    /// Returns the rank (number of dimensions)
-   [[nodiscard]] inline static constexpr size_type rank() { return __shape::rank(); }
+   [[nodiscard]] inline static constexpr size_type rank() {
+      return __shape::rank();
+   }
 
    // Overload the << operator
    template <class __shape_type, storage_order __storage_type>
-   friend std::ostream &operator<<(std::ostream &os, const stride<__shape_type, __storage_type> &);
+   friend std::ostream &
+   operator<<(std::ostream &os, const stride<__shape_type, __storage_type> &);
+
+   template <class ShapeType, storage_order StorageOrder>
+   // requires(::ten::is_shape<ShapeType>::value)
+   friend bool serialize(std::ostream &os, stride<ShapeType, StorageOrder> &s);
+
+   template <class StrideType>
+      requires(ten::is_stride<StrideType>::value)
+   friend StrideType deserialize(std::istream &is);
 };
+
+template <class ShapeType, storage_order StorageOrder>
+// requires(::ten::is_shape<ShapeType>::value)
+bool serialize(std::ostream &os, stride<ShapeType, StorageOrder> &s) {
+   constexpr size_t rank = stride<ShapeType, StorageOrder>::rank();
+   os.write(reinterpret_cast<char *>(s._strides.data()),
+            rank * sizeof(s._strides[0]));
+
+   return os.good();
+}
+
+template <class StrideType>
+   requires(::ten::is_stride<StrideType>::value)
+StrideType deserialize(std::istream &is) {
+   constexpr size_t rank = StrideType::rank();
+   std::array<size_type, rank> dims;
+   is.read(reinterpret_cast<char *>(dims.data()), rank * sizeof(dims[0]));
+
+   return StrideType(std::move(dims));
+}
 
 namespace details {
 template <size_type __n, class __shape, storage_order __order>
@@ -326,7 +406,8 @@ void print_stride(std::ostream &os, const stride<__shape, __order> &strides) {
 } // namespace details
 
 template <class __shape, storage_order __order>
-std::ostream &operator<<(std::ostream &os, const stride<__shape, __order> &strides) {
+std::ostream &operator<<(std::ostream &os,
+                         const stride<__shape, __order> &strides) {
    details::print_stride<0, __shape, __order>(os, strides);
    return os;
 }

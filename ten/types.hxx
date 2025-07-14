@@ -6,6 +6,7 @@
 #include <complex>
 #include <concepts>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <type_traits>
 
@@ -84,9 +85,22 @@ enum class storage_order { col_major, row_major };
 
 static constexpr storage_order default_order = storage_order::col_major;
 
+// Stride
+template <class Shape, storage_order StorageOrder> class stride;
+
 // Storage
 template <class T, class allocator> class dense_storage;
 template <class T, size_t N> class sdense_storage;
+
+// Shape traits
+template <class> struct is_shape : std::false_type {};
+template <size_type... dims>
+struct is_shape<shape<dims...>> : std::true_type {};
+
+// Stride traits
+template <class> struct is_stride : std::false_type {};
+template <class Shape, storage_order StorageOrder>
+struct is_stride<stride<Shape, StorageOrder>> : std::true_type {};
 
 // Storage traits
 template <class> struct is_dense_storage : std::false_type {};
@@ -114,13 +128,12 @@ class tensor_base {
 // BinaryExpr)
 template <class Derived> class expr;
 
-
-template<class T> struct is_expr {
+template <class T> struct is_expr {
    static constexpr bool value = std::is_base_of_v<::ten::expr<T>, T>;
 };
 
 // Concept for Expression type
-template<class T>
+template <class T>
 concept Expr = is_expr<std::remove_cvref_t<T>>::value;
 
 // Scalar type
@@ -152,7 +165,7 @@ struct is_tensor<ranked_tensor<Scalar, Shape, order, Storage, Allocator>> {
    static constexpr bool value = true;
 };
 
-template<class T>
+template <class T>
 concept Tensor = is_tensor<std::remove_cvref_t<T>>::value;
 
 template <typename> struct is_vector : std::false_type {};
@@ -188,7 +201,7 @@ struct is_dynamic_tensor<ranked_tensor<T, shape, order, allocator, storage>> {
    static constexpr bool value = shape::is_dynamic();
 };
 
-template<class T>
+template <class T>
 concept DynamicTensor = is_dynamic_tensor<T>::value;
 
 // Static tensor
@@ -199,7 +212,7 @@ struct is_stensor<ranked_tensor<T, shape, order, storage, allocator>> {
    static constexpr bool value = shape::is_static();
 };
 
-template<class T>
+template <class T>
 concept StaticTensor = is_stensor<T>::value;
 
 // Dynamic vector
@@ -320,6 +333,13 @@ struct isUpperTrMatrix<ranked_tensor<Scalar, shape, order, Storage, Allocator>>
 { static constexpr bool value = isUpperTrStorage<Storage>::value &&
 shape::rank() == 2;
 };*/
+
+////////////////////////////////////////////////////////////////////////////////
+// Storage types
+
+template <class> struct is_storage : std::false_type {};
+template <typename T, typename Allocator>
+struct is_storage<dense_storage<T, Allocator>> : std::true_type {};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Node types
