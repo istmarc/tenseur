@@ -1344,11 +1344,35 @@ PYBIND11_MODULE(tenseurbackend, m) {
    m.def("ones_tensor5_double", &ones_py<tensor5_double>);
    m.def("range_tensor5_double", &range_py<tensor5_double>);
 
-   // Save to a file
+   // Save to a binary file
    m.def("save_vector_float", &ten::save<vector_float>);
    m.def("save_vector_double", &ten::save<vector_double>);
    m.def("save_matrix_float", &ten::save<matrix_float>);
    m.def("save_matrix_double", &ten::save<matrix_double>);
+   m.def("save_tensor3_float", &ten::save<tensor3_float>);
+   m.def("save_tensor3_double", &ten::save<tensor3_double>);
+   m.def("save_tensor4_float", &ten::save<tensor4_float>);
+   m.def("save_tensor4_double", &ten::save<tensor4_double>);
+   m.def("save_tensor5_float", &ten::save<tensor5_float>);
+   m.def("save_tensor5_double", &ten::save<tensor5_double>);
+
+   // Load from binary file
+   m.def("load_vector_float", &ten::load<vector_float>);
+   m.def("load_vector_double", &ten::load<vector_double>);
+   m.def("load_matrix_float", &ten::load<matrix_float>);
+   m.def("load_matrix_double", &ten::load<matrix_double>);
+   m.def("load_tensor3_float", &ten::load<tensor3_float>);
+   m.def("load_tensor3_double", &ten::load<tensor3_double>);
+   m.def("load_tensor4_float", &ten::load<tensor4_float>);
+   m.def("load_tensor4_double", &ten::load<tensor4_double>);
+   m.def("load_tensor5_float", &ten::load<tensor5_float>);
+   m.def("load_tensor5_double", &ten::load<tensor5_double>);
+
+   // Save to a mtx file
+   m.def("save_mtx_vector_float", &ten::save_mtx<vector_float>);
+   m.def("save_mtx_vector_double", &ten::save_mtx<vector_double>);
+   m.def("save_mtx_matrix_float", &ten::save_mtx<matrix_float>);
+   m.def("save_mtx_matrix_double", &ten::save_mtx<matrix_double>);
 
 }
 
