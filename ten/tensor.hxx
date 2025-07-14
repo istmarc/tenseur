@@ -971,24 +971,30 @@ class ranked_tensor final
               const ranked_tensor<__type, __shape_type, __storage_order,
                                   __storage_type, __allocator_type> &t);
 
-   template<class T, class Shape, storage_order StorageOder, class Storage, class Allocator>
-   friend bool serialize(std::ostream& os, ranked_tensor<T, Shape, StorageOder, Storage, Allocator>& t);
+   template <class T, class Shape, storage_order StorageOder, class Storage,
+             class Allocator>
+   friend bool
+   serialize(std::ostream &os,
+             ranked_tensor<T, Shape, StorageOder, Storage, Allocator> &t);
 
-   template<class TensorType>
-   requires(ten::is_tensor<TensorType>::value)
-   friend TensorType deserialize(std::istream& is);
+   template <class TensorType>
+      requires(ten::is_tensor<TensorType>::value)
+   friend TensorType deserialize(std::istream &is);
 };
 
-template<class T, class Shape, storage_order StorageOder, class Storage, class Allocator>
-bool serialize(std::ostream& os, ranked_tensor<T, Shape, StorageOder, Storage, Allocator>& t) {
+template <class T, class Shape, storage_order StorageOder, class Storage,
+          class Allocator>
+bool serialize(std::ostream &os,
+               ranked_tensor<T, Shape, StorageOder, Storage, Allocator> &t) {
    return serialize(os, *t._node.get());
 }
 
-template<class TensorType>
-requires(ten::is_tensor<TensorType>::value)
-TensorType deserialize(std::istream& is) {
+template <class TensorType>
+   requires(ten::is_tensor<TensorType>::value)
+TensorType deserialize(std::istream &is) {
    using NodeType = TensorType::node_type;
-   auto node = std::shared_ptr<NodeType>(new NodeType(deserialize<NodeType>(is)));
+   auto node =
+       std::shared_ptr<NodeType>(new NodeType(deserialize<NodeType>(is)));
    return TensorType(std::move(node));
 }
 
@@ -1150,7 +1156,7 @@ std::ostream &operator<<(
 template <class T>
    requires(::ten::is_vector<T>::value &&
             std::is_floating_point_v<typename T::value_type>)
-void save(const T &t, std::string filename) {
+void save_mtx(const T &t, std::string filename) {
    std::cout << "Tenseur: Saving vector to file " << filename << std::endl;
    if (filename.empty()) {
       return;
@@ -1180,7 +1186,7 @@ void save(const T &t, std::string filename) {
 template <class T>
    requires(::ten::is_matrix<T>::value &&
             std::is_floating_point_v<typename T::value_type>)
-void save(const T &t, std::string filename) {
+void save_mtx(const T &t, std::string filename) {
    std::cout << "Tenseur: Saving Matrix to file " << filename << std::endl;
    if (filename.empty()) {
       return;
@@ -1191,7 +1197,7 @@ void save(const T &t, std::string filename) {
    }
    auto ext = filename.substr(index, filename.size());
    if (ext != ".mtx") {
-      std::cout << "Unsuported file extension" << std::endl;
+      std::cout << "Unsuported file extension\n";
       return;
    }
    size_t m = t.dim(0);
@@ -1205,14 +1211,44 @@ void save(const T &t, std::string filename) {
    for (size_t k = 0; k < m * n; k++) {
       file << t[k] << "\n";
    }
-   /*
-   for (size_t i = 0; i < m; i++) {
-      file << t(i, 0);
-      for (size_t j = 1; j < n; j++) {
-         file << " " << t(i, j);
-      }
-      file << "\n";
-   }*/
+}
+
+// FIXME Add support for serialization of const tensors
+template <class Tensor>
+   requires(::ten::is_tensor<Tensor>::value)
+bool save(Tensor &t, std::string filename) {
+   size_t index = filename.rfind(".");
+   if (index == -1) {
+      filename.append(".ten");
+   }
+   auto ext = filename.substr(index + 1, filename.size());
+   if (ext != "ten") {
+      std::cerr << "Unsupported file extension, please use .ten extension\n";
+      return false;
+   }
+   std::ofstream ofs(filename, std::ios_base::binary);
+   ten::serialize(ofs, t);
+   ofs.close();
+   return ofs.good();
+}
+
+template <class Tensor>
+   requires(::ten::is_tensor<Tensor>::value)
+std::optional<Tensor> load(const std::string &filename) {
+   size_t index = filename.rfind(".");
+   if (index == -1) {
+      std::cerr << "Unsupported file type\n";
+      return std::nullopt;
+   }
+   auto ext = filename.substr(index + 1, filename.size());
+   if (ext != "ten") {
+      std::cerr << "Unsupported file type\n";
+      return std::nullopt;
+   }
+   std::ifstream ifs(filename, std::ios_base::binary);
+   Tensor t = ten::deserialize<Tensor>(ifs);
+   ifs.close();
+   return t;
 }
 
 // vector<__t>
