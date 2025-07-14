@@ -1,5 +1,5 @@
-#ifndef TENSEUR_GRAPH_THEORY_GMATRIX
-#define TENSEUR_GRAPH_THEORY_GMATRIX
+#ifndef TENSEUR_GRAPHS_GMATRIX
+#define TENSEUR_GRAPHS_GMATRIX
 
 #include <ten/tensor>
 #include <ten/graph_theory/types.hxx>

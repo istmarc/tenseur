@@ -1,5 +1,5 @@
-#ifndef TENSEUR_GRAPH_THEORY_TYPES
-#define TENSEUR_GRAPH_THEORY_TYPES
+#ifndef TENSEUR_GRAPHS_TYPES
+#define TENSEUR_GRAPHS_TYPES
 
 namespace ten{
 namespace graph{
