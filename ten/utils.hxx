@@ -62,6 +62,19 @@ inline std::ostream& operator<<(std::ostream& os, const data_type d) {
    return os;
 }
 
+inline std::ostream& operator<<(std::ostream& os, const storage_format format) {
+   switch(format) {
+      case storage_format::dense:
+         os << "dense";
+         break;
+      default:
+         os << "none";
+         break;
+   }
+   return os;
+}
+
+
 } // namespace ten
 
 namespace ten::details {

@@ -615,18 +615,30 @@ template <class T, class Shape, storage_order Order, class Storage,
           class Allocator>
 bool serialize(std::ostream &os,
                tensor_node<T, Shape, Order, Storage, Allocator> &node) {
-   os.write(reinterpret_cast<char *>(&node._format), sizeof(node._format));
-   os.write(reinterpret_cast<char *>(&node._shape.value()),
-            sizeof(node._shape.value()));
-   os.write(reinterpret_cast<char *>(&node._stride.value()),
-            sizeof(node._stride.value()));
+   bool good = true;
 
+   os.write(reinterpret_cast<char *>(&node._format), sizeof(node._format));
+   good |= os.good();
+   // Serialize shape
+   if (!node._shape.has_value()) {
+      std::cerr << "Seriaization of this type of shape not yet supported.\n";
+      return false;
+   }
+   good |= serialize(os, node._shape.value());
+   // Serialize stride
+   if (!node._stride.has_value()) {
+      std::cerr << "Seriaization of this type of stride not yet supported.\n";
+      return false;
+   }
+   good |= serialize(os, node._stride.value());
+
+   // Serialize storage
    Storage *storage_pointer = node._storage.get();
    if (storage_pointer == nullptr) {
       std::cerr << "Error: Serialization of null storage pointer\n";
       return false;
    }
-   return serialize(os, *storage_pointer);
+   return good | serialize(os, *storage_pointer);
 }
 
 template <class TensorNode>
@@ -726,6 +738,9 @@ class ranked_tensor final
 
    /// Constructor of tensor from a shared pointer to tensor_node
    ranked_tensor(const std::shared_ptr<node_type> &node) : _node(node) {}
+
+   /// Constructor of tensor from a shared pointer to tensor_node
+   ranked_tensor(std::shared_ptr<node_type> &&node) : _node(std::move(node)) {}
 
    /// Asignment from a static expression
    template <class __expr>
@@ -955,7 +970,27 @@ class ranked_tensor final
    operator<<(std::ostream &os,
               const ranked_tensor<__type, __shape_type, __storage_order,
                                   __storage_type, __allocator_type> &t);
+
+   template<class T, class Shape, storage_order StorageOder, class Storage, class Allocator>
+   friend bool serialize(std::ostream& os, ranked_tensor<T, Shape, StorageOder, Storage, Allocator>& t);
+
+   template<class TensorType>
+   requires(ten::is_tensor<TensorType>::value)
+   friend TensorType deserialize(std::istream& is);
 };
+
+template<class T, class Shape, storage_order StorageOder, class Storage, class Allocator>
+bool serialize(std::ostream& os, ranked_tensor<T, Shape, StorageOder, Storage, Allocator>& t) {
+   return serialize(os, *t._node.get());
+}
+
+template<class TensorType>
+requires(ten::is_tensor<TensorType>::value)
+TensorType deserialize(std::istream& is) {
+   using NodeType = TensorType::node_type;
+   auto node = std::shared_ptr<NodeType>(new NodeType(deserialize<NodeType>(is)));
+   return TensorType(std::move(node));
+}
 
 /// Overload << operator for vector
 template <class __t, class __shape, storage_order __order, class __storage,

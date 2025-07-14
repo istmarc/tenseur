@@ -229,8 +229,8 @@ template <size_type... Ts> bool serialize(std::ostream &os, shape<Ts...> &s) {
 template <class Shape>
    requires(::ten::is_shape<Shape>::value)
 Shape deserialize(std::istream &is) {
-   constexpr size_t rank = Shape::rank();
-   size_t size;
+   constexpr std::size_t rank = Shape::rank();
+   std::size_t size;
    std::array<size_type, rank> dims;
    is.read(reinterpret_cast<char *>(&size), sizeof(size));
    is.read(reinterpret_cast<char *>(dims.data()), rank * sizeof(dims[0]));
