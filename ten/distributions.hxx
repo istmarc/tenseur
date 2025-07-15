@@ -10,8 +10,8 @@
 namespace ten {
 
 /// Distribution
-template <class __t> class distribution {
-   static_assert(std::is_floating_point_v<__t>, "__t must be a floating point.");
+template <class T> class distribution {
+   static_assert(std::is_floating_point_v<T>, "T must be a floating point.");
 };
 
 // FIXME isDistribution
@@ -30,26 +30,26 @@ static void set_seed(size_t seed) {
 
 /// \class uniform
 /// Uniform distribution
-template <class __t = float> class uniform : distribution<__t> {
+template <class T = float> class uniform : distribution<T> {
  public:
-   using value_type = __t;
-   using dist_type = std::uniform_real_distribution<__t>;
+   using value_type = T;
+   using dist_type = std::uniform_real_distribution<T>;
 
  private:
-   __t _lower_bound;
-   __t _upper_bound;
+   T _lower_bound;
+   T _upper_bound;
    dist_type dist;
 
  public:
-   explicit uniform(__t lower_bound = 0., __t upper_bound = 1.)
+   explicit uniform(T lower_bound = 0., T upper_bound = 1.)
        : _lower_bound(lower_bound), _upper_bound(upper_bound) {
       dist = dist_type(lower_bound, upper_bound);
    }
 
-   __t sample() { return dist(::ten::random_engine); }
+   T sample() { return dist(::ten::random_engine); }
 
-   vector<__t> sample(size_t n) {
-      vector<__t> s(n);
+   vector<T> sample(size_t n) {
+      vector<T> s(n);
       for (size_t i = 0; i < n; i++) {
          s[i] = sample();
       }
@@ -59,30 +59,30 @@ template <class __t = float> class uniform : distribution<__t> {
 
 /// \class normal
 /// Normal distribution
-template <class __t = float> class normal : distribution<__t> {
+template <class T = float> class normal : distribution<T> {
  public:
-   using type = __t;
-   using dist_type = std::normal_distribution<__t>;
+   using type = T;
+   using dist_type = std::normal_distribution<T>;
 
  private:
-   __t _mean;
-   __t _std;
+   T _mean;
+   T _std;
    dist_type dist;
 
  public:
-   explicit normal(__t mean = 0., __t std = 1.)
+   explicit normal(T mean = 0., T std = 1.)
        : _mean(mean), _std(std) {
       dist = dist_type{mean, std};
    }
 
-   __t mean() const { return _mean; }
+   T mean() const { return _mean; }
 
-   __t std() const { return _std; }
+   T std() const { return _std; }
 
-   __t sample() { return dist(::ten::random_engine); }
+   T sample() { return dist(::ten::random_engine); }
 
-   vector<__t> sample(size_t n) {
-      vector<__t> s(n);
+   vector<T> sample(size_t n) {
+      vector<T> s(n);
       for (size_t i = 0; i < n; i++) {
          s[i] = sample();
       }
@@ -92,7 +92,7 @@ template <class __t = float> class normal : distribution<__t> {
 
 /// \class mv_normal
 /// Multivariate normal distribution
-template <class __t = float> class mv_normal : distribution<__t> {};
+template <class T = float> class mv_normal : distribution<T> {};
 
 /// \class gamma
 /// Gamma distribution
