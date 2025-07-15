@@ -1,0 +1,6 @@
+#ifndef TENSEUR_ML
+#define TENSEUR_ML
+
+#include <ten/learning/histogram.hxx>
+
+#endif
