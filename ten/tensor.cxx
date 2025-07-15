@@ -1,3 +1,4 @@
+#include "expr.hxx"
 #include "learning/histogram.hxx"
 #include <cmath>
 #include <initializer_list>
@@ -76,12 +77,61 @@ using tensor5node_double = tensor5_double::node_type;
 using diagonalnode_float = diagonal_float::node_type;
 using diagonalnode_double = diagonal_double::node_type;
 
-// TODO Functions
+////////////////////////////////////////////////////////////////////////////////
+// Functions
 
-// Unary expr
-// using mul_scalar_vector_float = ten::binary_expr<scalarnode_float,
-// vectornode_float,
-// ten::functional::binary_func<ten::binary_operation::mul>::template func>;
+template <typename T> auto min_py(T tensor) {
+   return ten::unary_expr<typename T::node_type, ten::functional::min>(
+       tensor.node());
+}
+
+template <typename T> auto max_py(T tensor) {
+   return ten::unary_expr<typename T::node_type, ten::functional::max>(
+       tensor.node());
+}
+
+// TODO Unary expr
+using expr_min_vector_float =
+    ten::unary_expr<vectornode_float, ten::functional::min>;
+using expr_min_vector_double =
+    ten::unary_expr<vectornode_double, ten::functional::min>;
+using expr_min_matrix_float =
+    ten::unary_expr<matrixnode_float, ten::functional::min>;
+using expr_min_matrix_double =
+    ten::unary_expr<matrixnode_double, ten::functional::min>;
+using expr_min_tensor3_float =
+    ten::unary_expr<tensor3node_float, ten::functional::min>;
+using expr_min_tensor3_double =
+    ten::unary_expr<tensor3node_double, ten::functional::min>;
+using expr_min_tensor4_float =
+    ten::unary_expr<tensor4node_float, ten::functional::min>;
+using expr_min_tensor4_double =
+    ten::unary_expr<tensor4node_double, ten::functional::min>;
+using expr_min_tensor5_float =
+    ten::unary_expr<tensor5node_float, ten::functional::min>;
+using expr_min_tensor5_double =
+    ten::unary_expr<tensor5node_double, ten::functional::min>;
+
+using expr_max_vector_float =
+    ten::unary_expr<vectornode_float, ten::functional::max>;
+using expr_max_vector_double =
+    ten::unary_expr<vectornode_double, ten::functional::max>;
+using expr_max_matrix_float =
+    ten::unary_expr<matrixnode_float, ten::functional::max>;
+using expr_max_matrix_double =
+    ten::unary_expr<matrixnode_double, ten::functional::max>;
+using expr_max_tensor3_float =
+    ten::unary_expr<tensor3node_float, ten::functional::max>;
+using expr_max_tensor3_double =
+    ten::unary_expr<tensor3node_double, ten::functional::max>;
+using expr_max_tensor4_float =
+    ten::unary_expr<tensor4node_float, ten::functional::max>;
+using expr_max_tensor4_double =
+    ten::unary_expr<tensor4node_double, ten::functional::max>;
+using expr_max_tensor5_float =
+    ten::unary_expr<tensor5node_float, ten::functional::max>;
+using expr_max_tensor5_double =
+    ten::unary_expr<tensor5node_double, ten::functional::max>;
 
 // Binary expr
 using add_vector_float = ten::binary_expr<
@@ -587,12 +637,74 @@ PYBIND11_MODULE(tenseurbackend, m) {
        .value("hermitian", ten::storage_format::hermitian);
 
    // Unary expr
-   /*py::class_<mul_scalar_vector_float>(m, "mul_scalar_vector_float")
-      .def("value", &mul_scalar_vector_float::value)
-      .def("eval", ::&mul_scalar_vector_float::eval);
-   */
+
+   // ten::min
+   py::class_<expr_min_vector_float>(m, "expr_min_vector_float")
+       .def("value", &expr_min_vector_float::value)
+       .def("eval", &expr_min_vector_float::eval);
+   py::class_<expr_min_vector_double>(m, "expr_min_vector_double")
+       .def("value", &expr_min_vector_double::value)
+       .def("eval", &expr_min_vector_double::eval);
+   py::class_<expr_min_matrix_float>(m, "expr_min_matrix_float")
+       .def("value", &expr_min_matrix_float::value)
+       .def("eval", &expr_min_matrix_float::eval);
+   py::class_<expr_min_matrix_double>(m, "expr_min_matrix_double")
+       .def("value", &expr_min_matrix_double::value)
+       .def("eval", &expr_min_matrix_double::eval);
+   py::class_<expr_min_tensor3_float>(m, "expr_min_tensor3_float")
+       .def("value", &expr_min_tensor3_float::value)
+       .def("eval", &expr_min_tensor3_float::eval);
+   py::class_<expr_min_tensor3_double>(m, "expr_min_tensor3_double")
+       .def("value", &expr_min_tensor3_double::value)
+       .def("eval", &expr_min_tensor3_double::eval);
+   py::class_<expr_min_tensor4_float>(m, "expr_min_tensor4_float")
+       .def("value", &expr_min_tensor4_float::value)
+       .def("eval", &expr_min_tensor4_float::eval);
+   py::class_<expr_min_tensor4_double>(m, "expr_min_tensor4_double")
+       .def("value", &expr_min_tensor4_double::value)
+       .def("eval", &expr_min_tensor4_double::eval);
+   py::class_<expr_min_tensor5_float>(m, "expr_min_tensor5_float")
+       .def("value", &expr_min_tensor5_float::value)
+       .def("eval", &expr_min_tensor5_float::eval);
+   py::class_<expr_min_tensor5_double>(m, "expr_min_tensor5_double")
+       .def("value", &expr_min_tensor5_double::value)
+       .def("eval", &expr_min_tensor5_double::eval);
+
+   // ten::max
+   py::class_<expr_max_vector_float>(m, "expr_max_vector_float")
+       .def("value", &expr_max_vector_float::value)
+       .def("eval", &expr_max_vector_float::eval);
+   py::class_<expr_max_vector_double>(m, "expr_max_vector_double")
+       .def("value", &expr_max_vector_double::value)
+       .def("eval", &expr_max_vector_double::eval);
+   py::class_<expr_max_matrix_float>(m, "expr_max_matrix_float")
+       .def("value", &expr_max_matrix_float::value)
+       .def("eval", &expr_max_matrix_float::eval);
+   py::class_<expr_max_matrix_double>(m, "expr_max_matrix_double")
+       .def("value", &expr_max_matrix_double::value)
+       .def("eval", &expr_max_matrix_double::eval);
+   py::class_<expr_max_tensor3_float>(m, "expr_max_tensor3_float")
+       .def("value", &expr_max_tensor3_float::value)
+       .def("eval", &expr_max_tensor3_float::eval);
+   py::class_<expr_max_tensor3_double>(m, "expr_max_tensor3_double")
+       .def("value", &expr_max_tensor3_double::value)
+       .def("eval", &expr_max_tensor3_double::eval);
+   py::class_<expr_max_tensor4_float>(m, "expr_max_tensor4_float")
+       .def("value", &expr_max_tensor4_float::value)
+       .def("eval", &expr_max_tensor4_float::eval);
+   py::class_<expr_max_tensor4_double>(m, "expr_max_tensor4_double")
+       .def("value", &expr_max_tensor4_double::value)
+       .def("eval", &expr_max_tensor4_double::eval);
+   py::class_<expr_max_tensor5_float>(m, "expr_max_tensor5_float")
+       .def("value", &expr_max_tensor5_float::value)
+       .def("eval", &expr_max_tensor5_float::eval);
+   py::class_<expr_max_tensor5_double>(m, "expr_max_tensor5_double")
+       .def("value", &expr_max_tensor5_double::value)
+       .def("eval", &expr_max_tensor5_double::eval);
 
    // Binar expr
+
+   // add, sub, mul, div
    py::class_<add_vector_float>(m, "add_vector_float")
        .def("value", &add_vector_float::value)
        .def("eval", &add_vector_float::eval);
@@ -1437,6 +1549,32 @@ PYBIND11_MODULE(tenseurbackend, m) {
    m.def("save_mtx_matrix_float", &ten::save_mtx<matrix_float>);
    m.def("save_mtx_matrix_double", &ten::save_mtx<matrix_double>);
 
+   /////////////////////////////////////////////////////////////////////////////
+   // Functions
+   // min
+   m.def("min_vector_float", &min_py<vector_float>);
+   m.def("min_vector_double", &min_py<vector_double>);
+   m.def("min_matrix_float", &min_py<matrix_float>);
+   m.def("min_matrix_double", &min_py<matrix_double>);
+   m.def("min_tensor3_float", &min_py<tensor3_float>);
+   m.def("min_tensor3_double", &min_py<tensor3_double>);
+   m.def("min_tensor4_float", &min_py<tensor4_float>);
+   m.def("min_tensor4_double", &min_py<tensor4_double>);
+   m.def("min_tensor5_float", &min_py<tensor5_float>);
+   m.def("min_tensor5_double", &min_py<tensor5_double>);
+   // max
+   m.def("max_vector_float", &max_py<vector_float>);
+   m.def("max_vector_double", &max_py<vector_double>);
+   m.def("max_matrix_float", &max_py<matrix_float>);
+   m.def("max_matrix_double", &max_py<matrix_double>);
+   m.def("max_tensor3_float", &max_py<tensor3_float>);
+   m.def("max_tensor3_double", &max_py<tensor3_double>);
+   m.def("max_tensor4_float", &max_py<tensor4_float>);
+   m.def("max_tensor4_double", &max_py<tensor4_double>);
+   m.def("max_tensor5_float", &max_py<tensor5_float>);
+   m.def("max_tensor5_double", &max_py<tensor5_double>);
+
+   /////////////////////////////////////////////////////////////////////////////
    // learning
    py::class_<histogram_options>(m, "histogram_options")
        .def(py::init<bool, bool, size_t>());
