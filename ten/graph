@@ -4,5 +4,6 @@
 #include <ten/graphs/types.hxx>
 #include <ten/graphs/gmatrix.hxx>
 #include <ten/graphs/glist.hxx>
+#include <ten/graphs/gweighted.hxx>
 
 #endif
