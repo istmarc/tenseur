@@ -2,7 +2,7 @@
 #define TENSEUR_GRAPHS_GMATRIX
 
 #include <ten/tensor>
-#include <ten/graph_theory/types.hxx>
+#include <ten/graphs/types.hxx>
 
 namespace ten{
 namespace graph{
