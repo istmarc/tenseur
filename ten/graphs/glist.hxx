@@ -6,6 +6,9 @@
 #include <ten/graphs/types.hxx>
 
 #include <map>
+#include <queue>
+#include <stack>
+#include <unordered_set>
 
 namespace ten {
 namespace graph {
@@ -41,12 +44,50 @@ class glist {
    auto matrix() -> ten::matrix<float> {
       size_t n = _graph.size();
       ten::matrix<float> m = ten::zeros<ten::matrix<float>>({n, n});
-      for (auto const& [src, value]: _graph) {
+      for (auto const &[src, value] : _graph) {
          for (auto dest : value) {
             m(src, dest) = 1.;
          }
       }
       return m;
+   }
+
+   void dfs(const size_t u, std::function<void(const size_t)> f) {
+      std::stack<size_t> stack;
+      stack.push(u);
+      std::unordered_set<size_t> visited;
+      visited.insert(u);
+
+      while (!stack.empty()) {
+         auto v = stack.top();
+         stack.pop();
+         f(v);
+         for (auto n : _graph[v]) {
+            if (visited.find(n) == visited.end()) {
+               visited.insert(n);
+               stack.push(n);
+            }
+         }
+      }
+   }
+
+   void bfs(size_t u, std::function<void(const size_t)> f) {
+      std::queue<size_t> queue;
+      queue.push(u);
+      std::unordered_set<size_t> visited;
+      visited.insert(u);
+
+      while (!queue.empty()) {
+         auto v = queue.front();
+         queue.pop();
+         f(v);
+         for (auto n : _graph[v]) {
+            if (visited.find(n) == visited.end()) {
+               visited.insert(n);
+               queue.push(n);
+            }
+         }
+      }
    }
 };
 
