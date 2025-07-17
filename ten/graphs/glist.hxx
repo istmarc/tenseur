@@ -11,6 +11,7 @@ namespace ten {
 namespace graph {
 
 /// Grpah as an unweighted adjacency list
+/// Support vertices from 0...n
 class glist {
  private:
    ten::graph::graph_type _type;
@@ -39,10 +40,10 @@ class glist {
    // Get the adjacency matri
    auto matrix() -> ten::matrix<float> {
       size_t n = _graph.size();
-      ten::matrix<float> m({n, n});
-      for (size_t i = 0; i < n; i++) {
-         for (size_t j = 0; j < n; j++) {
-            m(i, j) = has_edge(i, j);
+      ten::matrix<float> m = ten::zeros<ten::matrix<float>>({n, n});
+      for (auto const& [src, value]: _graph) {
+         for (auto dest : value) {
+            m(src, dest) = 1.;
          }
       }
       return m;
