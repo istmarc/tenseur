@@ -1,3 +1,4 @@
+#include <functional>
 #include <ten/graph>
 #include <ten/tensor>
 
@@ -16,6 +17,13 @@ int main() {
       }
       std::cout << "Adjacency matrix" << std::endl;
       std::cout << g.matrix() << std::endl;
+
+      std::cout << "DFS" << std::endl;
+      std::function<void(const size_t u)> f = [](const size_t u){std::cout << u << std::endl;};
+      g.dfs(0, f);
+
+      std::cout << "BFS" << std::endl;
+      g.bfs(0, f);
    }
 
    {
