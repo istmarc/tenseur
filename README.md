@@ -29,7 +29,7 @@ A header only C++20 tensor library [WIP]
 - CMake
 - BLAS library (OpenBlas or BLIS)
 
-## Example
+## Examples
 
 - Multiply and add
 
@@ -59,6 +59,21 @@ int main() {
 
    std::cout << q << std::endl;
    std::cout << r << std::endl;
+}
+```
+
+- Save and load binary data
+
+```c++
+#include <ten/tensor>
+
+int main() {
+   auto x = ten::range<ten::matrix<float>>({3, 4});
+   ten::save(x, "matrix.ten");
+   auto y = ten::load<ten::matrix<float>>("matrix.ten").value();
+   std::cout << "shape = " << y.shape() << std::endl;
+   std::cout << "stride = " << y.strides() << std::endl;
+   std::cout << "data = \n" << y << std::endl;
 }
 ```
 
