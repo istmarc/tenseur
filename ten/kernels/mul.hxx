@@ -53,7 +53,6 @@ void mul_add(const A &a, const B &b, C &c, const T& alpha, const T& beta)
    size_t k = a.dim(1);
    size_t n = b.dim(1);
    using blas::transop;
-   using T = typename A::value_type;
    const transop transa = (a.is_transposed() ? transop::trans : transop::no);
    const transop transb = (b.is_transposed() ? transop::trans : transop::no);
    const size_t lda = (transa == transop::no ? m : k);
