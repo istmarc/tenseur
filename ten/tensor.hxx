@@ -2095,15 +2095,28 @@ template <SDiagonal T> auto dense(T x) -> decltype(auto) {
 // Expressions
 
 // TODO Gemm alpha * X + beta * Y
-/*template<XExpr XExprType, YExpr YExprType, CExpr C, class T = float>
-void gemm(const T alpha, XExprType&& X, YExprType&& Y, CExpr C, const T beta) {
+template <Expr XExprType, Expr YExprType, Tensor C,
+          class T = typename C::value_type>
+// requires(::ten::is_expr<XExpr>::value && ::ten::is_expr<YExpr>::value &&
+// ::ten::is_tensor<C>::value)
+void gemm(const T alpha, XExprType &&x, YExprType &&y, const T beta, C &c) {
    using x_expr_type = std::remove_cvref_t<XExprType>;
    using y_expr_type = std::remove_cvref_t<YExprType>;
-   auto expr = binary_expr<typename x_expr_type::node_type,
-      typename y_expr_type::node_type, ::ten::functional::gemm>(
-      X.node(), Y.node(), alpha, beta);
-   expr.eval();
-}*/
+
+   if constexpr (::ten::is_tensor<x_expr_type>::value &&
+                 ::ten::is_tensor<y_expr_type>::value) {
+      auto xptr = x.node().get();
+      auto yptr = y.node().get();
+      auto cptr = c.node().get();
+      ::ten::kernels::mul_add(*xptr, *yptr, *cptr, alpha, beta);
+   }
+
+   /*
+   if (ten::is_tensor<x_expr_type> && !ten::is_tensor<y_expr_type>) {
+   }
+   if (!ten::is_tensor<x_expr_type> && ten::is_tensor<y_expr_type>) {
+   }*/
+}
 
 // TODO axpy
 
