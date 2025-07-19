@@ -13,12 +13,12 @@
 namespace ten {
 namespace graph {
 
-/// Grpah as an unweighted adjacency list
-/// Support vertices from 0...n
+/// Graph as an unweighted adjacency list
+template<class T>
 class glist {
  private:
    ten::graph::graph_type _type;
-   std::map<size_t, std::vector<size_t>> _graph;
+   std::map<T, std::vector<T>> _graph;
 
  public:
    glist(ten::graph::graph_type graph_type = ten::graph::graph_type::undirected)
@@ -26,36 +26,42 @@ class glist {
 
    bool empty() { return _graph.empty(); }
 
-   void add_vertex(size_t vertex) { _graph[vertex] = std::vector<size_t>(); }
+   void add_vertex(const T& vertex) { _graph[vertex] = std::vector<T>(); }
 
-   void add_edge(size_t src, size_t dest) {
+   void add_edge(const T& src, const T& dest) {
       _graph[src].push_back(dest);
       if (_type == graph_type::undirected) {
          _graph[dest].push_back(src);
       }
    }
 
-   bool has_edge(size_t src, size_t dest) {
+   bool has_edge(const T& src, const T& dest) {
       return std::find(_graph[src].begin(), _graph[src].end(), dest) !=
              _graph[src].end();
    }
 
-   // Get the adjacency matri
+   // Get the adjacency matrix
    auto matrix() -> ten::matrix<float> {
       size_t n = _graph.size();
       ten::matrix<float> m = ten::zeros<ten::matrix<float>>({n, n});
+      std::map<T, size_t> map;
+      size_t i = 0;
+      for (auto it = _graph.begin(); it != _graph.end(); it++) {
+         map[it->first] = i;
+         i++;
+      }
       for (auto const &[src, value] : _graph) {
          for (auto dest : value) {
-            m(src, dest) = 1.;
+            m(map[src], map[dest]) = 1.;
          }
       }
       return m;
    }
 
-   void dfs(const size_t u, std::function<void(const size_t)> f) {
-      std::stack<size_t> stack;
+   void dfs(const T& u, std::function<void(const T&)> f) {
+      std::stack<T> stack;
       stack.push(u);
-      std::unordered_set<size_t> visited;
+      std::unordered_set<T> visited;
       visited.insert(u);
 
       while (!stack.empty()) {
@@ -71,10 +77,10 @@ class glist {
       }
    }
 
-   void bfs(size_t u, std::function<void(const size_t)> f) {
-      std::queue<size_t> queue;
+   void bfs(const T& u, std::function<void(const T&)> f) {
+      std::queue<T> queue;
       queue.push(u);
-      std::unordered_set<size_t> visited;
+      std::unordered_set<T> visited;
       visited.insert(u);
 
       while (!queue.empty()) {
