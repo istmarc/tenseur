@@ -20,16 +20,16 @@ enum class binary_operation;
 namespace ten::functional {
 ////////////////////////////////////////////////////////////////////////////////
 // Functions types
-template <bool __params = false, bool __with_shape = false> struct func {};
+template <bool params = false, bool with_shape = false> struct func {};
 
-template <class __func> struct has_params {
-   static constexpr bool value = std::is_base_of_v<func<true, true>, __func> ||
-                                 std::is_base_of_v<func<true, false>, __func>;
+template <class Func> struct has_params {
+   static constexpr bool value = std::is_base_of_v<func<true, true>, Func> ||
+                                 std::is_base_of_v<func<true, false>, Func>;
 };
 
-template <class __func> struct has_shape {
-   static constexpr bool value = std::is_base_of_v<func<true, true>, __func> ||
-                                 std::is_base_of_v<func<false, true>, __func>;
+template <class Func> struct has_shape {
+   static constexpr bool value = std::is_base_of_v<func<true, true>, Func> ||
+                                 std::is_base_of_v<func<false, true>, Func>;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -725,7 +725,27 @@ struct mul<__x, __y, __z> {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Other __bL__aS functions
+/// Other BLAS functions
+
+// C <- alpha * X * Y + beta * C
+/*template<class A, class B, class C, class D = typename ::ten::functional::details::mul_result<A, B>::type>
+class gemm : ::ten::functional::func<true> {
+private:
+   T _alpha;
+   T _beta;
+public:
+   gemm(const T alpha, const T beta) : _alpha(alpha), _beta(beta) {}
+
+   using output_type = C;
+
+   static constexpr typename C::shape_type 
+   output_shape(const typename A::shape_type& left, const typename B::shape_type& right) {
+   }
+
+   void operator()(const A& a, const B& b, C& result) {
+      ::ten::kernels::mul_add(a, b, result, alpha, beta);
+   }
+};*/
 
 /// axpy2
 /// __a <- alpha * __b + __a

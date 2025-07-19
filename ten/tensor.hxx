@@ -41,10 +41,10 @@ template <typename Derived> class expr {
 };
 
 // Add two expr
-template <Expr left_expr, Expr right_expr>
-auto operator+(left_expr &&left, right_expr &&right) {
-   using L = std::remove_cvref_t<left_expr>;
-   using R = std::remove_cvref_t<right_expr>;
+template <Expr LeftExpr, Expr RightExpr>
+auto operator+(LeftExpr &&left, RightExpr &&right) {
+   using L = std::remove_cvref_t<LeftExpr>;
+   using R = std::remove_cvref_t<RightExpr>;
    return ::ten::binary_expr<
        typename L::node_type, typename R::node_type,
        ::ten::functional::binary_func<::ten::binary_operation::add>::func>(
@@ -64,10 +64,10 @@ auto operator+(E &&expr, T &&scalar) {
 }
 
 // Substract two expressions
-template <Expr left_expr, Expr right_expr>
-auto operator-(left_expr &&left, right_expr &&right) {
-   using L = std::remove_cvref_t<left_expr>;
-   using R = std::remove_cvref_t<right_expr>;
+template <Expr LeftExpr, Expr RightExpr>
+auto operator-(LeftExpr &&left, RightExpr &&right) {
+   using L = std::remove_cvref_t<LeftExpr>;
+   using R = std::remove_cvref_t<RightExpr>;
    return ::ten::binary_expr<
        typename L::node_type, typename R::node_type,
        ::ten::functional::binary_func<::ten::binary_operation::sub>::func>(
@@ -87,10 +87,10 @@ template <Expr E, typename T> auto operator-(E &&expr, T &&scalar) {
 }
 
 // Multiply two expressions
-template <Expr left_expr, Expr right_expr>
-auto operator*(left_expr &&left, right_expr &&right) {
-   using L = std::remove_cvref_t<left_expr>;
-   using R = std::remove_cvref_t<right_expr>;
+template <Expr LeftExpr, Expr RightExpr>
+auto operator*(LeftExpr &&left, RightExpr &&right) {
+   using L = std::remove_cvref_t<LeftExpr>;
+   using R = std::remove_cvref_t<RightExpr>;
    return ::ten::binary_expr<
        typename L::node_type, typename R::node_type,
        ::ten::functional::mul<typename L::node_type,
@@ -110,10 +110,10 @@ auto operator*(E &&expr, T &&scalar) {
 }*/
 
 // Divide two expressions
-template <Expr left_expr, Expr right_expr>
-auto operator/(left_expr &&left, right_expr &&right) {
-   using L = std::remove_cvref_t<left_expr>;
-   using R = std::remove_cvref_t<right_expr>;
+template <Expr LeftExpr, Expr RightExpr>
+auto operator/(LeftExpr &&left, RightExpr &&right) {
+   using L = std::remove_cvref_t<LeftExpr>;
+   using R = std::remove_cvref_t<RightExpr>;
    return ::ten::binary_expr<
        typename L::node_type, typename R::node_type,
        ::ten::functional::binary_func<::ten::binary_operation::div>::func>(
@@ -153,48 +153,48 @@ template <class T> struct scalar_operations {
 
 /// \class scalar_node
 /// Node of scalar type
-template <typename __t>
-class scalar_node : public scalar_operations<scalar_node<__t>> {
+template <typename T>
+class scalar_node : public scalar_operations<scalar_node<T>> {
  public:
-   using scalar_type = scalar<__t>;
-   using value_type = __t;
+   using scalar_type = scalar<T>;
+   using value_type = T;
    // for std::conditional_t
    using tensor_type = void;
    using shape_type = shape<1>;
 
  private:
-   __t _value;
+   T _value;
 
  public:
-   scalar_node() : _value(__t()) {}
+   scalar_node() : _value(T()) {}
 
-   explicit scalar_node(const __t &value) : _value(value) {}
-   // explicit scalar_node(__t &&value) : _value(std::move(value)) {}
+   explicit scalar_node(const T &value) : _value(value) {}
+   // explicit scalar_node(T &&value) : _value(std::move(value)) {}
 
-   const __t &value() const { return _value; }
+   const T &value() const { return _value; }
 
-   scalar_node &operator=(const __t &value) {
+   scalar_node &operator=(const T &value) {
       _value = value;
       return *this;
    }
 };
 
 /// \class scalar
-/// Hold a single value of type __t.
-template <typename __t>
-class scalar : public expr<scalar<__t>>, public scalar_operations<scalar<__t>> {
+/// Hold a single value of type T.
+template <typename T>
+class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
  public:
-   using node_type = scalar_node<__t>;
-   using value_type = __t;
+   using node_type = scalar_node<T>;
+   using value_type = T;
 
  private:
    std::shared_ptr<node_type> _node = nullptr;
 
  public:
-   explicit scalar(const __t &value)
+   explicit scalar(const T &value)
        : _node(std::make_shared<node_type>(value)) {}
 
-   // explicit scalar(__t value)
+   // explicit scalar(T value)
    //     : _node(std::make_shared<node_type>(std::move(value))) {}
 
    explicit scalar(std::shared_ptr<node_type> node) : _node(node) {}
@@ -208,18 +208,18 @@ class scalar : public expr<scalar<__t>>, public scalar_operations<scalar<__t>> {
    }
 
    /// Get the value
-   const __t &value() const { return _node.get()->value(); }
+   const T &value() const { return _node.get()->value(); }
 
    // Returns the shared ptr to the node
    [[nodiscard]] std::shared_ptr<node_type> node() const { return _node; }
 
    // ostream operator
-   template <class __r>
-   friend std::ostream &operator<<(std::ostream &, const scalar<__r> &);
+   template <class Type>
+   friend std::ostream &operator<<(std::ostream &, const scalar<Type> &);
 };
 
-template <class __t>
-std::ostream &operator<<(std::ostream &os, const scalar<__t> &s) {
+template <class T>
+std::ostream &operator<<(std::ostream &os, const scalar<T> &s) {
    os << s.value();
    return os;
 }
@@ -2090,6 +2090,22 @@ template <SDiagonal T> auto dense(T x) -> decltype(auto) {
    }
    return y;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Expressions
+
+// TODO Gemm alpha * X + beta * Y
+/*template<XExpr XExprType, YExpr YExprType, CExpr C, class T = float>
+void gemm(const T alpha, XExprType&& X, YExprType&& Y, CExpr C, const T beta) {
+   using x_expr_type = std::remove_cvref_t<XExprType>;
+   using y_expr_type = std::remove_cvref_t<YExprType>;
+   auto expr = binary_expr<typename x_expr_type::node_type,
+      typename y_expr_type::node_type, ::ten::functional::gemm>(
+      X.node(), Y.node(), alpha, beta);
+   expr.eval();
+}*/
+
+// TODO axpy
 
 ////////////////////////////////////////////////////////////////////////////////
 /// functions
