@@ -5,7 +5,7 @@
 int main() {
 
    {
-      auto g = ten::graph::glist();
+      auto g = ten::graph::glist<size_t>();
       size_t n = 5;
       for (size_t i = 0; i < n; i++) {
          g.add_vertex(i);
@@ -19,7 +19,7 @@ int main() {
       std::cout << g.matrix() << std::endl;
 
       std::cout << "DFS" << std::endl;
-      std::function<void(const size_t u)> f = [](const size_t u){std::cout << u << std::endl;};
+      std::function<void(const size_t& u)> f = [](const size_t& u){std::cout << u << std::endl;};
       g.dfs(0, f);
 
       std::cout << "BFS" << std::endl;
@@ -27,7 +27,7 @@ int main() {
    }
 
    {
-      auto g = ten::graph::gweighted();
+      auto g = ten::graph::gweighted<size_t, float>();
       size_t n = 5;
       for (size_t i = 0; i < n; i++) {
          g.add_vertex(i);
