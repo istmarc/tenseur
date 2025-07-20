@@ -2094,14 +2094,12 @@ template <SDiagonal T> auto dense(T x) -> decltype(auto) {
 ////////////////////////////////////////////////////////////////////////////////
 // Expressions
 
-// TODO Gemm alpha * X + beta * Y
-template <Expr XExprType, Expr YExprType, Tensor C,
-          class T = typename C::value_type>
-// requires(::ten::is_expr<XExpr>::value && ::ten::is_expr<YExpr>::value &&
-// ::ten::is_tensor<C>::value)
-void gemm(const T alpha, XExprType &&x, YExprType &&y, const T beta, C &c) {
-   using x_expr_type = std::remove_cvref_t<XExprType>;
-   using y_expr_type = std::remove_cvref_t<YExprType>;
+// Gemm
+// C <- alpha * X * Y + beta * C
+template <Expr X, Expr Y, Tensor C, class T = typename C::value_type>
+void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
+   using x_expr_type = std::remove_cvref_t<X>;
+   using y_expr_type = std::remove_cvref_t<Y>;
 
    if constexpr (::ten::is_tensor<x_expr_type>::value &&
                  ::ten::is_tensor<y_expr_type>::value) {
@@ -2111,11 +2109,29 @@ void gemm(const T alpha, XExprType &&x, YExprType &&y, const T beta, C &c) {
       ::ten::kernels::mul_add(*xptr, *yptr, *cptr, alpha, beta);
    }
 
-   /*
-   if (ten::is_tensor<x_expr_type> && !ten::is_tensor<y_expr_type>) {
+   if constexpr (::ten::is_tensor<x_expr_type>::value &&
+                 !::ten::is_tensor<y_expr_type>::value) {
+      auto xptr = x.node().get();
+      auto yptr = y.eval().node().get();
+      auto cptr = c.node().get();
+      ::ten::kernels::mul_add(*xptr, *yptr, *cptr, alpha, beta);
    }
-   if (!ten::is_tensor<x_expr_type> && ten::is_tensor<y_expr_type>) {
-   }*/
+
+   if constexpr (!::ten::is_tensor<x_expr_type>::value &&
+                 ::ten::is_tensor<y_expr_type>::value) {
+      auto xptr = x.eval().node().get();
+      auto yptr = y.node().get();
+      auto cptr = c.node().get();
+      ::ten::kernels::mul_add(*xptr, *yptr, *cptr, alpha, beta);
+   }
+
+   if constexpr (!::ten::is_tensor<x_expr_type>::value &&
+                 !::ten::is_tensor<y_expr_type>::value) {
+      auto xptr = x.eval().node().get();
+      auto yptr = y.eval().node().get();
+      auto cptr = c.node().get();
+      ::ten::kernels::mul_add(*xptr, *yptr, *cptr, alpha, beta);
+   }
 }
 
 // TODO axpy
