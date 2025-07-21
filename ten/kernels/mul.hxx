@@ -25,8 +25,8 @@ void mul(const A &a, const B &b, C &c)
 // C <- A * B
 template <class A, class B, class C>
 void mul(const A &a, const B &b, C &c)
-   requires ::ten::is_matrix_node<A>::value && ::ten::is_matrix_node<B>::value &&
-            ::ten::is_matrix_node<C>::value
+   requires ::ten::is_matrix_node<A>::value && ::ten::is_matrix_node<B>::value
+            && ::ten::is_matrix_node<C>::value
 {
    size_t m = a.dim(0);
    size_t k = a.dim(1);
@@ -41,13 +41,12 @@ void mul(const A &a, const B &b, C &c)
               T(0.), c.data(), m);
 }
 
-
 // Multiply and add two dense matrices
 // C <- alpha * A * B + beta * C
 template <class A, class B, class C, class T>
-void mul_add(const A &a, const B &b, C &c, const T& alpha, const T& beta)
-   requires ::ten::is_matrix_node<A>::value && ::ten::is_matrix_node<B>::value &&
-            ::ten::is_matrix_node<C>::value
+void mul_add(const A &a, const B &b, C &c, const T &alpha, const T &beta)
+   requires ::ten::is_matrix_node<A>::value && ::ten::is_matrix_node<B>::value
+            && ::ten::is_matrix_node<C>::value
 {
    size_t m = a.dim(0);
    size_t k = a.dim(1);
@@ -59,6 +58,13 @@ void mul_add(const A &a, const B &b, C &c, const T& alpha, const T& beta)
    const size_t ldb = (transa == transop::no ? k : n);
    blas::gemm(transa, transb, m, n, k, alpha, a.data(), lda, b.data(), ldb,
               beta, c.data(), m);
+}
+
+template <class X, class Y, class T>
+   requires(::ten::is_vector_node<X>::value && ::ten::is_vector_node<Y>::value)
+void axpy(const T a, const X &x, Y &y) {
+   size_t n = x.size();
+   ::ten::kernels::blas::axpy(n, a, x.data(), 1, y.data(), 1);
 }
 
 } // namespace ten::kernels

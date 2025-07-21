@@ -2134,7 +2134,24 @@ void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
    }
 }
 
-// TODO axpy
+// axpy
+// y <- a*x + y
+template <Expr X, Tensor Y, typename T>
+   requires(std::is_same_v<T, typename Y::value_type>)
+void axpy(const T a, X &&x, Y &y) {
+   using x_expr_type = std::remove_cvref_t<X>;
+
+   if constexpr (::ten::is_tensor<x_expr_type>::value) {
+      auto xptr = x.node().get();
+      auto yptr = y.node().get();
+      ::ten::kernels::axpy(a, *xptr, *yptr);
+   }
+   if constexpr (!::ten::is_tensor<x_expr_type>::value) {
+      auto xptr = x.eval().node().get();
+      auto yptr = y.node().get();
+      ::ten::kernels::axpy(a, *xptr, *yptr);
+   }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// functions
