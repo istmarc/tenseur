@@ -5,6 +5,7 @@
 #include <ten/tensor.hxx>
 
 namespace ten {
+namespace linalg {
 
 /// QR factorization
 /// Factorize a matrix A = QR
@@ -53,7 +54,7 @@ template <class __t = float> class qr {
 
    auto r() const { return _r; }
 
-   auto factors() const {return std::make_tuple(_q, _r);}
+   auto factors() const { return std::make_tuple(_q, _r); }
 };
 
 /// LU factorization
@@ -131,7 +132,7 @@ template <class __t = float> class lu {
       return p;
    }
 
-   auto factors() const {  return std::make_tuple(p(), _l, _u);}
+   auto factors() const { return std::make_tuple(p(), _l, _u); }
 };
 
 // Cholesky factorization
@@ -179,7 +180,7 @@ template <class __t = float> class cholesky {
 
    auto u() const { return _u; }
 
-   auto factors() const { return std::make_tuple(_l, _u);}
+   auto factors() const { return std::make_tuple(_l, _u); }
 };
 
 /// SVD factorization
@@ -219,8 +220,9 @@ template <class __t = float> class svd {
 
    auto vt() const { return _vt; }
 
-   auto factors() const {return std::make_tuple(_u, _sigma, _vt);}
+   auto factors() const { return std::make_tuple(_u, _sigma, _vt); }
 };
+} // namespace linalg
 } // namespace ten
 
 #endif

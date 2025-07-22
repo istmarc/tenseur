@@ -6,5 +6,6 @@
 // Linear Algebra
 #include <ten/linear_algebra/linear_algebra.hxx>
 #include <ten/linear_algebra/factorization.hxx>
+#include <ten/linear_algebra/least_squares.hxx>
 
 #endif

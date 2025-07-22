@@ -3,10 +3,11 @@
 
 #include <ten/kernels/blas_api.hxx>
 #include <ten/kernels/lapack_api.hxx>
-#include <ten/types.hxx>
 #include <ten/linear_algebra/factorization.hxx>
+#include <ten/types.hxx>
 
 namespace ten {
+namespace linalg {
 
 /// Vector norms
 enum class vector_norm { l2 = 1, l1 = 2, linf, lp };
@@ -166,9 +167,9 @@ M inv(const M &a) {
 }
 
 // Determinant
-template<class M>
+template <class M>
    requires(ten::is_matrix<M>::value)
-typename M::value_type det(const M& m) {
+typename M::value_type det(const M &m) {
    using value_type = M::value_type;
 
    ten::lu<value_type> lufact;
@@ -180,7 +181,7 @@ typename M::value_type det(const M& m) {
    size_t n = 0;
    // Find the determinant of p
    for (size_t i = 0; i < m.dim(0); i++) {
-      if (p(i,i) == 0.) {
+      if (p(i, i) == 0.) {
          n += 1;
       }
    }
@@ -190,16 +191,16 @@ typename M::value_type det(const M& m) {
    std::cout << "det P  = " << d << std::endl;
    // Multiply by det(l) and det(u)
    for (size_t i = 0; i < m.dim(0); i++) {
-      d *= l(i,i) * u(i,i);
+      d *= l(i, i) * u(i, i);
    }
    return d;
 }
 
 // TODO pinv
 
-
 // TODO Power
 
+} // namespace linalg
 } // namespace ten
 
 #endif
