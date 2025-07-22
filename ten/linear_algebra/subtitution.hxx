@@ -3,9 +3,22 @@
 
 #include <ten/tensor>
 
-namespace ten {
+namespace ten::linalg {
 
-namespace linalg {
+template <class M, class V>
+   requires(::ten::is_matrix<M>::value && ::ten::is_vector<V>::value)
+void forward_subtitution(const M &L, const V &y, V &x) {
+   using T = typename V::value_type;
+   size_t n = x.size();
+   x[0] = y[0] / L(0, 0);
+   for (size_t i = 1; i < n; i++) {
+      T s = y[i];
+      for (size_t j = 0; j < i; j++) {
+         s -= L(i, j) * x[j];
+      }
+      x[i] = s / L(i, i);
+   }
+}
 
 template <class M, class V>
    requires(::ten::is_matrix<M>::value && ::ten::is_vector<V>::value)
@@ -22,8 +35,6 @@ void backward_subtitution(const M &U, const V &y, V &x) {
    }
 }
 
-} // namespace linalg
-
-} // namespace ten
+} // namespace ten::linalg
 
 #endif

@@ -6,8 +6,7 @@
 #include <ten/types.hxx>
 #include <type_traits>
 
-namespace ten {
-namespace linalg {
+namespace ten::linalg {
 
 enum class ls_method { qr = 1, lu = 2, svd = 3 };
 
@@ -31,37 +30,51 @@ template <class T = float> class linear_system {
 
    /// Solve Ax=b
    void solve(const matrix<T> &A, const vector<T> &b) {
-      size_t n = b.size();
-      _x = ten::vector<T>({n});
-
       if (_options._method == ls_method::qr) {
-         ::ten::qr<T> qr_fact;
+         ::ten::linalg::qr<T> qr_fact;
          qr_fact.factorize(A);
          auto [q, r] = qr_fact.factors();
-         ten::matrix<T> qt = ten::transpose(q);
-         ten::vector<T> z = qt * b;
-         ten::linalg::backward_subtitution(r, z, _x);
-      }
-      /* else if (_options.method == ls_method::lu) {
-         ::ten::lu<T> lu_fact;
+         ::ten::vector<T> z = ::ten::transposed(q) * b;
+         size_t n = b.size();
+         _x = ten::vector<T>({n});
+         ::ten::linalg::backward_subtitution(r, z, _x);
+      } else if (_options._method == ls_method::lu) {
+         ::ten::linalg::lu<T> lu_fact;
          lu_fact.factorize(A);
-         auto [l, u] = lu_fact.factors();
-      } else if (_options.method == ls_method::svd) {
-         ::ten::svd<T> svd_fact;
+         auto [P, L, U] = lu_fact.factors();
+         // Solve Lz = t using forward subtitution where z = Ux and t = P^T b
+         ::ten::vector<T> t = ::ten::transposed(P) * b;
+         size_t n = b.size();
+         auto z = ::ten::vector<T>({n});
+         ::ten::linalg::forward_subtitution(L, t, z);
+         // Solve Ux = z using backward subtitution
+         _x = ten::vector<T>({n});
+         ::ten::linalg::backward_subtitution(U, z, _x);
+      } else if (_options._method == ls_method::svd) {
+         ::ten::linalg::svd<T> svd_fact;
          svd_fact.factorize(A);
-         auto [s, v, d] = svd_fact.factors();
-      }*/
+         auto [U, Sigma, Vt] = svd_fact.factors();
+         size_t n = b.size();
+         // TODO Make invSigma = ten::fill<diagonal<T>>({n, n}, 1) / Sigma
+         ::ten::diagonal<T> invSigma({n, n});
+         for (size_t i = 0; i < n; i++) {
+            invSigma[i] = T(1) / Sigma[i];
+         }
+         // FIXME Make this work _x = ::ten::transposed(Vt) *
+         // ::ten::dense(invSigma) * ::ten::transposed(U) * b;
+         ::ten::matrix<T> m = ::ten::transposed(Vt) * ::ten::dense(invSigma) *
+                              ::ten::transposed(U);
+         _x = m * b;
+      }
    }
 
-   ::ten::vector<T> x() { return _x; }
+   ::ten::vector<T> solution() { return _x; }
 };
 
 /// TODO Linear least squares
 
 /// TODO Nonlinear least squares
 
-} // namespace linalg
-
-} // namespace ten
+} // namespace ten::linalg
 
 #endif

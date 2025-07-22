@@ -6,8 +6,7 @@
 #include <ten/linear_algebra/factorization.hxx>
 #include <ten/types.hxx>
 
-namespace ten {
-namespace linalg {
+namespace ten::linalg {
 
 /// Vector norms
 enum class vector_norm { l2 = 1, l1 = 2, linf, lp };
@@ -172,7 +171,7 @@ template <class M>
 typename M::value_type det(const M &m) {
    using value_type = M::value_type;
 
-   ten::lu<value_type> lufact;
+   ten::linalg::lu<value_type> lufact;
    lufact.factorize(m);
    auto [p, l, u] = lufact.factors();
 
@@ -200,7 +199,6 @@ typename M::value_type det(const M &m) {
 
 // TODO Power
 
-} // namespace linalg
-} // namespace ten
+} // namespace ten::linalg
 
 #endif

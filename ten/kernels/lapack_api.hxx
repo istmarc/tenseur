@@ -9,6 +9,7 @@
 #include <Accelerate/Accelerate.h>
 #else
 #include <lapacke.h>
+#include <cblas.h>
 #endif
 
 namespace ten::kernels::lapack {
