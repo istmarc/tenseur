@@ -83,6 +83,7 @@ template <size_type Dim, size_type... Rest> class shape;
 /// Storage order of a multidimentional array
 enum class storage_order { col_major, row_major };
 
+/// Default storage order
 static constexpr storage_order default_order = storage_order::col_major;
 
 // Stride
@@ -174,6 +175,16 @@ template <class Scalar, class Shape, storage_order order, class Storage,
 struct is_vector<ranked_tensor<Scalar, Shape, order, Storage, Allocator>> {
    static constexpr bool value = Shape::rank() == 1;
 };
+
+/// Column type
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+class ranked_column;
+
+/// Row type
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+class ranked_row;
 
 /// Matrix (dense)
 template <typename> struct is_matrix : std::false_type {};

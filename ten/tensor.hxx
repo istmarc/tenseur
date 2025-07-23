@@ -887,6 +887,22 @@ class ranked_tensor final
       return (*_node.get())(index...);
    }
 
+   // Get the column
+   [[nodiscard]] auto column(const size_t index) const -> decltype(auto)
+      requires(__shape::rank() == 2)
+   {
+      return ranked_column<__t, __shape, __order, __storage, __allocator>(
+          _node, index);
+   }
+
+   // Get the row
+   [[nodiscard]] auto row(const size_t index) -> decltype(auto)
+      requires(__shape::rank() == 2)
+   {
+      return ranked_row<__t, __shape, __order, __storage, __allocator>(_node,
+                                                                       index);
+   }
+
    // copy
    auto copy() const {
       auto format = _node.get()->format();
@@ -971,12 +987,14 @@ class ranked_tensor final
               const ranked_tensor<__type, __shape_type, __storage_order,
                                   __storage_type, __allocator_type> &t);
 
+   // Serialize friend function
    template <class T, class Shape, storage_order StorageOder, class Storage,
              class Allocator>
    friend bool
    serialize(std::ostream &os,
              ranked_tensor<T, Shape, StorageOder, Storage, Allocator> &t);
 
+   // Deserialize friend function
    template <class TensorType>
       requires(ten::is_tensor<TensorType>::value)
    friend TensorType deserialize(std::istream &is);
@@ -1050,8 +1068,6 @@ std::ostream &operator<<(
    }
    return os;
 }
-
-/// FIXME Print only some values
 
 /// Overload << operator for matrix
 template <class __t, class __shape, storage_order __order, class __storage,
@@ -1251,56 +1267,50 @@ std::optional<Tensor> load(const std::string &filename) {
    return t;
 }
 
-// vector<__t>
-template <class __t, storage_order __order = default_order,
-          class __storage = default_storage<__t, shape<::ten::dynamic>>,
-          class __allocator = typename details::allocator_type<__storage>::type>
+// vector<T>
+template <class T, storage_order Order = default_order,
+          class Storage = default_storage<T, ::ten::shape<::ten::dynamic>>,
+          class Allocator = typename details::allocator_type<Storage>::type>
 using vector =
-    ranked_tensor<__t, shape<::ten::dynamic>, __order, __storage, __allocator>;
+    ranked_tensor<T, shape<::ten::dynamic>, Order, Storage, Allocator>;
 
-// svector<__t, size>
-template <class __t, size_type __size, storage_order __order = default_order,
-          class __storage = default_storage<__t, shape<__size>>,
-          class __allocator = typename details::allocator_type<__storage>::type>
-   requires(__size > 0)
-using svector =
-    ranked_tensor<__t, shape<__size>, __order, __storage, __allocator>;
+// svector<T, size>
+template <class T, size_type Size, storage_order Order = default_order,
+          class Storage = default_storage<T, ::ten::shape<Size>>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+   requires(Size > 0)
+using svector = ranked_tensor<T, shape<Size>, Order, Storage, Allocator>;
 
-// matrix<__t> or matrix<__t, __shape>
-template <class __t, class __shape = dynamic_shape<2>,
-          storage_order __order = default_order,
-          class __storage = default_storage<__t, __shape>,
-          class __allocator = typename details::allocator_type<__storage>::type>
-   requires(__shape::rank() == 2)
-using matrix = ranked_tensor<__t, __shape, __order, __storage, __allocator>;
+// matrix<T> or matrix<T, Shape>
+template <class T, class Shape = dynamic_shape<2>,
+          storage_order Order = default_order,
+          class Storage = default_storage<T, Shape>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+   requires(Shape::rank() == 2)
+using matrix = ranked_tensor<T, Shape, Order, Storage, Allocator>;
 
-// smatrix<__t, rows, cols>
-template <class __t, size_type __rows, size_type __cols,
-          storage_order __order = default_order,
-          class __storage = default_storage<__t, shape<__rows, __cols>>,
-          class __allocator = typename details::allocator_type<__storage>::type>
-   requires(__rows > 0 && __cols > 0)
-using smatrix =
-    ranked_tensor<__t, shape<__rows, __cols>, __order, __storage, __allocator>;
+// smatrix<T, rows, cols>
+template <class T, size_type Rows, size_type Cols,
+          storage_order Order = default_order,
+          class Storage = default_storage<T, ::ten::shape<Rows, Cols>>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+   requires(Rows > 0 && Cols > 0)
+using smatrix = ranked_tensor<T, shape<Rows, Cols>, Order, Storage, Allocator>;
 
 /// \typedef tensor
-/// tensor<__t, __rank>
-template <class __t, size_type __rank, storage_order __order = default_order,
-          class __storage = default_storage<__t, dynamic_shape<__rank>>,
-          class __allocator = typename details::allocator_type<__storage>::type>
-using tensor =
-    ranked_tensor<__t, dynamic_shape<__rank>, __order, __storage, __allocator>;
+/// tensor<T, Rank>
+template <class T, size_type Rank, storage_order Order = default_order,
+          class Storage = default_storage<T, dynamic_shape<Rank>>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+using tensor = ranked_tensor<T, dynamic_shape<Rank>, Order, Storage, Allocator>;
 
 /// \typedef stensor
-/// stensor<__t, __dims...>
-template <class __t, size_type... __dims>
-// TODO Shorter requires all dims > 0 without shape
-   requires(shape<__dims...>::is_static())
-using stensor =
-    ranked_tensor<__t, shape<__dims...>, default_order,
-                  default_storage<__t, shape<__dims...>>,
-                  typename details::allocator_type<
-                      default_storage<__t, shape<__dims...>>>::type>;
+/// stensor<T, Dims...>
+template <class T, size_type... Dims>
+   requires(shape<Dims...>::is_static())
+using stensor = ranked_tensor<
+    T, shape<Dims...>, default_order, default_storage<T, shape<Dims...>>,
+    typename details::allocator_type<default_storage<T, shape<Dims...>>>::type>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Special matrices
@@ -1323,132 +1333,363 @@ template <class __t, size_type rows, size_type cols,
 using sdiagonal =
     ranked_tensor<__t, ten::shape<rows, cols>, __order, __storage, __allocator>;
 
-/// __transposed matrix
-template <class __t>
-   requires(__t::is_dynamic() && ::ten::is_matrix<__t>::value)
-__t transposed(const __t &t) {
-   using node_type = __t::node_type;
+////////////////////////////////////////////////////////////////////////////////
+
+/// transposed matrix
+template <class T>
+   requires(T::is_dynamic() && ::ten::is_matrix<T>::value)
+T transposed(const T &t) {
+   using node_type = T::node_type;
    auto st = t.storage();
    auto dims = t.shape();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::transposed);
    std::shared_ptr<node_type> node =
        std::make_shared<node_type>(st, dims, format);
-   return __t(std::move(node));
+   return T(std::move(node));
 }
-/// __transposed static matrix
-template <class __t>
-   requires(__t::is_static() && ::ten::is_smatrix<__t>::value)
-__t transposed(const __t &t) {
-   using node_type = __t::node_type;
+/// Transposed static matrix
+template <class T>
+   requires(T::is_static() && ::ten::is_smatrix<T>::value)
+T transposed(const T &t) {
+   using node_type = T::node_type;
    auto st = t.storage();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::transposed);
    std::shared_ptr<node_type> node = std::make_shared<node_type>(st, format);
-   return __t(std::move(node));
+   return T(std::move(node));
 }
 
 /// Symmetric tensor
-template <class __t>
-   requires(__t::is_dynamic())
-__t symmetric(const __t &t) {
-   using node_type = __t::node_type;
+template <class T>
+   requires(T::is_dynamic())
+T symmetric(const T &t) {
+   using node_type = T::node_type;
    auto st = t.storage();
    auto dims = t.shape();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::symmetric);
    std::shared_ptr<node_type> node =
        std::make_shared<node_type>(st, dims, format);
-   return __t(std::move(node));
+   return T(std::move(node));
 }
 /// Symmetric static tensor
-template <class __t>
-   requires(__t::is_static())
-__t symmetric(const __t &t) {
-   using node_type = __t::node_type;
+template <class T>
+   requires(T::is_static())
+T symmetric(const T &t) {
+   using node_type = T::node_type;
    auto st = t.storage();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::symmetric);
    std::shared_ptr<node_type> node = std::make_shared<node_type>(st, format);
-   return __t(std::move(node));
+   return T(std::move(node));
 }
 
 // TODO Extend hermitian to tensor
 
 /// Hermitian matrix
-template <class __t>
-   requires(__t::is_dynamic() && ::ten::is_matrix<__t>::value)
-__t hermitian(const __t &t) {
-   using node_type = __t::node_type;
+template <class T>
+   requires(T::is_dynamic() && ::ten::is_matrix<T>::value)
+T hermitian(const T &t) {
+   using node_type = T::node_type;
    auto st = t.storage();
    auto dims = t.shape();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::hermitian);
    std::shared_ptr<node_type> node =
        std::make_shared<node_type>(st, dims, format);
-   return __t(std::move(node));
+   return T(std::move(node));
 }
 /// Hermitian static matrix
-template <class __t>
-   requires(__t::is_static() && ::ten::is_smatrix<__t>::value)
-__t hermitian(const __t &t) {
-   using node_type = __t::node_type;
+template <class T>
+   requires(T::is_static() && ::ten::is_smatrix<T>::value)
+T hermitian(const T &t) {
+   using node_type = T::node_type;
    auto st = t.storage();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::hermitian);
    std::shared_ptr<node_type> node = std::make_shared<node_type>(st, format);
-   return __t(std::move(node));
+   return T(std::move(node));
 }
 
 /// Lower triangular matrix
-template <class __t>
-   requires(__t::is_dynamic() && ::ten::is_matrix<__t>::value)
-__t lower_tr(const __t &t) {
-   using node_type = __t::node_type;
+template <class T>
+   requires(T::is_dynamic() && ::ten::is_matrix<T>::value)
+T lower_tr(const T &t) {
+   using node_type = T::node_type;
    auto st = t.storage();
    auto dims = t.shape();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::lower_tr);
    std::shared_ptr<node_type> node =
        std::make_shared<node_type>(st, dims, format);
-   return __t(std::move(node));
+   return T(std::move(node));
 }
 /// Lower triangular static matrix
-template <class __t>
-   requires(__t::is_static() && ::ten::is_smatrix<__t>::value)
-__t lower_tr(const __t &t) {
-   using node_type = __t::node_type;
+template <class T>
+   requires(T::is_static() && ::ten::is_smatrix<T>::value)
+T lower_tr(const T &t) {
+   using node_type = T::node_type;
    auto st = t.storage();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::lower_tr);
    std::shared_ptr<node_type> node = std::make_shared<node_type>(st, format);
-   return __t(std::move(node));
+   return T(std::move(node));
 }
 
 /// Upper triangular matrix
-template <class __t>
-   requires(__t::is_dynamic() && ::ten::is_matrix<__t>::value)
-__t upper_tr(const __t &t) {
-   using node_type = __t::node_type;
+template <class T>
+   requires(T::is_dynamic() && ::ten::is_matrix<T>::value)
+T upper_tr(const T &t) {
+   using node_type = T::node_type;
    auto st = t.storage();
    auto dims = t.shape();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::upper_tr);
    std::shared_ptr<node_type> node =
        std::make_shared<node_type>(st, dims, format);
-   return __t(std::move(node));
+   return T(std::move(node));
 }
 /// Upper triangular static matrix
-template <class __t>
-   requires(__t::is_static() && ::ten::is_smatrix<__t>::value)
-__t upper_tr(const __t &t) {
-   using node_type = __t::node_type;
+template <class T>
+   requires(T::is_static() && ::ten::is_smatrix<T>::value)
+T upper_tr(const T &t) {
+   using node_type = T::node_type;
    auto st = t.storage();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::upper_tr);
    std::shared_ptr<node_type> node = std::make_shared<node_type>(st, format);
-   return __t(std::move(node));
+   return T(std::move(node));
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Columns
+template <class T, class Shape, storage_order Order = default_order,
+          class Storage = default_storage<T, Shape>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+// requires(Shape::rank() == 2)
+class ranked_column final
+    : public ten::expr<ranked_column<T, Shape, Order, Storage, Allocator>>,
+      public ::ten::tensor_operations<T, Shape, Order, Storage, Allocator>,
+      public ::ten::tensor_base {
+   static_assert(Shape::rank() == 2,
+                 "ranked_column is defined only for matrices.");
+
+ public:
+   /*
+   template<class To>
+      requires std::convertible_to<T, To>
+   using casted_type = ranked_column<To, Shape, Order,
+      typename Storage::template casted_type<To>,
+      typename details::allocator_type<
+         typename Storage::template casted_type<To>>::type>;*/
+
+   /// \typedef base_type
+   /// Type of the tensor operations.
+   using base_type = tensor_operations<T, Shape, Order, Storage, Allocator>;
+
+   /// \typedef node_type
+   /// Node type
+   using node_type = tensor_node<T, Shape, Order, Storage, Allocator>;
+
+ private:
+   size_t _index = 0;
+   std::shared_ptr<node_type> _node = nullptr;
+
+ public:
+   /// Constructors
+   ranked_column(const std::shared_ptr<node_type> &node,
+                 const size_t index) noexcept
+       : _node(node), _index(index) {}
+   ranked_column(std::shared_ptr<node_type> &&node, const size_t index) noexcept
+       : _node(std::move(node)), _index(index) {}
+
+   // TODO Assignment from expression
+
+   /// Copy constructor
+   ranked_column(const ranked_column &t) { _node = t._node; }
+   /// Move constructor
+   ranked_column(ranked_column &&t) { _node = std::move(t._node); }
+
+   /// Assignment operator
+   ranked_column &operator=(const ranked_column &t) {
+      _node = t._node;
+      return *this;
+   }
+   /// Assignment operator
+   ranked_column &operator=(ranked_column &&t) {
+      _node = std::move(t._node);
+      return *this;
+   }
+
+   /// Returns the shape
+   [[nodiscard]] inline const Shape &shape() const {
+      return _node.get()->shape();
+   }
+
+   /// Returns the strides
+   [[nodiscard]] inline const typename base_type::stride_type &strides() const {
+      return _node.get()->strides();
+   }
+
+   /// Returns the dynamic size
+   [[nodiscard]] inline size_type size() const {
+      return _node.get()->shape().dim(0);
+   }
+
+   /// Returns the index'th dynamic dimension
+   [[nodiscard]] inline size_type dim(size_type index) const {
+      return _node.get()->dim(index);
+   }
+
+   // Returns the shared ptr to the node
+   [[nodiscard]] std::shared_ptr<node_type> node() const { return _node; }
+
+   /// Get the data
+   [[nodiscard]] const T *data() const {
+      size_t rows = this->shape().dim(0);
+      return _node.get()->data() + _index * rows;
+   }
+
+   /// Get the data
+   [[nodiscard]] T *data() {
+      size_t rows = this->shape().dim(0);
+      return _node.get()->data() + _index * rows;
+   }
+
+   /// Returns the shared ptr to the storage
+   [[nodiscard]] std::shared_ptr<Storage> storage() const {
+      return _node.get()->storage();
+   }
+
+   /// Overloading the [] operator
+   [[nodiscard]] inline const typename base_type::value_type &
+   operator[](size_type index) const noexcept {
+      size_t rows = this->shape().dim(0);
+      return (*_node.get())[index + _index * rows];
+   }
+
+   /// Overloading the [] operator
+   [[nodiscard]] inline typename base_type::value_type &
+   operator[](size_type index) noexcept {
+      size_t rows = this->shape().dim(0);
+      return (*_node.get())[index + _index * rows];
+   }
+};
+
+// column<T> or column<T, Shape>
+template <class T, class Shape = dynamic_shape<2>,
+          storage_order Order = default_order,
+          class Storage = default_storage<T, Shape>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+   requires(Shape::rank() == 2)
+using column = ranked_column<T, Shape, Order, Storage, Allocator>;
+
+// TODO template<class T, size_t Rows, size_t Cols>
+// using scolumn = ranked_column<T, ten::shape<Rows, Cols>>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Rows
+template <class T, class Shape, storage_order Order = default_order,
+          class Storage = default_storage<T, Shape>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+class ranked_row final
+    : public ten::expr<ranked_column<T, Shape, Order, Storage, Allocator>>,
+      public ::ten::tensor_operations<T, Shape, Order, Storage, Allocator>,
+      public ::ten::tensor_base {
+   static_assert(Shape::rank() == 2,
+                 "ranked_row is defined only for matrices.");
+
+ public:
+   /// \typedef base_type
+   /// Type of the tensor operations.
+   using base_type = tensor_operations<T, Shape, Order, Storage, Allocator>;
+
+   /// \typedef node_type
+   /// Node type
+   using node_type = tensor_node<T, Shape, Order, Storage, Allocator>;
+
+ private:
+   size_t _index = 0;
+   std::shared_ptr<node_type> _node = nullptr;
+
+ public:
+   /// Constructors
+   ranked_row(const std::shared_ptr<node_type> &node,
+              const size_t index) noexcept
+       : _node(node), _index(index) {}
+   ranked_row(std::shared_ptr<node_type> &&node, const size_t index) noexcept
+       : _node(std::move(node)), _index(index) {}
+
+   // TODO Assignment from expression
+
+   /// Copy constructor
+   // ranked_row(const ranked_row &t) { _node = t._node; }
+   /// Move constructor
+   // ranked_row(ranked_row &&t) { _node = std::move(t._node); }
+
+   /// Assignment operator
+   /*ranked_row &operator=(const ranked_row &t) {
+      _node = t._node;
+      return *this;
+   }*/
+   /// Assignment operator
+   /*ranked_row &operator=(ranked_row &&t) {
+      _node = std::move(t._node);
+      return *this;
+   }*/
+
+   /// Returns the shape
+   [[nodiscard]] inline const Shape &shape() const {
+      return _node.get()->shape();
+   }
+
+   /// Returns the strides
+   [[nodiscard]] inline const typename base_type::stride_type &strides() const {
+      return _node.get()->strides();
+   }
+
+   /// Returns the dynamic size
+   [[nodiscard]] inline size_type size() const {
+      return _node.get()->shape().dim(1);
+   }
+
+   /// Returns the index'th dynamic dimension
+   [[nodiscard]] inline size_type dim(size_type index) const {
+      return _node.get()->dim(index);
+   }
+
+   // Returns the shared ptr to the node
+   [[nodiscard]] std::shared_ptr<node_type> node() const { return _node; }
+
+   /// Get the data
+   [[nodiscard]] const T *data() const { return _node.get()->data() + _index; }
+
+   /// Get the data
+   [[nodiscard]] T *data() { return _node.get()->data() + _index; }
+
+   /// Returns the shared ptr to the storage
+   [[nodiscard]] std::shared_ptr<Storage> storage() const {
+      return _node.get()->storage();
+   }
+
+   /// Overloading the [] operator
+   [[nodiscard]] inline const typename base_type::value_type &
+   operator[](size_type index) const noexcept {
+      size_t rows = this->shape().dim(0);
+      return (*_node.get())[_index + index * rows];
+   }
+
+   /// Overloading the [] operator
+   [[nodiscard]] inline typename base_type::value_type &
+   operator[](size_type index) noexcept {
+      size_t rows = this->shape().dim(0);
+      return (*_node.get())[_index + index * rows];
+   }
+};
+
+// TODO row
+// TODO static rows srow
 
 ////////////////////////////////////////////////////////////////////////////////
 // Basic functions
