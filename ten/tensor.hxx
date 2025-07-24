@@ -2344,34 +2344,26 @@ void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
 
    if constexpr (::ten::is_tensor<x_expr_type>::value &&
                  ::ten::is_tensor<y_expr_type>::value) {
-      auto xptr = x.node().get();
-      auto yptr = y.node().get();
-      auto cptr = c.node().get();
-      ::ten::kernels::mul_add(*xptr, *yptr, *cptr, alpha, beta);
+      ::ten::kernels::mul_add(x, y, c, alpha, beta);
    }
 
    if constexpr (::ten::is_tensor<x_expr_type>::value &&
                  !::ten::is_tensor<y_expr_type>::value) {
-      auto xptr = x.node().get();
-      auto yptr = y.eval().node().get();
-      auto cptr = c.node().get();
-      ::ten::kernels::mul_add(*xptr, *yptr, *cptr, alpha, beta);
+      auto ytensor = y.eval();
+      ::ten::kernels::mul_add(x, ytensor, c, alpha, beta);
    }
 
    if constexpr (!::ten::is_tensor<x_expr_type>::value &&
                  ::ten::is_tensor<y_expr_type>::value) {
-      auto xptr = x.eval().node().get();
-      auto yptr = y.node().get();
-      auto cptr = c.node().get();
-      ::ten::kernels::mul_add(*xptr, *yptr, *cptr, alpha, beta);
+      auto xtensor = x.eval();
+      ::ten::kernels::mul_add(xtensor, y, c, alpha, beta);
    }
 
    if constexpr (!::ten::is_tensor<x_expr_type>::value &&
                  !::ten::is_tensor<y_expr_type>::value) {
-      auto xptr = x.eval().node().get();
-      auto yptr = y.eval().node().get();
-      auto cptr = c.node().get();
-      ::ten::kernels::mul_add(*xptr, *yptr, *cptr, alpha, beta);
+      auto xtensor = x.eval();
+      auto ytensor = y.eval();
+      ::ten::kernels::mul_add(x, y, c, alpha, beta);
    }
 }
 
