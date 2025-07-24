@@ -186,6 +186,28 @@ template <class T, class shape, storage_order order, class storage,
           class allocator>
 class ranked_row;
 
+/// is_column
+template <class> struct is_column : std::false_type {};
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+struct is_column<ranked_column<T, shape, order, storage, allocator>>
+    : std::true_type {};
+
+/// is_row
+template <class> struct is_row : std::false_type {};
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+struct is_row<ranked_row<T, shape, order, storage, allocator>>
+    : std::true_type {};
+
+/// Concept Column
+template <class T>
+concept Column = is_column<std::remove_cvref_t<T>>::value;
+
+/// Concept Row
+template <class T>
+concept Row = is_row<std::remove_cvref_t<T>>::value;
+
 /// Matrix (dense)
 template <typename> struct is_matrix : std::false_type {};
 template <class T, class shape, storage_order order, class storage,
