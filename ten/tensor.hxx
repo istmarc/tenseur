@@ -2344,26 +2344,34 @@ void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
 
    if constexpr (::ten::is_tensor<x_expr_type>::value &&
                  ::ten::is_tensor<y_expr_type>::value) {
-      ::ten::kernels::mul_add(x, y, c, alpha, beta);
+      ::ten::kernels::mul_add(std::forward<X>(x), std::forward<Y>(y), c, alpha,
+                              beta);
    }
 
    if constexpr (::ten::is_tensor<x_expr_type>::value &&
                  !::ten::is_tensor<y_expr_type>::value) {
       auto ytensor = y.eval();
-      ::ten::kernels::mul_add(x, ytensor, c, alpha, beta);
+      using YTensor = decltype(ytensor);
+      ::ten::kernels::mul_add(std::forward<X>(x),
+                              std::forward<YTensor>(ytensor), c, alpha, beta);
    }
 
    if constexpr (!::ten::is_tensor<x_expr_type>::value &&
                  ::ten::is_tensor<y_expr_type>::value) {
       auto xtensor = x.eval();
-      ::ten::kernels::mul_add(xtensor, y, c, alpha, beta);
+      using XTensor = decltype(xtensor);
+      ::ten::kernels::mul_add(std::forward<XTensor>(xtensor),
+                              std::forward<Y>(y), c, alpha, beta);
    }
 
    if constexpr (!::ten::is_tensor<x_expr_type>::value &&
                  !::ten::is_tensor<y_expr_type>::value) {
       auto xtensor = x.eval();
+      using XTensor = decltype(xtensor);
       auto ytensor = y.eval();
-      ::ten::kernels::mul_add(x, y, c, alpha, beta);
+      using YTensor = decltype(ytensor);
+      ::ten::kernels::mul_add(std::forward<XTensor>(x),
+                              std::forward<YTensor>(y), c, alpha, beta);
    }
 }
 
