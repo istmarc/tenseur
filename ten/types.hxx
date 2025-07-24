@@ -176,6 +176,10 @@ struct is_vector<ranked_tensor<Scalar, Shape, order, Storage, Allocator>> {
    static constexpr bool value = Shape::rank() == 1;
 };
 
+/// Concept Vector dense
+template <class T>
+concept Vector = is_vector<std::remove_cvref_t<T>>::value;
+
 /// Column type
 template <class T, class shape, storage_order order, class storage,
           class allocator>

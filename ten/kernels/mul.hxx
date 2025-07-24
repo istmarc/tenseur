@@ -44,8 +44,7 @@ void mul(const A &a, const B &b, C &c)
 // Multiply and add two dense matrices
 // C <- alpha * A * B + beta * C
 template <Matrix A, Matrix B, Matrix C, class T>
-void mul_add(A&& a, B &&b, C &c, const T &alpha, const T &beta)
-{
+void mul_add(A &&a, B &&b, C &c, const T &alpha, const T &beta) {
    size_t m = a.dim(0);
    size_t k = a.dim(1);
    size_t n = b.dim(1);
@@ -58,9 +57,7 @@ void mul_add(A&& a, B &&b, C &c, const T &alpha, const T &beta)
               beta, c.data(), m);
 }
 
-template <class X, class Y, class T>
-   requires(::ten::is_vector_node<X>::value && ::ten::is_vector_node<Y>::value)
-void axpy(const T a, const X &x, Y &y) {
+template <Vector X, Vector Y, class T> void axpy(const T a, X &&x, Y &y) {
    size_t n = x.size();
    ::ten::kernels::blas::axpy(n, a, x.data(), 1, y.data(), 1);
 }

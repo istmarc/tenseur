@@ -2337,7 +2337,8 @@ template <SDiagonal T> auto dense(T x) -> decltype(auto) {
 
 // Gemm
 // C <- alpha * X * Y + beta * C
-template <Expr X, Expr Y, Tensor C, class T = typename C::value_type>
+template <Expr X, Expr Y, Tensor C, class T>
+requires(std::is_same_v<T, typename C::value_type>)
 void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
    using x_expr_type = std::remove_cvref_t<X>;
    using y_expr_type = std::remove_cvref_t<Y>;
@@ -2383,14 +2384,12 @@ void axpy(const T a, X &&x, Y &y) {
    using x_expr_type = std::remove_cvref_t<X>;
 
    if constexpr (::ten::is_tensor<x_expr_type>::value) {
-      auto xptr = x.node().get();
-      auto yptr = y.node().get();
-      ::ten::kernels::axpy(a, *xptr, *yptr);
+      ::ten::kernels::axpy(a, std::forward<X>(x), y);
    }
    if constexpr (!::ten::is_tensor<x_expr_type>::value) {
-      auto xptr = x.eval().node().get();
-      auto yptr = y.node().get();
-      ::ten::kernels::axpy(a, *xptr, *yptr);
+      auto xtensor = x.eval();
+      using XTensor = decltype(xtensor);
+      ::ten::kernels::axpy(a, std::forward<XTensor>(xtensor), y);
    }
 }
 
