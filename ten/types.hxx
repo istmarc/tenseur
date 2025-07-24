@@ -217,6 +217,10 @@ struct is_matrix<ranked_tensor<T, shape, order, storage, allocator>> {
        shape::rank() == 2 && ::ten::is_dense_storage<storage>::value;
 };
 
+/// Concept Matrix dense
+template <class T>
+concept Matrix = is_matrix<std::remove_cvref_t<T>>::value;
+
 /// StaticMatrix (dense)
 template <typename> struct is_smatrix : std::false_type {};
 template <class T, class shape, storage_order order, class storage,
@@ -225,6 +229,10 @@ struct is_smatrix<ranked_tensor<T, shape, order, storage, allocator>> {
    static constexpr bool value =
        shape::rank() == 2 && ::ten::is_static_storage<storage>::value;
 };
+
+/// Concept StaticMatrix dense
+template <class T>
+concept StaticMatrix = is_smatrix<std::remove_cvref_t<T>>::value;
 
 // Dynamic tensor
 template <typename> struct is_dynamic_tensor : std::false_type {};
