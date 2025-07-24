@@ -53,7 +53,7 @@ int main() {
 
 int main() {
    auto a = ten::range<matrix<float>>({4, 4});
-   ten::qr qr_fact;
+   ten::linalg::qr qr_fact;
    qr_fact.factorize(a);
    auto [q, r] = qr_fact.factors();
 
