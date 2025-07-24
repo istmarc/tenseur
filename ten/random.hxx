@@ -9,79 +9,93 @@
 #include <random>
 
 namespace ten {
-/// Random tensor
-/// rand<tensor<...>, ...>(shape)
-template <DynamicTensor __t,
-          class __distribution =
-              std::uniform_real_distribution<typename __t::value_type>>
-auto rand(std::initializer_list<size_t> &&dims) {
-   __t x(std::move(dims));
-   __distribution dist;
-   std::random_device rd;
-   std::mt19937 gen(rd());
-   // Fill with random data
-   for (size_t i = 0; i < x.size(); i++) {
-      x[i] = dist(gen);
-   }
-   return x;
-}
 
-/// Random tensor with seed
-/// rand<tensor<...>, ...>(shape)
-template <DynamicTensor __t,
-          class __distribution =
-              std::uniform_real_distribution<typename __t::value_type>>
-auto rand(std::initializer_list<size_t> &&dims, size_t seed) {
-   __t x(std::move(dims));
-   __distribution dist;
-   std::mt19937 gen(seed);
+/// Random normal tensor
+/// rand_norm<tensor<...>, ...>(shape)
+template <DynamicTensor T>
+auto rand_norm(std::initializer_list<size_t> &&dims,
+               const typename T::value_type mean = 0.,
+               const typename T::value_type std = 1.) {
+   T x(std::move(dims));
+   using value_type = typename T::value_type;
+
+   ten::normal<value_type> dist(mean, std);
    // Fill with random data
    for (size_t i = 0; i < x.size(); i++) {
-      x[i] = dist(gen);
+      x[i] = dist.sample();
    }
    return x;
 }
 
 /// Random tensor
-/// rand<t, rank>(shape)
-template <class __t, size_type __rank, class __shape = dynamic_shape<__rank>,
-          storage_order __order = ::ten::default_order,
-          class __storage = default_storage<__t, __shape>,
-          class __allocator = typename details::allocator_type<__storage>::type>
-auto rand(std::initializer_list<size_t> &&dims) {
-   return rand<ranked_tensor<__t, __shape, __order, __storage, __allocator>>(
-       std::move(dims));
+/// rand_norm<t, rank>(shape)
+template <class T, size_type Rank, class Shape = dynamic_shape<Rank>,
+          storage_order Order = ::ten::default_order,
+          class Storage = default_storage<T, Shape>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+auto rand_norm(std::initializer_list<size_t> &&dims, const T mean = 0.,
+               const T std = 1.) {
+   return rand_norm<ranked_tensor<T, Shape, Order, Storage, Allocator>>(
+       std::move(dims), mean, std);
 }
 
 /// Random static tensor
-/// rand<stensor<...>>
-template <StaticTensor __t,
-          class __distribution =
-              std::uniform_real_distribution<typename __t::value_type>>
-auto rand() {
-   __t x;
-   __distribution dist;
-   std::random_device rd;
-   std::mt19937 gen(rd());
+/// rand_norm<stensor<...>>
+template <StaticTensor T>
+auto rand_norm(const typename T::value_type mean = 0.,
+               const typename T::value_type std = 1.) {
+   T x;
+   using value_type = typename T::value_type;
+
+   ten::normal<value_type> dist(mean, std);
    // Fill with random data
    for (size_t i = 0; i < x.size(); i++) {
-      x[i] = dist(gen);
+      x[i] = dist.sample();
    }
    return x;
 }
 
-/// Random static tensor with seed
-/// rand<stensor<...>>
-template <StaticTensor __t,
-          class __distribution =
-              std::uniform_real_distribution<typename __t::value_type>>
-auto rand(size_t seed) {
-   __t x;
-   __distribution dist;
-   std::mt19937 gen(seed);
+/// Random uniform tensor
+/// rand_unif<tensor<...>, ...>(shape)
+template <DynamicTensor T>
+auto rand_unif(std::initializer_list<size_t> &&dims,
+               const typename T::value_type lower_bound = 0.,
+               const typename T::value_type upper_bound = 1.) {
+   T x(std::move(dims));
+   using value_type = typename T::value_type;
+
+   ten::uniform<value_type> dist(lower_bound, upper_bound);
    // Fill with random data
    for (size_t i = 0; i < x.size(); i++) {
-      x[i] = dist(gen);
+      x[i] = dist.sample();
+   }
+   return x;
+}
+
+/// Random tensor
+/// rand_norm<t, rank>(shape)
+template <class T, size_type Rank, class Shape = dynamic_shape<Rank>,
+          storage_order Order = ::ten::default_order,
+          class Storage = default_storage<T, Shape>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+auto rand_unif(std::initializer_list<size_t> &&dims, const T lower_bound = 0.,
+               const T upper_bound = 1.) {
+   return rand_norm<ranked_tensor<T, Shape, Order, Storage, Allocator>>(
+       std::move(dims), lower_bound, upper_bound);
+}
+
+/// Random static tensor
+/// rand_norm<stensor<...>>
+template <StaticTensor T>
+auto rand_unif(const typename T::value_type lower_bound = 0.,
+               const typename T::value_type upper_bound = 1.) {
+   T x;
+   using value_type = typename T::value_type;
+
+   ten::uniform<value_type> dist(lower_bound, upper_bound);
+   // Fill with random data
+   for (size_t i = 0; i < x.size(); i++) {
+      x[i] = dist.sample();
    }
    return x;
 }
