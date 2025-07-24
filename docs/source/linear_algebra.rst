@@ -14,7 +14,7 @@ Factorization routines
    int main() {
       auto a = ten::range<ten::matrix<float>>({4, 4});
 
-      ten::qr qr_fact;
+      ten::linalg::qr qr_fact;
       qr_fact.factorize(a);
       auto [q, r] = qr_fact.factors();
 
@@ -35,7 +35,7 @@ Factorization routines
    int main() {
       auto a = ten::range<ten::matrix<float>>({4, 4});
 
-      ten::lu lu_fact;
+      ten::linalg::lu lu_fact;
       lu_fact.factorize(a);
 
       auto p = lu_fact.p();
@@ -61,7 +61,7 @@ Factorization routines
       ten::matrix<float> a({3, 3}, {4., 12., -16., 12., 37., -43.,
          -16., -43., 98.});
 
-      ten::cholesky cholesky_fact;
+      ten::linalg::cholesky cholesky_fact;
       cholesky_fact.factorize(a);
 
       auto l = cholesky_fact.l();
@@ -87,7 +87,7 @@ Factorization routines
       ten::matrix<float> a({3, 3}, {4., 12., -16., 12., 37., -43.,
          -16., -43., 98.});
 
-      ten::svd svd_fact;
+      ten::linalg::svd svd_fact;
       svd_fact.factorize(a);
 
       auto u = svd_fact.u();

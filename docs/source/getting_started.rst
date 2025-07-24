@@ -12,7 +12,7 @@ Tenseur has an easy to use api, It can be illustrated with the following example
    // Sample from a normal distribution
    ten::vector<float> x = norm.sample(1000);
    // Save to a mtx file (Matrix Market format)
-   ten::save(x, "norm.mtx");
+   ten::save_mtx(x, "norm.mtx");
 
 The saved file can be loaded in numpy:
 
