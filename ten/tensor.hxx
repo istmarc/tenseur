@@ -40,17 +40,20 @@ template <typename Derived> class expr {
    expr(expr &&) = default;
 };
 
+
 // Add two expr
 template <Expr LeftExpr, Expr RightExpr>
 auto operator+(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
-   return ::ten::binary_expr<
-       typename L::node_type, typename R::node_type,
-       ::ten::functional::binary_func<::ten::binary_operation::add>::func>(
-       left.node(), right.node());
+   using left_input = ::ten::details::input_type<L>::type;
+   using right_input = ::ten::details::input_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+
+   return ::ten::binary_expr<L, R, output_type, ::ten::functional::binary_func<::ten::binary_operation::add>::func>(left, right);
 }
 
+/*
 template <typename T, Expr E> auto operator+(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
    return ::ten::scalar<T>(scalar) + std::forward<R>(expr);
@@ -72,15 +75,18 @@ auto operator-(LeftExpr &&left, RightExpr &&right) {
        typename L::node_type, typename R::node_type,
        ::ten::functional::binary_func<::ten::binary_operation::sub>::func>(
        left.node(), right.node());
-}
+}*/
 
-/*template <typename T, typename E>
+
+/*FIXME
+template <typename T, typename E>
    requires ::ten::is_expr<std::remove_cvref_t<E>>
 auto operator-(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
    return ::ten::scalar<T>(scalar) - std::forward<R>(expr);
 }*/
 
+/*
 template <Expr E, typename T> auto operator-(E &&expr, T &&scalar) {
    using R = std::remove_cvref_t<E>;
    return std::forward<R>(expr) - ::ten::scalar<T>(scalar);
@@ -101,38 +107,42 @@ auto operator*(LeftExpr &&left, RightExpr &&right) {
 template <typename T, Expr E> auto operator*(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
    return ::ten::scalar<T>(scalar) * std::forward<std::remove_cvref_t<E>>(expr);
-}
+}*/
 
-/*template <Expr E, typename T>
+/*FIXME 
+template <Expr E, typename T>
 auto operator*(E &&expr, T &&scalar) {
    using R = std::remove_cvref_t<E>;
    return std::forward<R>(expr) * ::ten::scalar<T>(scalar);
 }*/
 
+/*
 // Divide two expressions
 template <Expr LeftExpr, Expr RightExpr>
 auto operator/(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
-   return ::ten::binary_expr<
+   return ::ten:binary_expr<
        typename L::node_type, typename R::node_type,
        ::ten::functional::binary_func<::ten::binary_operation::div>::func>(
        left.node(), right.node());
-}
+}*/
 
-/*template <typename T, typename E>
+/*FIXME 
+template <typename T, typename E>
    requires ::ten::is_expr<std::remove_cvref_t<E>>
 auto operator/(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
    return scalar<T>(scalar) / std::forward<R>(expr);
 }*/
 
+/*
 template <Expr E, typename T> auto operator/(E &&expr, T &&scalar) {
    using R = std::remove_cvref_t<E>;
    return std::forward<R>(expr) / ::ten::scalar<T>(scalar);
-}
+}*/
 
-/// AxpyOne
+/// TODO AxpyOne
 /// A += B
 /*template <typename left_expr, typename right_expr>
    requires ::ten::is_expr<std::remove_cvref_t<left_expr>> &&
@@ -153,7 +163,7 @@ template <class T> struct scalar_operations {
 
 /// \class scalar_node
 /// Node of scalar type
-template <typename T>
+/*template <typename T>
 class scalar_node : public scalar_operations<scalar_node<T>> {
  public:
    using scalar_type = scalar<T>;
@@ -177,7 +187,7 @@ class scalar_node : public scalar_operations<scalar_node<T>> {
       _value = value;
       return *this;
    }
-};
+};*/
 
 /// \class scalar
 /// Hold a single value of type T.
@@ -188,31 +198,30 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
    using value_type = T;
 
  private:
-   std::shared_ptr<node_type> _node = nullptr;
+   T _value;
 
  public:
-   explicit scalar(const T &value)
-       : _node(std::make_shared<node_type>(value)) {}
+   scalar() {}
 
-   // explicit scalar(T value)
-   //     : _node(std::make_shared<node_type>(std::move(value))) {}
+   explicit scalar(const T &value): _value(value) {}
 
-   explicit scalar(std::shared_ptr<node_type> node) : _node(node) {}
+   explicit scalar(T&& value) : _value(std::move(value)) {}
 
    /// Asignment from an expression
-   template <class Expr>
+   /*template <class Expr>
       requires(::ten::is_unary_expr<std::remove_cvref_t<Expr>>::value ||
                ::ten::is_binary_expr<std::remove_cvref_t<Expr>>::value)
    scalar(Expr &&expr) {
-      _node = expr.eval().node();
-   }
+      _node = expr.eval();
+   }*/
 
    /// Get the value
-   const T &value() const { return _node.get()->value(); }
+   const T &value() const { return _value; }
 
-   // Returns the shared ptr to the node
-   [[nodiscard]] std::shared_ptr<node_type> node() const { return _node; }
-
+   scalar &operator=(const T &value) {
+      _value = value;
+      return *this;
+   }
    // ostream operator
    template <class Type>
    friend std::ostream &operator<<(std::ostream &, const scalar<Type> &);
@@ -743,13 +752,13 @@ class ranked_tensor final
    ranked_tensor(std::shared_ptr<node_type> &&node) : _node(std::move(node)) {}
 
    /// Asignment from a static expression
-   template <class __expr>
-      requires((::ten::is_unary_expr<std::remove_cvref_t<__expr>>::value ||
-                ::ten::is_binary_expr<std::remove_cvref_t<__expr>>::value) &&
-               std::remove_cvref_t<__expr>::evaluated_type::is_static())
-   ranked_tensor(__expr &&expr) noexcept {
-      using expr_type = std::remove_cvref_t<__expr>;
-      using evaluated_type = typename expr_type::evaluated_type;
+   template <class ExprType>
+      requires((::ten::is_unary_expr<std::remove_cvref_t<ExprType>>::value ||
+                ::ten::is_binary_expr<std::remove_cvref_t<ExprType>>::value) &&
+               std::remove_cvref_t<ExprType>::evaluated_type::is_static())
+   ranked_tensor(ExprType &&expr) noexcept {
+      using expr_type = std::remove_cvref_t<ExprType>;
+      using evaluated_type = typename expr_type::output_type;
 
       static_assert(::ten::is_tensor<evaluated_type>::value,
                     "Error: Evaluated type must be a tensor.");
@@ -763,13 +772,13 @@ class ranked_tensor final
    }
 
    /// Asignment from a dynamic expression
-   template <class __expr>
-      requires((::ten::is_unary_expr<std::remove_cvref_t<__expr>>::value ||
-                ::ten::is_binary_expr<std::remove_cvref_t<__expr>>::value) &&
-               std::remove_cvref_t<__expr>::evaluated_type::is_dynamic())
-   ranked_tensor(__expr &&expr) noexcept {
-      using expr_type = std::remove_cvref_t<__expr>;
-      using evaluated_type = typename expr_type::evaluated_type;
+   template <class ExprType>
+      requires((::ten::is_unary_expr<std::remove_cvref_t<ExprType>>::value ||
+                ::ten::is_binary_expr<std::remove_cvref_t<ExprType>>::value) &&
+               std::remove_cvref_t<ExprType>::evaluated_type::is_dynamic())
+   ranked_tensor(ExprType &&expr) noexcept {
+      using expr_type = std::remove_cvref_t<ExprType>;
+      using evaluated_type = typename expr_type::output_type;
 
       static_assert(::ten::is_tensor<evaluated_type>::value,
                     "Evaluated type must be a tensor.");
@@ -813,15 +822,6 @@ class ranked_tensor final
       _node = t._node;
       return *this;
    }
-   /*{
-      if constexpr (base_type::shape_type::is_dynamic()) {
-         _node = std::make_shared<node_type>(t.storage(), t.shape());
-      } else {
-         _node = std::make_shared<node_type>(t.storage());
-      }
-      //_node = t._node;
-      return *this;
-   }*/
 
    /// Assignment operator
    ranked_tensor &operator=(ranked_tensor &&t) {
@@ -911,6 +911,7 @@ class ranked_tensor final
          auto st = std::make_shared<typename node_type::storage_type>(shape);
          auto node = std::make_shared<node_type>(std::move(st), shape, format);
          ranked_tensor t(std::move(node));
+         // Copy the data to the new tensor
          for (size_t i = 0; i < this->size(); i++) {
             t[i] = (*_node.get())[i];
          }
@@ -919,6 +920,7 @@ class ranked_tensor final
          auto st = std::make_shared<typename node_type::storage_type>();
          auto node = std::make_shared<node_type>(std::move(st), format);
          ranked_tensor t(std::move(node));
+         // Copy the data to the new tensor
          for (size_t i = 0; i < this->size(); i++) {
             t[i] = (*_node.get())[i];
          }
@@ -1714,6 +1716,7 @@ template <class __to, StaticTensor __t> auto cast(const __t &x) {
    return r;
 }
 
+/* TODO
 // reshape<shape>(x)
 template <class __shape, Expr __expr> auto reshape(__expr &&expr) {
    using node_type = typename std::remove_cvref_t<__expr>::node_type;
@@ -1776,8 +1779,9 @@ template <Expr __expr> auto flatten(__expr expr) {
           std::forward<expr_type>(expr));
    }
 }
+*/
 
-// transpose(x)
+/*// transpose(x)
 template <Expr __expr> auto transpose(__expr &&expr) {
    using expr_type = std::remove_cvref_t<__expr>;
 
@@ -1801,16 +1805,16 @@ template <Expr __expr> auto transpose(__expr &&expr) {
       }
    }
 
-   /* TODO unar_expr or binary_expr
-   if constexpr (is_unary_expr<expr_type>::value ||
+   // TODO unar_expr or binary_expr
+   //if constexpr (is_unary_expr<expr_type>::value ||
                  is_binary_expr<expr_type>::value) {
-      using output_type = typename expr_type::evaluated_type;
-      using shape_type = typename output_type::shape_type;
+    //  using output_type = typename expr_type::evaluated_type;
+    //  using shape_type = typename output_type::shape_type;
 
-      return reshape<::ten::shape<shape_type::staticSize()>, expr_type>(
-          std::forward<expr_type>(expr));
-   }*/
-}
+    //  return reshape<::ten::shape<shape_type::staticSize()>, expr_type>(
+   //       std::forward<expr_type>(expr));
+   //}
+}*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions for creating a new tensor
@@ -2398,182 +2402,192 @@ void axpy(const T a, X &&x, Y &y) {
 
 /// \fn min
 /// Returns the maximum of an expression
-template <Expr __expr> auto min(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
-   return unary_expr<typename expr_type::node_type, functional::min>(
-       expr.node());
+template <Expr ExprType> auto min(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   //using output_type = typename ::ten::details::output_type<expr_type>::type;
+   using value_type = typename expr_type::value_type;
+   using output_type = ten::scalar<value_type>;
+   return unary_expr<expr_type, output_type, functional::min>(expr);
 }
 
+/*
 /// \fn max
 /// Return the maximum of an tensor or an expression
-template <Expr __expr> auto max(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto max(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename details::output_type<expr_type>::type;
    return unary_expr<typename expr_type::node_type, functional::max>(
        expr.node());
 }
 
 /// \fn sum
 /// Return the maximum of an tensor or an expression
-template <Expr __expr> auto sum(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto sum(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename details::output_type<expr_type>::type;
    return unary_expr<typename expr_type::node_type, functional::sum>(
        expr.node());
 }
 
 /// \fn cum_sum
 /// Return the maximum of an tensor or an expression
-template <Expr __expr> auto cum_sum(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto cum_sum(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename details::output_type<expr_type>::type;
    return unary_expr<typename expr_type::node_type, functional::cum_sum>(
        expr.node());
 }
 /// \fn sum
 /// Return the maximum of an tensor or an expression
-template <Expr __expr> auto prod(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto prod(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename details::output_type<expr_type>::type;
    return unary_expr<typename expr_type::node_type, functional::prod>(
        expr.node());
-}
+}*/
+
 
 /// \fn abs
 /// Returns the absolute value of a scalar, a tensor or an expression
-template <Expr __expr> auto abs(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
-   return unary_expr<typename expr_type::node_type, functional::abs>(
-       expr.node());
+template <Expr ExprType> auto abs(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename ::ten::details::output_type<expr_type>::type;
+   return unary_expr<expr_type, output_type, functional::abs >(expr);
 }
 
+/*
 /// \fn sqrt
 /// Returns the square root of a scalar, a tensor or an expression
-template <Expr __expr> auto sqrt(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto sqrt(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::sqrt>(
        expr.node());
 }
 
 /// \fn sqr
 /// Returns the square of an expression
-template <Expr __expr> auto sqr(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto sqr(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::sqr>(
        expr.node());
 }
 
 /// \fn sin
 /// Returns the sine of a scalar, a tensor or an expression
-template <Expr __expr> auto sin(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto sin(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::sin>(
        expr.node());
 }
 
 /// \fn sinh
 /// Hyperbolic sine
-template <Expr __expr> auto sinh(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto sinh(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::sinh>(
        expr.node());
 }
 
 /// \fn asin
 /// Arc sine
-template <Expr __expr> auto asin(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto asin(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::asin>(
        expr.node());
 }
 
 /// \fn cos
 /// Returns the cosine of a scalar, a tensor or an expression
-template <Expr __expr> auto cos(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto cos(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::cos>(
        expr.node());
 }
 
 /// \fn acos
-template <Expr __expr> auto acos(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto acos(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::acos>(
        expr.node());
 }
 
 /// \fn cosh
-template <Expr __expr> auto cosh(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto cosh(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::cosh>(
        expr.node());
 }
 
 /// \fn tan
 /// Returns the tangent of a scalar, a tensor or an expression
-template <Expr __expr> auto tan(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto tan(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::tan>(
        expr.node());
 }
 
 /// \fn atan
-template <Expr __expr> auto atan(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto atan(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::atan>(
        expr.node());
 }
 
 /// \fn tanh
-template <Expr __expr> auto tanh(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto tanh(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::tanh>(
        expr.node());
 }
 
 /// \fn exp
 /// Returns the tangent of a scalar, a tensor or an expression
-template <Expr __expr> auto exp(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto exp(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::exp>(
        expr.node());
 }
 
 /// \fn log
 /// Returns the tangent of a scalar, a tensor or an expression
-template <Expr __expr> auto log(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto log(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    using node_type = expr_type::node_type;
    return unary_expr<typename expr_type::node_type, functional::log>(
        expr.node());
 }
 
 /// \fn log10
-template <Expr __expr> auto log10(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto log10(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::log10>(
        expr.node());
 }
 
 /// \fn floor
-template <Expr __expr> auto floor(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto floor(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::floor>(
        expr.node());
 }
 
 /// \fn ceil
-template <Expr __expr> auto ceil(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto ceil(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
    return unary_expr<typename expr_type::node_type, functional::ceil>(
        expr.node());
 }
+*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // Parameteric functions
 
 /// \fn pow
 /// Power
-template <Expr __expr, class T = float> auto pow(__expr &&expr, T n) {
-   using expr_type = std::remove_cvref_t<__expr>;
-   return unary_expr<typename expr_type::node_type, functional::pow>(
-       expr.node(), n);
+template <Expr ExprType, class T = float> auto pow(ExprType &&expr, T n) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename ::ten::details::output_type<expr_type>::type;
+   return unary_expr<expr_type, output_type, functional::pow>(expr, n);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

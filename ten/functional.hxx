@@ -17,6 +17,23 @@ namespace ten {
 enum class binary_operation;
 }
 
+namespace ten::details {
+template <class, class> struct common_type;
+
+template <Tensor A, Tensor B>
+   requires(same_shape<A, B> && same_storage_order<A, B> && same_storage<A, B> && same_allocator<A, B>)
+struct common_type<A, B> {
+   using value_type =
+       std::common_type_t<typename A::value_type, typename B::value_type>;
+   using type =
+       ranked_tensor<value_type, typename A::shape_type, A::storage_order(),
+                   typename A::storage_type, typename A::allocator_type>;
+};
+
+template <class A, class B>
+using common_type_t = typename common_type<A, B>::type;
+} // namespace ten::details
+
 namespace ten::functional {
 ////////////////////////////////////////////////////////////////////////////////
 // Functions types
@@ -92,52 +109,57 @@ template <class __a, class __b = __a> struct sqr : func<> {
 };
 
 /// absolute value
-template <class __a, class __b = __a> struct abs : func<> {
-   using output_type = __b;
+template <class A, class B>
+requires (::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value)
+struct abs : func<>{
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using value_type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using value_type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::abs(static_cast<value_type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Power
-template <class __a, class __b = __a> struct pow : func<true> {
+template <class A, class B>
+requires (ten::is_tensor<A>::value || ten::is_column<A>::value || ten::is_row<A>::value)
+struct pow : func<true> {
  private:
    double _n;
 
  public:
-   using output_type = __b;
+   using output_type = B;
 
    explicit pow(double n) : _n(n) {}
 
-   void operator()(const __a &a, __b &b) const {
-      using value_type = typename __b::value_type;
+   void operator()(const A &a, B &b) const {
+      using value_type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::pow(static_cast<value_type>(a[i]), _n);
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Minimum
-template <class __a, class __b = typename __a::scalarnode_type>
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_scalar<B>::value)
 struct min : func<> {
-   using output_type = __b;
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __a::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename A::value_type;
       type res = a[0];
       for (size_t i = 1; i < a.size(); i++) {
          res = std::min(static_cast<type>(a[i]), res);
@@ -145,8 +167,8 @@ struct min : func<> {
       b = res;
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
@@ -466,49 +488,34 @@ template <class __a, class __b = __a> struct ceil : func<> {
    }
 };
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // __binary functions (__add, Sub, Mul and Div)
-namespace details {
-template <class, class> struct common_type;
-
-template <TensorNode __a, TensorNode __b>
-   requires same_shape<__a, __b> && same_storage_order<__a, __b> &&
-            same_storage<__a, __b> && same_allocator<__a, __b>
-struct common_type<__a, __b> {
-   using value_type =
-       std::common_type_t<typename __a::value_type, typename __b::value_type>;
-   using type =
-       tensor_node<value_type, typename __a::shape_type, __a::storage_order(),
-                   typename __a::storage_type, typename __a::allocator_type>;
-};
-
-template <class __a, class __b>
-using common_type_t = typename common_type<__a, __b>::type;
-} // namespace details
 
 // __binary function
-template <::ten::binary_operation __kind> struct binary_func {
+template <::ten::binary_operation Kind> struct binary_func {
 
-   template <class __a, class __b, class __c = details::common_type_t<__a, __b>>
+   template <class A, class B, class C = details::common_type_t<A, B>>
    struct func : ::ten::functional::func<> {
 
-      using output_type = __c;
+      using output_type = C;
 
-      static constexpr typename __c::shape_type
-      output_shape(const typename __a::shape_type &left,
-                   const typename __b::shape_type &right) {
-         typename __c::shape_type s(left);
+      static constexpr typename C::shape_type
+      output_shape(const typename A::shape_type &left,
+                   const typename B::shape_type &right) {
+         typename C::shape_type s(left);
          return s;
       }
 
-      static auto output_shape(const __a &a, const __b &b) { return a.shape(); }
+      static auto output_shape(const A &a, const B &b) { return a.shape(); }
 
-      void operator()(const __a &left, const __b &right, __c &result) {
-         ::ten::kernels::binary_ops<__kind>(left, right, result);
+      void operator()(const A &left, const B &right, C &result) {
+         ::ten::kernels::binary_ops<Kind>(left, right, result);
       }
    };
 };
 
+/*
 namespace details {
 template <class, class> struct mul_result;
 
@@ -723,6 +730,7 @@ struct mul<__x, __y, __z> {
              TensorNode __c = typename details::mul_result<__a, __b>::type>
    using func = mul<__a, __b, __c>::template func<__a, __b, __c>;
 };
+*/
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Other BLAS functions

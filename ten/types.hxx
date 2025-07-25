@@ -410,34 +410,37 @@ struct is_tensor_node<tensor_node<T, shape, order, storage, allocator>>
 // Unary Node
 template <class input, class output, template <typename...> class Func,
           typename... Args>
-class unary_node;
+class unary_expr;
 
-template <class> struct is_unary_node : std::false_type {};
+template <class> struct is_unary_expr : std::false_type {};
 template <class input, class output, template <typename...> class Func,
           typename... Args>
-struct is_unary_node<unary_node<input, output, Func, Args...>>
+struct is_unary_expr<unary_expr<input, output, Func, Args...>>
     : std::true_type {};
 
 // Unary Expr
+/*
 template <class E, template <typename...> class Func, typename... Args>
 class unary_expr;
 
 template <class> struct is_unary_expr : std::false_type {};
 template <class E, template <typename...> class Func, typename... Args>
 struct is_unary_expr<unary_expr<E, Func, Args...>> : std::true_type {};
+*/
 
 // Binary Node
 template <class left, class right, class output,
           template <typename...> class Func, typename... Args>
-class binary_node;
+class binary_expr;
 
-template <class> struct is_binary_node : std::false_type {};
+template <class> struct is_binary_expr : std::false_type {};
 template <class left, class right, class O, template <typename...> class Func,
           typename... Args>
-struct is_binary_node<binary_node<left, right, O, Func, Args...>>
+struct is_binary_expr<binary_expr<left, right, O, Func, Args...>>
     : std::true_type {};
 
 // Binary Expr
+/*
 template <class left, class right, template <typename...> class Func,
           typename... Args>
 class binary_expr;
@@ -447,11 +450,20 @@ template <class left, class right, template <typename...> class Func,
           typename... Args>
 struct is_binary_expr<binary_expr<left, right, Func, Args...>>
     : std::true_type {};
+*/
 
 /////////////////////////////////////////////////////////////////////////////////
 // Concepts
 
 /// Unary node
+template <class T>
+concept UnaryExpr = is_unary_expr<T>::value;
+
+/// Binary node
+template <class T>
+concept BinaryExpr = is_binary_expr<T>::value;
+
+/*/// Unary node
 template <class T>
 concept UnaryNode = is_unary_node<T>::value;
 
@@ -461,7 +473,7 @@ concept BinaryNode = is_binary_node<T>::value;
 
 /// Unary or binary node
 template <class T>
-concept Node = UnaryNode<T> || BinaryNode<T>;
+concept Node = UnaryNode<T> || BinaryNode<T>;*/
 
 /// Diagonal matrix
 template <typename T>
