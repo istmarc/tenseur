@@ -64,18 +64,20 @@ template <Expr E, typename T>
 auto operator+(E &&expr, T &&scalar) {
    using R = std::remove_cvref_t<E>;
    return std::forward<R>(expr) + ::ten::scalar<T>(scalar);
-}
+}*/
 
 // Substract two expressions
 template <Expr LeftExpr, Expr RightExpr>
 auto operator-(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
-   return ::ten::binary_expr<
-       typename L::node_type, typename R::node_type,
-       ::ten::functional::binary_func<::ten::binary_operation::sub>::func>(
-       left.node(), right.node());
-}*/
+   using left_input = ::ten::details::input_type<L>::type;
+   using right_input = ::ten::details::input_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+
+   return ::ten::binary_expr<L,R, output_type, ::ten::functional::binary_func<::ten::binary_operation::sub>::func>(
+       left, right);
+}
 
 
 /*FIXME
@@ -90,20 +92,23 @@ auto operator-(T &&scalar, E &&expr) {
 template <Expr E, typename T> auto operator-(E &&expr, T &&scalar) {
    using R = std::remove_cvref_t<E>;
    return std::forward<R>(expr) - ::ten::scalar<T>(scalar);
-}
+}*/
 
 // Multiply two expressions
-template <Expr LeftExpr, Expr RightExpr>
+/*template <Expr LeftExpr, Expr RightExpr>
 auto operator*(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
-   return ::ten::binary_expr<
-       typename L::node_type, typename R::node_type,
-       ::ten::functional::mul<typename L::node_type,
-                              typename R::node_type>::template func>(
-       left.node(), right.node());
-}
+   using left_input = ::ten::details::input_type<L>::type;
+   using right_input = ::ten::details::input_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
 
+   return ::ten::binary_expr<L, R, output_type,
+       ::ten::functional::mul<left_input, right_input, output_type>::template func>(
+       left, right);
+}*/
+
+/*
 template <typename T, Expr E> auto operator*(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
    return ::ten::scalar<T>(scalar) * std::forward<std::remove_cvref_t<E>>(expr);
@@ -116,17 +121,18 @@ auto operator*(E &&expr, T &&scalar) {
    return std::forward<R>(expr) * ::ten::scalar<T>(scalar);
 }*/
 
-/*
+
 // Divide two expressions
 template <Expr LeftExpr, Expr RightExpr>
 auto operator/(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
-   return ::ten:binary_expr<
-       typename L::node_type, typename R::node_type,
-       ::ten::functional::binary_func<::ten::binary_operation::div>::func>(
-       left.node(), right.node());
-}*/
+   using left_input = ::ten::details::input_type<L>::type;
+   using right_input = ::ten::details::input_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+
+   return ::ten::binary_expr<L, R, output_type, ::ten::functional::binary_func<::ten::binary_operation::div>::func>(left, right);
+}
 
 /*FIXME 
 template <typename T, typename E>
