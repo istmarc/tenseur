@@ -95,18 +95,19 @@ template <Expr E, typename T> auto operator-(E &&expr, T &&scalar) {
 }*/
 
 // Multiply two expressions
-/*template <Expr LeftExpr, Expr RightExpr>
+template <Expr LeftExpr, Expr RightExpr>
 auto operator*(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
    using left_input = ::ten::details::input_type<L>::type;
    using right_input = ::ten::details::input_type<R>::type;
-   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+
+   using output_type = ::ten::details::mul_result_t<left_input, right_input>;
 
    return ::ten::binary_expr<L, R, output_type,
        ::ten::functional::mul<left_input, right_input, output_type>::template func>(
        left, right);
-}*/
+}
 
 /*
 template <typename T, Expr E> auto operator*(T &&scalar, E &&expr) {

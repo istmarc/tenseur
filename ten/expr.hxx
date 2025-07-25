@@ -153,7 +153,7 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>>{
       // Evaluate input
       if constexpr (::ten::is_unary_expr<Input>::value ||
                     ::ten::is_binary_expr<Input>::value) {
-         if (_input.evaluated()) {
+         if (!_input.evaluated()) {
             _input.eval();
          }
       }
@@ -175,7 +175,10 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>>{
 
       // Evaluate
       _func.value()(::ten::details::input_value(_input), _value);
+
+      // This expression has been evaluated
       _evaluated = true;
+
       return _value;
    }
 };
