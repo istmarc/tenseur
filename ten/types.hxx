@@ -144,6 +144,10 @@ template <class T> class scalar;
 template <class> struct is_scalar : std::false_type {};
 template <class T> struct is_scalar<scalar<T>> : std::true_type {};
 
+// Scalar concept
+template <class T>
+concept Scalar = is_scalar<std::remove_cvref_t<T>>::value;
+
 // Forward declaration of tensor operations
 template <class T, class Shape, storage_order Order, class Storage,
           class Allocator>

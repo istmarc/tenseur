@@ -109,17 +109,19 @@ auto operator*(LeftExpr &&left, RightExpr &&right) {
        left, right);
 }
 
-/*
-template <typename T, Expr E> auto operator*(T &&scalar, E &&expr) {
+
+template <typename T, Expr E>
+// FIXME requires(std::is_floating_point_v<T> || ::ten::is_complex<T> || std::is_integral_v<T>)
+auto operator*(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   return ::ten::scalar<T>(scalar) * std::forward<std::remove_cvref_t<E>>(expr);
-}*/
+   return ::ten::scalar<T>(scalar) * std::forward<R>(expr);
+}
 
 /*FIXME 
 template <Expr E, typename T>
 auto operator*(E &&expr, T &&scalar) {
    using R = std::remove_cvref_t<E>;
-   return std::forward<R>(expr) * ::ten::scalar<T>(scalar);
+   return ::ten::scalar<T>(scalar) * std::forward<R>(expr);
 }*/
 
 

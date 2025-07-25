@@ -43,4 +43,11 @@ int main(){
       std::cout << c << std::endl;
    }
 
+   {
+      std::cout << "Scalar tensor multiplication\n";
+      auto a = ten::range<ten::matrix<float>>({3, 3});
+      auto b = 2.0f * a;
+      std::cout << b.eval() << std::endl;
+   }
+
 }

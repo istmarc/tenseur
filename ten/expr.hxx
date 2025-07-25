@@ -85,6 +85,9 @@ inline auto input_shape(const ExprType& expr) -> decltype(auto) {
 }
 
 // Input value
+template<Scalar T>
+inline auto input_value(T& t) {return t;}
+
 template<Tensor T>
 inline auto input_value(T& t) {return t;}
 

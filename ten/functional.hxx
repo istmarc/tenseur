@@ -78,10 +78,10 @@ struct mul_result<A, B> {
 };
 
 // scalar * tensor
-//template <Scalar A, Tensor B> struct mul_result<A, B> {
-// using value_type = typename B::value_type;
-//   using type = B;
-//};
+template <Scalar A, Tensor B> struct mul_result<A, B> {
+   //using value_type = typename B::value_type;
+   using type = B;
+};
 
 /// scalar * unary_expr
 /*template <Scalar A, UnaryExpr B> struct mul_result<A, B> {
@@ -263,11 +263,12 @@ struct min : func<> {
 };
 
 /// Maximum
-template <class __a, class B = typename __a::scalarnode_type>
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_scalar<B>::value)
 struct max : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       type res = a[0];
       for (size_t i = 1; i < a.size(); i++) {
@@ -282,11 +283,12 @@ struct max : func<> {
    }
 };
 /// Sum
-template <class __a, class B = typename __a::scalarnode_type>
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_scalar<B>::value)
 struct sum : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       type res = 0.;
       for (size_t i = 0; i < a.size(); i++) {
@@ -301,11 +303,13 @@ struct sum : func<> {
    }
 };
 
-/// cum__Sum
-template <class __a, class B = __a> struct cum_sum : func<> {
+/// Cumulative sum
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct cum_sum : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       b[0] = static_cast<type>(a[0]);
       for (size_t i = 1; i < a.size(); i++) {
@@ -320,11 +324,12 @@ template <class __a, class B = __a> struct cum_sum : func<> {
 };
 
 /// Prod
-template <class __a, class B = typename __a::scalarnode_type>
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_scalar<B>::value)
 struct prod : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       type res = 1.;
       for (size_t i = 0; i < a.size(); i++) {
@@ -342,10 +347,12 @@ struct prod : func<> {
 // TODO use simd for cos, sin and tan
 
 /// Sine
-template <class __a, class B = __a> struct sin : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct sin : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::sin(static_cast<type>(a[i]));
@@ -359,10 +366,12 @@ template <class __a, class B = __a> struct sin : func<> {
 };
 
 /// asin
-template <class __a, class B = __a> struct asin : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct asin : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::asin(static_cast<type>(a[i]));
@@ -376,10 +385,12 @@ template <class __a, class B = __a> struct asin : func<> {
 };
 
 /// Sinh
-template <class __a, class B = __a> struct sinh : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct sinh : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::sinh(static_cast<type>(a[i]));
@@ -393,10 +404,12 @@ template <class __a, class B = __a> struct sinh : func<> {
 };
 
 /// Cosine
-template <class __a, class B = __a> struct cos : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct cos : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::cos(static_cast<type>(a[i]));
@@ -410,10 +423,12 @@ template <class __a, class B = __a> struct cos : func<> {
 };
 
 /// acos
-template <class __a, class B = __a> struct acos : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct acos : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::acos(static_cast<type>(a[i]));
@@ -427,10 +442,12 @@ template <class __a, class B = __a> struct acos : func<> {
 };
 
 /// cosh
-template <class __a, class B = __a> struct cosh : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct cosh : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::cosh(static_cast<type>(a[i]));
@@ -444,10 +461,12 @@ template <class __a, class B = __a> struct cosh : func<> {
 };
 
 /// Tangent
-template <class __a, class B = __a> struct tan : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct tan : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::tan(static_cast<type>(a[i]));
@@ -460,10 +479,12 @@ template <class __a, class B = __a> struct tan : func<> {
    }
 };
 
-template <class __a, class B = __a> struct atan : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct atan : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::atan(static_cast<type>(a[i]));
@@ -476,10 +497,12 @@ template <class __a, class B = __a> struct atan : func<> {
    }
 };
 
-template <class __a, class B = __a> struct tanh : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct tanh : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::tanh(static_cast<type>(a[i]));
@@ -493,10 +516,12 @@ template <class __a, class B = __a> struct tanh : func<> {
 };
 
 /// Exponential
-template <class __a, class B = __a> struct exp : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct exp : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::exp(static_cast<type>(a[i]));
@@ -510,10 +535,12 @@ template <class __a, class B = __a> struct exp : func<> {
 };
 
 /// Natural logarithm
-template <class __a, class B = __a> struct log : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct log : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::log(static_cast<type>(a[i]));
@@ -527,10 +554,12 @@ template <class __a, class B = __a> struct log : func<> {
 };
 
 /// Logarithm
-template <class __a, class B = __a> struct log10 : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct log10 : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::log10(static_cast<type>(a[i]));
@@ -544,10 +573,12 @@ template <class __a, class B = __a> struct log10 : func<> {
 };
 
 /// Floor
-template <class __a, class B = __a> struct floor : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct floor : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::floor(static_cast<type>(a[i]));
@@ -561,10 +592,12 @@ template <class __a, class B = __a> struct floor : func<> {
 };
 
 /// Ceil
-template <class __a, class B = __a> struct ceil : func<> {
+template <class A, class B>
+requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+struct ceil : func<> {
    using output_type = B;
 
-   void operator()(const __a &a, B &b) {
+   void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::ceil(static_cast<type>(a[i]));
@@ -663,7 +696,6 @@ struct mul<X, Y, Z> {
 };
 
 // scalar * tensor
-/*
 template <Scalar X, Tensor Y, Tensor Z>
 struct mul<X, Y, Z> {
 
@@ -685,7 +717,7 @@ struct mul<X, Y, Z> {
          }
       }
    };
-};*/
+};
 
 // matrix_node * matrix
 /*template <Node __x, MatrixNode __y, MatrixNode __z>
