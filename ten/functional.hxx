@@ -79,14 +79,20 @@ struct mul_result<A, B> {
 
 // scalar * tensor
 template <Scalar A, Tensor B> struct mul_result<A, B> {
-   //using value_type = typename B::value_type;
    using type = B;
 };
 
+/*
 /// scalar * unary_expr
-/*template <Scalar A, UnaryExpr B> struct mul_result<A, B> {
-   using type = std::remove_cvref_t<B>::evaluated_type::node_type;
+template <Scalar A, UnaryExpr B> struct mul_result<A, B> {
+   using type = std::remove_cvref_t<B>::output_type;
+};
+
+/// scalar * binary_expr
+template <Scalar A, BinaryExpr B> struct mul_result<A, B> {
+   using type = std::remove_cvref_t<B>::output_type;
 };*/
+
 
 /// node * vector
 /*template <Node A, VectorNode B> struct mul_result<A, B> {
@@ -138,6 +144,32 @@ struct mul_result<A, B> {
    using value_type = mul_result<evaluated_type, A>::value_type;
    using type = mul_result<evaluated_type, A>::type;
 };*/
+
+
+// dynamic reshape result
+template <class A, class Shape> struct reshape_result {
+   using type =
+       tensor_node<typename A::value_type, Shape, A::storage_order(),
+                   typename A::storage_type, typename A::allocator_type>;
+};
+
+// static transpose result
+template <class A, class Shape> struct static_transpose_result {
+   static_assert(Shape::is_static(), "Shape must be static.");
+   static_assert(Shape::rank() == 2, "Shape rank must be 2.");
+
+   using type = tensor_node<typename A::value_type,
+                            ::ten::shape<Shape::template static_dim<1>(),
+                                         Shape::template static_dim<0>()>,
+                            A::storage_order(), typename A::storage_type,
+                            typename A::allocator_type>;
+};
+// dynamic transpose result
+template <class A, class Shape> struct transpose_result {
+   using type =
+       tensor_node<typename A::value_type, Shape, A::storage_order(),
+                   typename A::storage_type, typename A::allocator_type>;
+};
 
 } // namespace ten::details
 
@@ -719,31 +751,33 @@ struct mul<X, Y, Z> {
    };
 };
 
-// matrix_node * matrix
-/*template <Node __x, MatrixNode __y, MatrixNode __z>
-   requires(
-       ten::is_matrix_node<
-           typename std::remove_cvref_t<__x>::evaluated_type::node_type>::value)
-struct mul<__x, __y, __z> {
-   using evaluated_type = std::remove_cvref_t<__x>::evaluated_type::node_type;
-   // matrix_node * matrix_node
-   template <MatrixNode A, MatrixNode B,
-             MatrixNode C = typename details::mul_result<A, B>::type>
-   using func = mul<A, B, C>::template func<A, B, C>;
-};*/
-
-// scalar_node * tensor
-/*template <Node __x, TensorNode __y, TensorNode __z>
-   requires(
-       ten::is_scalar_node<
-           typename std::remove_cvref_t<__x>::evaluated_type::node_type>::value)
-struct mul<__x, __y, __z> {
-   using evaluated_type = std::remove_cvref_t<__x>::evaluated_type::node_type;
-   template <ScalarNode A, TensorNode B,
-             TensorNode C = typename details::mul_result<A, B>::type>
+// UnaryExpr * matrix
+template <UnaryExpr X, Matrix Y, Matrix Z>
+// FIXME REquire X::output_type to be a matrix
+struct mul<X, Y, Z> {
+   //using evaluated_type = std::remove_cvref_t<X>::output_type;
+   // matrix * matrix
+   template <Matrix A, Matrix B, Matrix C>
    using func = mul<A, B, C>::template func<A, B, C>;
 };
-*/
+
+// BinaryExpr * matrix
+template <BinaryExpr X, Matrix Y, Matrix Z>
+// FIXME REquire X::output_type to be a matrix
+struct mul<X, Y, Z> {
+   //using evaluated_type = std::remove_cvref_t<X>::output_type;
+   // matrix * matrix
+   template <Matrix A, Matrix B, Matrix C>
+   using func = mul<A, B, C>::template func<A, B, C>;
+};
+
+// UnaryExpr * tensor
+/*template <UnaryExpr X, Tensor Y, Tensor  Z>
+struct mul<X, Y, Z> {
+   using evaluated_type = std::remove_cvref_t<X>::evaluated_type::node_type;
+   template <Scalar A, Tensor B, Tensor C>
+   using func = mul<A, B, C>::template func<A, B, C>;
+};*/
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Other BLAS functions
@@ -798,26 +832,16 @@ struct __axpy2 : ::ten::functional::func<> {
 ////////////////////////////////////////////////////////////////////////////////
 // Reshape
 
-namespace details {
-// dynamic reshape result
-template <class __a, class __shape> struct reshape_result {
-   using type =
-       tensor_node<typename __a::value_type, __shape, __a::storage_order(),
-                   typename __a::storage_type, typename __a::allocator_type>;
-};
-} // namespace details
-
 // Reshape to static
-template <class __shape> struct static_reshape {
-   static_assert(__shape::is_static(), "Shape must be static");
+template <class Shape> struct static_reshape {
+   static_assert(Shape::is_static(), "Shape must be static");
 
-   template <class __a,
-             class __b = typename details::reshape_result<__a, __shape>::type>
+   template <class A, class B>
    struct func : ::ten::functional::func<> {
-      using output_type = __b;
+      using output_type = B;
 
-      void operator()(const __a &left, __b &right) {
-         right = __b(left.storage());
+      void operator()(const A &left, B &right) {
+         right = B(left.node());
       }
    };
 };
@@ -826,28 +850,27 @@ template <size_type... __dims>
 using dims_static_reshape = static_reshape<::ten::shape<__dims...>>;
 
 // Dynamic reshape
-// __shape is the target shape type
-template <class __shape> struct dynamic_reshape {
+// Shape is the target shape type
+template <class Shape> struct dynamic_reshape {
 
-   template <class __a,
-             class __b = typename details::reshape_result<__a, __shape>::type>
+   template <class A, class B>
    struct func : ::ten::functional::func<true, true> {
     public:
-      using output_type = __b;
+      using output_type = B;
 
     private:
-      __shape _shape;
+      Shape _shape;
 
     public:
-      func(const __shape &s) : _shape(s) {}
-      func(__shape &&s) : _shape(std::move(s)) {}
+      func(const Shape &s) : _shape(s) {}
+      func(Shape &&s) : _shape(std::move(s)) {}
 
-      typename __b::shape_type output_shape(const typename __a::shape_type &) {
+      typename B::shape_type output_shape(const typename A::shape_type &) {
          return _shape;
       }
 
-      void operator()(const __a &left, __b &right) {
-         right = __b(left.storage(), _shape);
+      void operator()(const A &left, B &right) {
+         right = B(left.storage(), _shape);
       }
    };
 };
@@ -855,48 +878,26 @@ template <class __shape> struct dynamic_reshape {
 ////////////////////////////////////////////////////////////////////////////////
 // Transpose a matrix
 
-namespace details {
-// static transpose result
-template <class __a, class __shape> struct static_transpose_result {
-   static_assert(__shape::is_static(), "Shape must be static.");
-   static_assert(__shape::rank() == 2, "Shape rank must be 2.");
-
-   using type = tensor_node<typename __a::value_type,
-                            ::ten::shape<__shape::template static_dim<1>(),
-                                         __shape::template static_dim<0>()>,
-                            __a::storage_order(), typename __a::storage_type,
-                            typename __a::allocator_type>;
-};
-// dynamic transpose result
-template <class __a, class __shape> struct transpose_result {
-   using type =
-       tensor_node<typename __a::value_type, __shape, __a::storage_order(),
-                   typename __a::storage_type, typename __a::allocator_type>;
-};
-} // namespace details
-
 // Reshape to static
-template <class __shape> struct static_transpose {
-   static_assert(__shape::is_static(), "Shape must be static.");
-   static_assert(__shape::rank() == 2, "Shape rank must be 2.");
+template <class Shape> struct static_transpose {
+   static_assert(Shape::is_static(), "Shape must be static.");
+   static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
-   template <class __a,
-             class __b =
-                 typename details::static_transpose_result<__a, __shape>::type>
+   template <class A, class B>
    struct func : ::ten::functional::func<> {
-      using output_type = __b;
+      using output_type = B;
 
-      void operator()(const __a &left, __b &right) {
-         using shape_type = __b::shape_type;
-         using storage_type = __b::storage_type;
+      void operator()(const A &left, B &right) {
+         using shape_type = B::shape_type;
+         using storage_type = B::storage_type;
 
          std::shared_ptr<storage_type> storage(new storage_type());
          // FIXME use auto storage =
          // std::make_shared<storage_type>(storage_type());
-         right = __b(storage);
+         right = B(storage);
          // copy transposed data
-         size_type m = __a::shape_type::template static_dim<0>();
-         size_type n = __a::shape_type::template static_dim<1>();
+         size_type m = A::shape_type::template static_dim<0>();
+         size_type n = A::shape_type::template static_dim<1>();
          for (size_type i = 0; i < n; i++) {
             for (size_type j = 0; j < m; j++) {
                right(i, j) = left(j, i);
@@ -911,25 +912,24 @@ template <size_type rows, size_type cols>
 using DimsStaticTranspose = StaticTranspose<::ten::Shape<cols, rows>>;*/
 
 // Dynamic transpose
-template <class __shape> struct dynamic_transpose {
+template <class Shape> struct dynamic_transpose {
 
-   template <class __a,
-             class __b = typename details::transpose_result<__a, __shape>::type>
+   template <class A, class B>
    struct func : ::ten::functional::func<true> {
-      static_assert(__shape::is_dynamic(), "Shape must be dynamic");
+      static_assert(Shape::is_dynamic(), "Shape must be dynamic");
       // FIXME Currently defined only for matrices
-      static_assert(__shape::rank() == 2, "Shape rank must be 2.");
+      static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
-      using output_type = __b;
+      using output_type = B;
 
-      typename __b::shape_type output_shape(const typename __a::shape_type &s) {
-         typename __b::shape_type res({s.dim(1), s.dim(0)});
+      typename B::shape_type output_shape(const typename A::shape_type &s) {
+         typename B::shape_type res({s.dim(1), s.dim(0)});
          return res;
       }
 
-      void operator()(const __a &left, __b &right) {
-         using storage_type = __b::storage_type;
-         using shape_type = __b::shape_type;
+      void operator()(const A &left, B &right) {
+         using storage_type = B::storage_type;
+         using shape_type = B::shape_type;
 
          size_type m = left.dim(0);
          size_type n = left.dim(1);
@@ -937,7 +937,7 @@ template <class __shape> struct dynamic_transpose {
          std::shared_ptr<storage_type> storage(new storage_type(s));
          // FIXME use auto storage =
          // std::make_shared<storage_type>(storage_type()); copy elements
-         right = __b(storage, s);
+         right = B(storage, s);
          for (size_type i = 0; i < n; i++) {
             for (size_type j = 0; j < m; j++) {
                right(i, j) = left(j, i);
