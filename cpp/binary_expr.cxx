@@ -35,4 +35,12 @@ int main(){
       std::cout << c << std::endl;
    }
 
+   {
+      std::cout << "Matrix vector multiplication\n";
+      auto a = ten::range<ten::matrix<float>>({3, 3});
+      auto b = ten::range<ten::vector<float>>({3});
+      auto c = (a * b).eval();
+      std::cout << c << std::endl;
+   }
+
 }

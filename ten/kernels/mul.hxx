@@ -11,7 +11,7 @@ void mul(A&& a, B &&b, C &c)
    size_t m = a.dim(0);
    size_t n = a.dim(1);
    using blas::transop;
-   using T = typename A::value_type;
+   using T = typename std::remove_cvref_t<A>::value_type;
    const transop transa = (a.is_transposed() ? transop::trans : transop::no);
    const size_t lda = (transa == transop::no ? m : n);
    const size_t incb = 1;
