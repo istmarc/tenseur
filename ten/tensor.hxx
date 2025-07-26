@@ -53,18 +53,30 @@ auto operator+(LeftExpr &&left, RightExpr &&right) {
    return ::ten::binary_expr<L, R, output_type, ::ten::functional::binary_func<::ten::binary_operation::add>::func>(left, right);
 }
 
-/*
-template <typename T, Expr E> auto operator+(T &&scalar, E &&expr) {
+template <typename T, Expr E>
+requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value || std::is_integral_v<T>)
+auto operator+(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   return ::ten::scalar<T>(scalar) + std::forward<R>(expr);
+   using L = ::ten::scalar<T>;
+   using left_input = ::ten::details::input_type<L>::type;
+   using right_input = ::ten::details::input_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type, ::ten::functional::scalar_left_binary_func<::ten::binary_operation::add>::func>(
+      ::ten::scalar<T>(scalar), expr);
 }
 
+
 template <Expr E, typename T>
-   requires std::is_floating_point_v<T>
+requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value || std::is_integral_v<T>)
 auto operator+(E &&expr, T &&scalar) {
-   using R = std::remove_cvref_t<E>;
-   return std::forward<R>(expr) + ::ten::scalar<T>(scalar);
-}*/
+   using L = std::remove_cvref_t<E>;
+   using R = ::ten::scalar<T>;
+   using left_input = ::ten::details::input_type<L>::type;
+   using right_input = ::ten::details::input_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type, ::ten::functional::scalar_right_binary_func<::ten::binary_operation::add>::func>(
+      expr, ::ten::scalar<T>(scalar));
+}
 
 // Substract two expressions
 template <Expr LeftExpr, Expr RightExpr>
@@ -79,20 +91,30 @@ auto operator-(LeftExpr &&left, RightExpr &&right) {
        left, right);
 }
 
-
-/*FIXME
-template <typename T, typename E>
-   requires ::ten::is_expr<std::remove_cvref_t<E>>
+template <typename T, Expr E>
+requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value || std::is_integral_v<T>)
 auto operator-(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   return ::ten::scalar<T>(scalar) - std::forward<R>(expr);
-}*/
+   using L = ::ten::scalar<T>;
+   using left_input = ::ten::details::input_type<L>::type;
+   using right_input = ::ten::details::input_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type, ::ten::functional::scalar_left_binary_func<::ten::binary_operation::sub>::func>(
+      ::ten::scalar<T>(scalar), expr);
+}
 
-/*
-template <Expr E, typename T> auto operator-(E &&expr, T &&scalar) {
-   using R = std::remove_cvref_t<E>;
-   return std::forward<R>(expr) - ::ten::scalar<T>(scalar);
-}*/
+
+template <Expr E, typename T>
+requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value || std::is_integral_v<T>)
+auto operator-(E &&expr, T &&scalar) {
+   using L = std::remove_cvref_t<E>;
+   using R = ::ten::scalar<T>;
+   using left_input = ::ten::details::input_type<L>::type;
+   using right_input = ::ten::details::input_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type, ::ten::functional::scalar_right_binary_func<::ten::binary_operation::sub>::func>(
+      expr, ::ten::scalar<T>(scalar));
+}
 
 // Multiply two expressions
 template <Expr LeftExpr, Expr RightExpr>
@@ -116,14 +138,11 @@ auto operator*(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
    return ::ten::scalar<T>(scalar) * std::forward<R>(expr);
 }
-
-/*FIXME 
 template <Expr E, typename T>
 auto operator*(E &&expr, T &&scalar) {
    using R = std::remove_cvref_t<E>;
    return ::ten::scalar<T>(scalar) * std::forward<R>(expr);
-}*/
-
+}
 
 // Divide two expressions
 template <Expr LeftExpr, Expr RightExpr>
@@ -155,7 +174,7 @@ template <Expr E, typename T> auto operator/(E &&expr, T &&scalar) {
 /*template <typename left_expr, typename right_expr>
    requires ::ten::is_expr<std::remove_cvref_t<left_expr>> &&
             ::ten::is_expr<std::remove_cvref_t<right_expr>>
-auto operator+=(left_expr &&left, right_expr &&right) {
+void operator+=(left_expr &&left, right_expr &&right) {
    using L = std::remove_cvref_t<left_expr>;
    using R = std::remove_cvref_t<RightExpr>;
    return ::ten::binary_expr<
@@ -1820,69 +1839,69 @@ template <class __t, class __shape, storage_order __order = default_order,
 }
 
 // fill<tensor<...>>(__shape, value)
-template <class __t>
-   requires(::ten::is_dynamic_tensor<__t>::value &&
-            ::ten::is_dense_storage<typename __t::storage_type>::value)
-[[nodiscard]] auto fill(typename __t::shape_type &&shape,
-                        typename __t::value_type value) {
-   using value_type = typename __t::value_type;
-   using shape_type = typename __t::shape_type;
-   __t x(std::forward<shape_type>(shape));
+template <class T>
+   requires(::ten::is_dynamic_tensor<T>::value &&
+            ::ten::is_dense_storage<typename T::storage_type>::value)
+[[nodiscard]] auto fill(typename T::shape_type &&shape,
+                        typename T::value_type value) {
+   using value_type = typename T::value_type;
+   using shape_type = typename T::shape_type;
+   T x(std::forward<shape_type>(shape));
    for (size_type i = 0; i < x.size(); i++) {
       x[i] = value;
    }
    return x;
 }
 
-template <class __t>
-   requires(::ten::is_dynamic_tensor<__t>::value &&
-            ::ten::is_dense_storage<typename __t::storage_type>::value)
+template <class T>
+   requires(::ten::is_dynamic_tensor<T>::value &&
+            ::ten::is_dense_storage<typename T::storage_type>::value)
 [[nodiscard]] auto fill(std::initializer_list<size_type> &&dims,
-                        typename __t::value_type value) {
-   using shape_type = typename __t::shape_type;
-   return fill<__t>(shape_type(std::move(dims)), value);
+                        typename T::value_type value) {
+   using shape_type = typename T::shape_type;
+   return fill<T>(shape_type(std::move(dims)), value);
 }
 
-// fill<__t, __shape, __order,__storage, __allocator>(__shape, value)
-template <class __t, class __shape, storage_order __order = default_order,
-          class __storage = ::ten::default_storage<__t, __shape>,
+// fill<T, __shape, __order,__storage, __allocator>(__shape, value)
+template <class T, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<T, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
    requires(::ten::is_dynamic_tensor<ranked_tensor<
-                __t, __shape, __order, __storage, __allocator>>::value &&
+                T, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
-[[nodiscard]] auto fill(__shape &&dims, __t value) {
+[[nodiscard]] auto fill(__shape &&dims, T value) {
    using tensor_type =
-       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
+       ranked_tensor<T, __shape, __order, __storage, __allocator>;
    return fill<tensor_type>(std::forward<shape>(dims), value);
 }
 
-template <class __t, class __shape, storage_order __order = default_order,
-          class __storage = ::ten::default_storage<__t, __shape>,
+template <class T, class __shape, storage_order __order = default_order,
+          class __storage = ::ten::default_storage<T, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
    requires(::ten::is_dynamic_tensor<ranked_tensor<
-                __t, __shape, __order, __storage, __allocator>>::value &&
+                T, __shape, __order, __storage, __allocator>>::value &&
             ::ten::is_dense_storage<__storage>::value)
-[[nodiscard]] auto fill(std::initializer_list<size_type> &&dims, __t value) {
+[[nodiscard]] auto fill(std::initializer_list<size_type> &&dims, T value) {
    using tensor_type =
-       ranked_tensor<__t, __shape, __order, __storage, __allocator>;
+       ranked_tensor<T, __shape, __order, __storage, __allocator>;
    using shape_type = typename tensor_type::shape_type;
    return fill<tensor_type>(shape_type(std::move(dims)), value);
 }
 
-// fill<__t, rank>(__shape, value)
-template <class __t, size_type rank, storage_order __order = default_order>
-[[nodiscard]] auto fill(const dynamic_shape<rank> &shape, __t value) {
+// fill<T, rank>(shape, value)
+template <class T, size_type rank, storage_order __order = default_order>
+[[nodiscard]] auto fill(const dynamic_shape<rank> &shape, T value) {
    using shape_type = ::ten::dynamic_shape<rank>;
-   return fill<__t, shape_type, __order>(std::forward<shape_type>(shape),
+   return fill<T, shape_type, __order>(std::forward<shape_type>(shape),
                                          value);
 }
 
-template <class __t, size_type rank, storage_order __order = default_order>
-[[nodiscard]] auto fill(std::initializer_list<size_type> &&dims, __t value) {
+template <class T, size_type rank, storage_order __order = default_order>
+[[nodiscard]] auto fill(std::initializer_list<size_type> &&dims, T value) {
    using shape_type = ::ten::dynamic_shape<rank>;
-   return fill<__t, shape_type, __order>(shape_type(std::move(dims)), value);
+   return fill<T, shape_type, __order>(shape_type(std::move(dims)), value);
 }
 
 // zeros<tensor<...>>()

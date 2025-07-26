@@ -20,6 +20,7 @@ enum class binary_operation;
 namespace ten::details {
 template <class, class> struct common_type;
 
+// Tensor, Tensor
 template <Tensor A, Tensor B>
    requires(same_shape<A, B> && same_storage_order<A, B> && same_storage<A, B> && same_allocator<A, B>)
 struct common_type<A, B> {
@@ -28,6 +29,20 @@ struct common_type<A, B> {
    using type =
        ranked_tensor<value_type, typename A::shape_type, A::storage_order(),
                    typename A::storage_type, typename A::allocator_type>;
+};
+
+// Scalar, Tensor
+template <Scalar A, Tensor B>
+//   requires(::ten::same_value_type<A, B>)
+struct common_type<A, B> {
+   using type =B;
+};
+
+// Tensor, Scalar
+template <Tensor A, Scalar B>
+//   requires(::ten::same_value_type<A, B>)
+struct common_type<A, B> {
+   using type = A;
 };
 
 template <class A, class B>
@@ -646,7 +661,7 @@ struct ceil : func<> {
 ////////////////////////////////////////////////////////////////////////////////
 // Binary functions (Add, Sub, Mul and Div)
 
-// Binary function
+/// Binary function
 template <::ten::binary_operation Kind> struct binary_func {
 
    template <class A, class B, class C>
@@ -666,6 +681,79 @@ template <::ten::binary_operation Kind> struct binary_func {
 
       void operator()(const A &left, const B &right, C &result) {
          ::ten::kernels::binary_ops<Kind>(left, right, result);
+      }
+   };
+};
+
+/// Binary function with scalar
+template <::ten::binary_operation Kind> struct scalar_left_binary_func {
+
+   template <Scalar A, class B, class C>
+   struct func : ::ten::functional::func<> {
+
+      using output_type = C;
+
+      static constexpr typename C::shape_type
+      output_shape(//const typename A::shape_type &left,
+                   const typename B::shape_type &right) {
+         // FIXME Maybe check that left == right
+         typename C::shape_type s(right);
+         return s;
+      }
+
+      static auto output_shape(/*const A &a, */const B &b) { return b.shape(); }
+
+      void operator()(const A &left, const B &right, C &result) {
+         /// FIXME use broadcast
+         if constexpr (B::is_static()) {
+            B x;
+            for (size_t i = 0; i < x.size(); i++) {
+               x[i] = left.value();
+            }
+            ::ten::kernels::binary_ops<Kind>(x, right, result);
+         } else {
+            B x(right.shape());
+            for (size_t i = 0; i < x.size(); i++) {
+               x[i] = left.value();
+            }
+            ::ten::kernels::binary_ops<Kind>(x, right, result);
+         }
+      }
+   };
+};
+
+/// Binary function with scalar right type
+template <::ten::binary_operation Kind> struct scalar_right_binary_func {
+
+   template <class A, Scalar B, class C>
+   struct func : ::ten::functional::func<> {
+
+      using output_type = C;
+
+      static constexpr typename C::shape_type
+      output_shape(const typename A::shape_type &left)
+      {
+         typename C::shape_type s(left);
+         return s;
+      }
+
+      static auto output_shape(const A &a) { return a.shape(); }
+
+      void operator()(const A &left, const B &right, C &result) {
+         /// FIXME use broadcast
+         if constexpr (A::is_static()) {
+            A x;
+            for (size_t i = 0; i < x.size(); i++) {
+               x[i] = right.value();
+            }
+            ::ten::kernels::binary_ops<Kind>(left, x, result);
+         } else {
+            A x(left.shape());
+            for (size_t i = 0; i < x.size(); i++) {
+               x[i] = right.value();
+            }
+            ::ten::kernels::binary_ops<Kind>(left, x, result);
+         }
       }
    };
 };
