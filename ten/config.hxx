@@ -35,10 +35,15 @@ enum class simd_backend { std, unknown };
 static simd_backend simd_backend_type = TENSEUR_SIMDBACKEND;
 
 // TODO Two simdvecLen default to 8 and 4 for floats, 4 and 2 for doubles
-#ifndef TENSEUR_SIMDVECLEN
-#define TENSEUR_SIMDVECLEN 32
+#ifndef TENSEUR_SIMDVECLEN_FLOAT
+#define TENSEUR_SIMDVECLEN_FLOAT 32
 #endif
-static constexpr size_t simd_vecLen = TENSEUR_SIMDVECLEN;
+static constexpr size_t simd_vecLen_float = TENSEUR_SIMDVECLEN_FLOAT;
+
+#ifndef TENSEUR_SIMDVECLEN_DOUBLE
+#define TENSEUR_SIMDVECLEN_DOUBLE 16
+#endif
+static constexpr size_t simd_vecLen_double = TENSEUR_SIMDVECLEN_DOUBLE;
 
 } // namespace ten
 

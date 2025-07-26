@@ -50,4 +50,32 @@ int main(){
       std::cout << a.eval() << std::endl;
    }
 
+   {
+      auto x = ten::range<ten::vector<int32_t>>({10});
+      auto y = ten::range<ten::vector<int32_t>>({10});
+      auto z = x + y;
+      std::cout << z.eval() << std::endl;
+   }
+
+   {
+      auto x = ten::range<ten::vector<uint32_t>>({10});
+      auto y = ten::range<ten::vector<uint32_t>>({10});
+      auto z = x + y;
+      std::cout << z.eval() << std::endl;
+   }
+
+   {
+      auto x = ten::range<ten::vector<int64_t>>({10});
+      auto y = ten::range<ten::vector<int64_t>>({10});
+      auto z = x + y;
+      std::cout << z.eval() << std::endl;
+   }
+
+   {
+      auto x = ten::range<ten::vector<size_t>>({10});
+      auto y = ten::range<ten::vector<size_t>>({10});
+      auto z = x + y;
+      std::cout << z.eval() << std::endl;
+   }
+
 }

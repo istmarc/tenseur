@@ -76,6 +76,34 @@ using size_type = TENSEUR_SIZE_TYPE;
 template <class> struct is_complex : std::false_type {};
 template <class T> struct is_complex<std::complex<T>> : std::true_type {};
 
+// Traits for float
+template<class> struct is_float : std::false_type {};
+template<> struct is_float<float> : std::true_type {};
+
+// Traits for double
+template<class> struct is_double : std::false_type {};
+template<> struct is_double<double> : std::true_type {};
+
+// Traits for int32
+template<class> struct is_int32 : std::false_type {};
+template<> struct is_int32<int32_t> : std::true_type {};
+
+// Traits for uint32
+template<class> struct is_uint32 : std::false_type {};
+template<> struct is_uint32<uint32_t> : std::true_type {};
+
+// Traits for int64
+template<class> struct is_int64 : std::false_type {};
+template<> struct is_int64<int64_t> : std::true_type {};
+
+// Traits for uint64
+template<class> struct is_uint64 : std::false_type {};
+template<> struct is_uint64<uint64_t> : std::true_type {};
+
+// Traits for bool
+template<class> struct is_bool : std::false_type {};
+template<> struct is_bool<bool> : std::true_type {};
+
 // Forward declaration of shape
 template <size_type Dim, size_type... Rest> class shape;
 
