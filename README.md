@@ -66,11 +66,12 @@ int main() {
 
 ```c++
 #include <ten/tensor>
+#include <ten/io>
 
 int main() {
    auto x = ten::range<ten::matrix<float>>({3, 4});
-   ten::save(x, "matrix.ten");
-   auto y = ten::load<ten::matrix<float>>("matrix.ten").value();
+   ten::io::save(x, "matrix.ten");
+   auto y = ten::io::load<ten::matrix<float>>("matrix.ten").value();
    std::cout << "shape = " << y.shape() << std::endl;
    std::cout << "stride = " << y.strides() << std::endl;
    std::cout << "data = \n" << y << std::endl;
