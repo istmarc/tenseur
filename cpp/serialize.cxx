@@ -1,30 +1,7 @@
-#include "ten/shape.hxx"
-#include "ten/tensor.hxx"
 #include <ten/tensor>
+#include <ten/io>
 
 int main() {
-   { // Storage
-      auto x = ten::range<ten::vector<float>>({10});
-      std::cout << "Data to write = " << std::endl;
-      std::cout << x << std::endl;
-
-      auto storage = x.storage();
-      auto st = storage.get();
-      std::ofstream ofs("vector.ten", std::ios_base::binary);
-      ten::serialize(ofs, *st);
-      ofs.close();
-
-      std::ifstream ifs("vector.ten", std::ios_base::binary);
-      using storage_type = decltype(x)::storage_type;
-      auto y = ten::deserialize<storage_type>(ifs);
-      ifs.close();
-
-      auto data = y.data();
-
-      std::cout << "Read data = " << std::endl;
-      for (size_t i = 0; i < y.size(); i++)
-         std::cout << data[i] << std::endl;
-   }
 
    { // Tensor node
       auto x = ten::range<ten::matrix<float>>({3, 4});
@@ -95,8 +72,8 @@ int main() {
    { // Tensor
       std::cout << "Tensor" << std::endl;
       auto x = ten::range<ten::matrix<float>>({3, 4});
-      ten::save(x, "tensor.ten");
-      auto y = ten::load<decltype(x)>("tensor.ten").value();
+      ten::io::save(x, "tensor.ten");
+      auto y = ten::io::load<decltype(x)>("tensor.ten").value();
       std::cout << "shape = " << y.shape() << std::endl;
       std::cout << "stride = " << y.strides() << std::endl;
       std::cout << "data = \n" << y << std::endl;
