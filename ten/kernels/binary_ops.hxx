@@ -1,5 +1,5 @@
-#ifndef TA_KERNELS_STD_SIMD_BINARY_OPS_HXX
-#define TA_KERNELS_STD_SIMD_BINARY_OPS_HXX
+#ifndef TENSEUR_KERNELS_STD_SIMD_BINARY_OPS_HXX
+#define TENSEUR_KERNELS_STD_SIMD_BINARY_OPS_HXX
 
 #include <experimental/bits/simd.h>
 #include <experimental/simd>

@@ -4,14 +4,12 @@
 #include <cmath>
 #include <functional>
 #include <initializer_list>
-#include <iostream>
+//#include <iostream>
 #include <memory>
 #include <type_traits>
 
-#include <ten/kernels/binary_ops.hxx>
-#include <ten/kernels/blas_api.hxx>
-#include <ten/kernels/mul.hxx>
 #include <ten/types.hxx>
+#include <ten/kernels/host>
 
 namespace ten {
 enum class binary_operation;
