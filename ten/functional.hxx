@@ -22,20 +22,21 @@ template <class, class> struct common_type;
 
 // Tensor, Tensor
 template <Tensor A, Tensor B>
-   requires(same_shape<A, B> && same_storage_order<A, B> && same_storage<A, B> && same_allocator<A, B>)
+   requires(same_shape<A, B> && same_storage_order<A, B> &&
+            same_storage<A, B> && same_allocator<A, B>)
 struct common_type<A, B> {
    using value_type =
        std::common_type_t<typename A::value_type, typename B::value_type>;
    using type =
        ranked_tensor<value_type, typename A::shape_type, A::storage_order(),
-                   typename A::storage_type, typename A::allocator_type>;
+                     typename A::storage_type, typename A::allocator_type>;
 };
 
 // Scalar, Tensor
 template <Scalar A, Tensor B>
 //   requires(::ten::same_value_type<A, B>)
 struct common_type<A, B> {
-   using type =B;
+   using type = B;
 };
 
 // Tensor, Scalar
@@ -48,7 +49,6 @@ struct common_type<A, B> {
 template <class A, class B>
 using common_type_t = typename common_type<A, B>::type;
 
-
 template <class, class> struct mul_result;
 
 template <class A, class B>
@@ -56,40 +56,42 @@ using mul_result_t = typename mul_result<A, B>::type;
 
 // vector * vector
 template <Vector A, Vector B>
-requires(same_shape<A, B> && same_storage_order<A, B> &&
+   requires(same_shape<A, B> && same_storage_order<A, B> &&
             same_storage<A, B> && same_allocator<A, B>)
 struct mul_result<A, B> {
    using value_type =
        std::common_type_t<typename A::value_type, typename B::value_type>;
    using type =
        ranked_tensor<value_type, typename A::shape_type, A::storage_order(),
-                   typename A::storage_type, typename A::allocator_type>;
+                     typename A::storage_type, typename A::allocator_type>;
 };
 
 // matrix * matrix
 template <Matrix A, Matrix B>
-requires(same_storage_order<A, B> && same_storage<A, B> && same_allocator<A, B>)
+   requires(same_storage_order<A, B> && same_storage<A, B> &&
+            same_allocator<A, B>)
 struct mul_result<A, B> {
    using value_type =
        std::common_type_t<typename A::value_type, typename B::value_type>;
    using type =
        ranked_tensor<value_type,
-                   ::ten::shape<A::shape_type::template static_dim<0>(),
-                                B::shape_type::template static_dim<1>()>,
-                   A::storage_order(), typename A::storage_type,
-                   typename A::allocator_type>;
+                     ::ten::shape<A::shape_type::template static_dim<0>(),
+                                  B::shape_type::template static_dim<1>()>,
+                     A::storage_order(), typename A::storage_type,
+                     typename A::allocator_type>;
 };
 
 // matrix * vector
 template <Matrix A, Vector B>
-   requires(same_storage_order<A, B> && same_storage<A, B> && same_allocator<A, B>)
+   requires(same_storage_order<A, B> && same_storage<A, B> &&
+            same_allocator<A, B>)
 struct mul_result<A, B> {
    using value_type =
        std::common_type_t<typename A::value_type, typename B::value_type>;
    using type =
        ranked_tensor<value_type, shape<A::shape_type::template static_dim<0>()>,
-                   A::storage_order(), typename A::storage_type,
-                   typename A::allocator_type>;
+                     A::storage_order(), typename A::storage_type,
+                     typename A::allocator_type>;
 };
 
 // scalar * tensor
@@ -97,7 +99,6 @@ template <Scalar A, Tensor B> struct mul_result<A, B> {
    using type = B;
 };
 
-/*
 /// scalar * unary_expr
 template <Scalar A, UnaryExpr B> struct mul_result<A, B> {
    using type = std::remove_cvref_t<B>::output_type;
@@ -106,60 +107,55 @@ template <Scalar A, UnaryExpr B> struct mul_result<A, B> {
 /// scalar * binary_expr
 template <Scalar A, BinaryExpr B> struct mul_result<A, B> {
    using type = std::remove_cvref_t<B>::output_type;
-};*/
+};
 
-
-/// node * vector
-/*template <Node A, VectorNode B> struct mul_result<A, B> {
-   using evaluated_type = std::remove_cvref_t<A>::evaluated_type::node_type;
-   using value_type = mul_result<evaluated_type, B>::value_type;
+/// UnaryExpr * vector
+template <UnaryExpr A, Vector B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
    using type = mul_result<evaluated_type, B>::type;
-};*/
+};
 
-/// matrix_node * matrix
-/*template <Node A, MatrixNode B>
-   requires(
-       ten::is_matrix_node<
-           typename std::remove_cvref_t<A>::evaluated_type::node_type>::value)
-struct mul_result<A, B> {
-   using evaluated_type = std::remove_cvref_t<A>::evaluated_type::node_type;
-   using value_type = mul_result<evaluated_type, B>::value_type;
+/// BinaryExpr * vector
+template <BinaryExpr A, Vector B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
    using type = mul_result<evaluated_type, B>::type;
-};*/
+};
 
-/// scalar_node * tensor
-/*template <Node A, TensorNode B>
-   requires(
-       ten::is_scalar_node<
-           typename std::remove_cvref_t<A>::evaluated_type::node_type>::value)
-struct mul_result<A, B> {
-   // using evaluated_type =
-   // std::remove_cvref_t<A>::evaluated_type::node_type; using value_type =
-   // mul_result<evaluated_type, B>::value_type;
-   using type = B; // mul_result<evaluated_type, B>::type;
-};*/
+/// UnaryExpr * matrix
+template <UnaryExpr A, Matrix B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
+   using type = mul_result<evaluated_type, B>::type;
+};
 
-/// vector * node
-/*template <VectorNode A, Node B> struct mul_result<A, B> {
-   using evaluated_type = std::remove_cvref_t<B>::evaluated_type::node_type;
-   using value_type = mul_result<evaluated_type, A>::value_type;
+/// matrix * UnaryExpr
+template <Matrix A, UnaryExpr B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<B>::output_type;
    using type = mul_result<evaluated_type, A>::type;
-};*/
+};
 
-/// matrix * node
-/*template <MatrixNode A, Node B> struct mul_result<A, B> {
-   using evaluated_type = std::remove_cvref_t<B>::evaluated_type::node_type;
-   using value_type = mul_result<evaluated_type, A>::value_type;
+/// BinaryExpr * Matrix
+template <BinaryExpr A, Matrix B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
+   using type = mul_result<evaluated_type, B>::type;
+};
+
+/// Matrix * BinaryExpr
+template <Matrix A, BinaryExpr B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<B>::output_type;
    using type = mul_result<evaluated_type, A>::type;
-};*/
+};
 
-/// tensor * node
-/*template <TensorNode A, Node B> struct mul_result<A, B> {
-   using evaluated_type = std::remove_cvref_t<B>::evaluated_type::node_type;
-   using value_type = mul_result<evaluated_type, A>::value_type;
-   using type = mul_result<evaluated_type, A>::type;
-};*/
+/// UnaryExpr * tensor
+template <UnaryExpr A, Tensor B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
+   using type = mul_result<evaluated_type, B>::type;
+};
 
+/// BinaryExpr * tensor
+template <BinaryExpr A, Tensor B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
+   using type = mul_result<evaluated_type, B>::type;
+};
 
 // dynamic reshape result
 template <class A, class Shape> struct reshape_result {
@@ -208,7 +204,9 @@ template <class Func> struct has_shape {
 
 /// Square root
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct sqrt : func<> {
    using output_type = B;
 
@@ -227,7 +225,9 @@ struct sqrt : func<> {
 
 /// Square
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct sqr : func<> {
    using output_type = B;
 
@@ -246,8 +246,10 @@ struct sqr : func<> {
 
 /// absolute value
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
-struct abs : func<>{
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct abs : func<> {
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -265,7 +267,9 @@ struct abs : func<>{
 
 /// Power
 template <class A, class B>
-requires ((ten::is_tensor<A>::value || ten::is_column<A>::value || ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((ten::is_tensor<A>::value || ten::is_column<A>::value ||
+             ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct pow : func<true> {
  private:
    double _n;
@@ -290,7 +294,9 @@ struct pow : func<true> {
 
 /// Minimum
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_scalar<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_scalar<B>::value)
 struct min : func<> {
    using output_type = B;
 
@@ -303,15 +309,17 @@ struct min : func<> {
       b = res;
    }
 
-   static typename B::shape_type
-   output_shape(const typename B::shape_type &right) {
-      return right;
+   static typename A::shape_type
+   output_shape(const typename A::shape_type &left) {
+      return left;
    }
 };
 
 /// Maximum
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_scalar<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_scalar<B>::value)
 struct max : func<> {
    using output_type = B;
 
@@ -324,14 +332,16 @@ struct max : func<> {
       b = res;
    }
 
-   static typename B::shape_type
-   output_shape(const typename B::shape_type &right) {
-      return right;
+   static typename A::shape_type
+   output_shape(const typename A::shape_type &left) {
+      return left;
    }
 };
 /// Sum
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_scalar<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_scalar<B>::value)
 struct sum : func<> {
    using output_type = B;
 
@@ -352,7 +362,9 @@ struct sum : func<> {
 
 /// Cumulative sum
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct cum_sum : func<> {
    using output_type = B;
 
@@ -372,7 +384,9 @@ struct cum_sum : func<> {
 
 /// Prod
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_scalar<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_scalar<B>::value)
 struct prod : func<> {
    using output_type = B;
 
@@ -385,9 +399,9 @@ struct prod : func<> {
       b = res;
    }
 
-   static typename B::shape_type
-   output_shape(const typename B::shape_type &right) {
-      return right;
+   static typename A::shape_type
+   output_shape(const typename A::shape_type &left) {
+      return left;
    }
 };
 
@@ -395,7 +409,9 @@ struct prod : func<> {
 
 /// Sine
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct sin : func<> {
    using output_type = B;
 
@@ -414,7 +430,9 @@ struct sin : func<> {
 
 /// asin
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct asin : func<> {
    using output_type = B;
 
@@ -433,7 +451,9 @@ struct asin : func<> {
 
 /// Sinh
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct sinh : func<> {
    using output_type = B;
 
@@ -452,7 +472,9 @@ struct sinh : func<> {
 
 /// Cosine
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct cos : func<> {
    using output_type = B;
 
@@ -471,7 +493,9 @@ struct cos : func<> {
 
 /// acos
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct acos : func<> {
    using output_type = B;
 
@@ -490,7 +514,9 @@ struct acos : func<> {
 
 /// cosh
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct cosh : func<> {
    using output_type = B;
 
@@ -509,7 +535,9 @@ struct cosh : func<> {
 
 /// Tangent
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct tan : func<> {
    using output_type = B;
 
@@ -527,7 +555,9 @@ struct tan : func<> {
 };
 
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct atan : func<> {
    using output_type = B;
 
@@ -545,7 +575,9 @@ struct atan : func<> {
 };
 
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct tanh : func<> {
    using output_type = B;
 
@@ -564,7 +596,9 @@ struct tanh : func<> {
 
 /// Exponential
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct exp : func<> {
    using output_type = B;
 
@@ -583,7 +617,9 @@ struct exp : func<> {
 
 /// Natural logarithm
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct log : func<> {
    using output_type = B;
 
@@ -602,7 +638,9 @@ struct log : func<> {
 
 /// Logarithm
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct log10 : func<> {
    using output_type = B;
 
@@ -621,7 +659,9 @@ struct log10 : func<> {
 
 /// Floor
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct floor : func<> {
    using output_type = B;
 
@@ -640,7 +680,9 @@ struct floor : func<> {
 
 /// Ceil
 template <class A, class B>
-requires ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
 struct ceil : func<> {
    using output_type = B;
 
@@ -656,7 +698,6 @@ struct ceil : func<> {
       return right;
    }
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Binary functions (Add, Sub, Mul and Div)
@@ -694,14 +735,16 @@ template <::ten::binary_operation Kind> struct scalar_left_binary_func {
       using output_type = C;
 
       static constexpr typename C::shape_type
-      output_shape(//const typename A::shape_type &left,
-                   const typename B::shape_type &right) {
+      output_shape( // const typename A::shape_type &left,
+          const typename B::shape_type &right) {
          // FIXME Maybe check that left == right
          typename C::shape_type s(right);
          return s;
       }
 
-      static auto output_shape(/*const A &a, */const B &b) { return b.shape(); }
+      static auto output_shape(/*const A &a, */ const B &b) {
+         return b.shape();
+      }
 
       void operator()(const A &left, const B &right, C &result) {
          /// FIXME use broadcast
@@ -731,8 +774,7 @@ template <::ten::binary_operation Kind> struct scalar_right_binary_func {
       using output_type = C;
 
       static constexpr typename C::shape_type
-      output_shape(const typename A::shape_type &left)
-      {
+      output_shape(const typename A::shape_type &left) {
          typename C::shape_type s(left);
          return s;
       }
@@ -758,22 +800,19 @@ template <::ten::binary_operation Kind> struct scalar_right_binary_func {
    };
 };
 
-
 template <class A, class B, class C>
 // = typename details::mul_result<A, B>::type>
 struct mul;
 
 // vector * vector
-template <Vector X, Vector Y, Vector Z>
-struct mul<X, Y, Z> {
+template <Vector X, Vector Y, Vector Z> struct mul<X, Y, Z> {
 
    template <Vector A, Vector B, Vector C>
    using func = binary_func<::ten::binary_operation::mul>::func<A, B, C>;
 };
 
 // matrix * matrix
-template <Matrix X, Matrix Y, Matrix Z>
-struct mul<X, Y, Z> {
+template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> {
 
    template <Matrix A, Matrix B, Matrix C>
    struct func : ::ten::functional::func<> {
@@ -794,8 +833,7 @@ struct mul<X, Y, Z> {
 };
 
 // matrix * vector
-template <Matrix X, Vector Y, Vector Z>
-struct mul<X, Y, Z> {
+template <Matrix X, Vector Y, Vector Z> struct mul<X, Y, Z> {
 
    template <Matrix A, Vector B, Vector C>
    struct func : ::ten::functional::func<> {
@@ -816,8 +854,7 @@ struct mul<X, Y, Z> {
 };
 
 // scalar * tensor
-template <Scalar X, Tensor Y, Tensor Z>
-struct mul<X, Y, Z> {
+template <Scalar X, Tensor Y, Tensor Z> struct mul<X, Y, Z> {
 
    template <Scalar A, Tensor B, Tensor C>
    struct func : ::ten::functional::func<> {
@@ -843,8 +880,8 @@ struct mul<X, Y, Z> {
 template <UnaryExpr X, Matrix Y, Matrix Z>
 // FIXME REquire X::output_type to be a matrix
 struct mul<X, Y, Z> {
-   //using evaluated_type = std::remove_cvref_t<X>::output_type;
-   // matrix * matrix
+   // using evaluated_type = std::remove_cvref_t<X>::output_type;
+   //  matrix * matrix
    template <Matrix A, Matrix B, Matrix C>
    using func = mul<A, B, C>::template func<A, B, C>;
 };
@@ -853,8 +890,8 @@ struct mul<X, Y, Z> {
 template <BinaryExpr X, Matrix Y, Matrix Z>
 // FIXME REquire X::output_type to be a matrix
 struct mul<X, Y, Z> {
-   //using evaluated_type = std::remove_cvref_t<X>::output_type;
-   // matrix * matrix
+   // using evaluated_type = std::remove_cvref_t<X>::output_type;
+   //  matrix * matrix
    template <Matrix A, Matrix B, Matrix C>
    using func = mul<A, B, C>::template func<A, B, C>;
 };
@@ -871,18 +908,16 @@ struct mul<X, Y, Z> {
 /// Other BLAS functions
 
 // C <- alpha * X * Y + beta * C
-/*template<class A, class B, class C, class D = typename ::ten::functional::details::mul_result<A, B>::type>
-class gemm : ::ten::functional::func<true> {
-private:
-   T _alpha;
-   T _beta;
-public:
-   gemm(const T alpha, const T beta) : _alpha(alpha), _beta(beta) {}
+/*template<class A, class B, class C, class D = typename
+::ten::functional::details::mul_result<A, B>::type> class gemm :
+::ten::functional::func<true> { private: T _alpha; T _beta; public: gemm(const T
+alpha, const T beta) : _alpha(alpha), _beta(beta) {}
 
    using output_type = C;
 
-   static constexpr typename C::shape_type 
-   output_shape(const typename A::shape_type& left, const typename B::shape_type& right) {
+   static constexpr typename C::shape_type
+   output_shape(const typename A::shape_type& left, const typename
+B::shape_type& right) {
    }
 
    void operator()(const A& a, const B& b, C& result) {
@@ -924,13 +959,10 @@ struct __axpy2 : ::ten::functional::func<> {
 template <class Shape> struct static_reshape {
    static_assert(Shape::is_static(), "Shape must be static");
 
-   template <class A, class B>
-   struct func : ::ten::functional::func<> {
+   template <class A, class B> struct func : ::ten::functional::func<> {
       using output_type = B;
 
-      void operator()(const A &left, B &right) {
-         right = B(left.node());
-      }
+      void operator()(const A &left, B &right) { right = B(left.node()); }
    };
 };
 
@@ -971,8 +1003,7 @@ template <class Shape> struct static_transpose {
    static_assert(Shape::is_static(), "Shape must be static.");
    static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
-   template <class A, class B>
-   struct func : ::ten::functional::func<> {
+   template <class A, class B> struct func : ::ten::functional::func<> {
       using output_type = B;
 
       void operator()(const A &left, B &right) {
@@ -1002,8 +1033,7 @@ using DimsStaticTranspose = StaticTranspose<::ten::Shape<cols, rows>>;*/
 // Dynamic transpose
 template <class Shape> struct dynamic_transpose {
 
-   template <class A, class B>
-   struct func : ::ten::functional::func<true> {
+   template <class A, class B> struct func : ::ten::functional::func<true> {
       static_assert(Shape::is_dynamic(), "Shape must be dynamic");
       // FIXME Currently defined only for matrices
       static_assert(Shape::rank() == 2, "Shape rank must be 2.");

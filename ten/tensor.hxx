@@ -40,42 +40,49 @@ template <typename Derived> class expr {
    expr(expr &&) = default;
 };
 
-
 // Add two expr
 template <Expr LeftExpr, Expr RightExpr>
 auto operator+(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
-   using left_input = ::ten::details::input_type<L>::type;
-   using right_input = ::ten::details::input_type<R>::type;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
 
-   return ::ten::binary_expr<L, R, output_type, ::ten::functional::binary_func<::ten::binary_operation::add>::func>(left, right);
+   return ::ten::binary_expr<
+       L, R, output_type,
+       ::ten::functional::binary_func<::ten::binary_operation::add>::func>(
+       left, right);
 }
 
 template <typename T, Expr E>
-requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value || std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
+            std::is_integral_v<T>)
 auto operator+(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
    using L = ::ten::scalar<T>;
-   using left_input = ::ten::details::input_type<L>::type;
-   using right_input = ::ten::details::input_type<R>::type;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   return ::ten::binary_expr<L, R, output_type, ::ten::functional::scalar_left_binary_func<::ten::binary_operation::add>::func>(
-      ::ten::scalar<T>(scalar), expr);
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::add>::func>(
+       ::ten::scalar<T>(scalar), expr);
 }
 
-
 template <Expr E, typename T>
-requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value || std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
+            std::is_integral_v<T>)
 auto operator+(E &&expr, T &&scalar) {
    using L = std::remove_cvref_t<E>;
    using R = ::ten::scalar<T>;
-   using left_input = ::ten::details::input_type<L>::type;
-   using right_input = ::ten::details::input_type<R>::type;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   return ::ten::binary_expr<L, R, output_type, ::ten::functional::scalar_right_binary_func<::ten::binary_operation::add>::func>(
-      expr, ::ten::scalar<T>(scalar));
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::add>::func>(
+       expr, ::ten::scalar<T>(scalar));
 }
 
 // Substract two expressions
@@ -83,37 +90,44 @@ template <Expr LeftExpr, Expr RightExpr>
 auto operator-(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
-   using left_input = ::ten::details::input_type<L>::type;
-   using right_input = ::ten::details::input_type<R>::type;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
 
-   return ::ten::binary_expr<L,R, output_type, ::ten::functional::binary_func<::ten::binary_operation::sub>::func>(
+   return ::ten::binary_expr<
+       L, R, output_type,
+       ::ten::functional::binary_func<::ten::binary_operation::sub>::func>(
        left, right);
 }
 
 template <typename T, Expr E>
-requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value || std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
+            std::is_integral_v<T>)
 auto operator-(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
    using L = ::ten::scalar<T>;
-   using left_input = ::ten::details::input_type<L>::type;
-   using right_input = ::ten::details::input_type<R>::type;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   return ::ten::binary_expr<L, R, output_type, ::ten::functional::scalar_left_binary_func<::ten::binary_operation::sub>::func>(
-      ::ten::scalar<T>(scalar), expr);
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::sub>::func>(
+       ::ten::scalar<T>(scalar), expr);
 }
 
-
 template <Expr E, typename T>
-requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value || std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
+            std::is_integral_v<T>)
 auto operator-(E &&expr, T &&scalar) {
    using L = std::remove_cvref_t<E>;
    using R = ::ten::scalar<T>;
-   using left_input = ::ten::details::input_type<L>::type;
-   using right_input = ::ten::details::input_type<R>::type;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   return ::ten::binary_expr<L, R, output_type, ::ten::functional::scalar_right_binary_func<::ten::binary_operation::sub>::func>(
-      expr, ::ten::scalar<T>(scalar));
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::sub>::func>(
+       expr, ::ten::scalar<T>(scalar));
 }
 
 // Multiply two expressions
@@ -121,27 +135,44 @@ template <Expr LeftExpr, Expr RightExpr>
 auto operator*(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
-   using left_input = ::ten::details::input_type<L>::type;
-   using right_input = ::ten::details::input_type<R>::type;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
 
    using output_type = ::ten::details::mul_result_t<left_input, right_input>;
 
-   return ::ten::binary_expr<L, R, output_type,
-       ::ten::functional::mul<left_input, right_input, output_type>::template func>(
-       left, right);
+   return ::ten::binary_expr<
+       L, R, output_type,
+       ::ten::functional::mul<left_input, right_input,
+                              output_type>::template func>(left, right);
 }
-
 
 template <typename T, Expr E>
-// FIXME requires(std::is_floating_point_v<T> || ::ten::is_complex<T> || std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
+            std::is_integral_v<T>)
 auto operator*(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   return ::ten::scalar<T>(scalar) * std::forward<R>(expr);
+   using L = ::ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::mul>::func>(
+       ::ten::scalar<T>(scalar), expr);
 }
 template <Expr E, typename T>
+   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
+            std::is_integral_v<T>)
 auto operator*(E &&expr, T &&scalar) {
-   using R = std::remove_cvref_t<E>;
-   return ::ten::scalar<T>(scalar) * std::forward<R>(expr);
+   using L = std::remove_cvref_t<E>;
+   using R = ::ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::mul>::func>(
+       expr, ::ten::scalar<T>(scalar));
 }
 
 // Divide two expressions
@@ -149,11 +180,14 @@ template <Expr LeftExpr, Expr RightExpr>
 auto operator/(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
-   using left_input = ::ten::details::input_type<L>::type;
-   using right_input = ::ten::details::input_type<R>::type;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
 
-   return ::ten::binary_expr<L, R, output_type, ::ten::functional::binary_func<::ten::binary_operation::div>::func>(left, right);
+   return ::ten::binary_expr<
+       L, R, output_type,
+       ::ten::functional::binary_func<::ten::binary_operation::div>::func>(
+       left, right);
 }
 
 /*
@@ -202,9 +236,9 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
  public:
    scalar() {}
 
-   explicit scalar(const T &value): _value(value) {}
+   explicit scalar(const T &value) : _value(value) {}
 
-   explicit scalar(T&& value) : _value(std::move(value)) {}
+   explicit scalar(T &&value) : _value(std::move(value)) {}
 
    /// Asignment from an expression
    /*template <class Expr>
@@ -221,6 +255,12 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
       _value = value;
       return *this;
    }
+
+   scalar &operator=(const scalar &s) {
+      _value = s._value;
+      return *this;
+   }
+
    // ostream operator
    template <class Type>
    friend std::ostream &operator<<(std::ostream &, const scalar<Type> &);
@@ -476,8 +516,7 @@ class tensor_node
 
    /// Construct a tenso_node from storage and shape
    /// FIXME Check size
-   explicit tensor_node(std::unique_ptr<__storage> &&st,
-                        const __shape &dims,
+   explicit tensor_node(std::unique_ptr<__storage> &&st, const __shape &dims,
                         ::ten::storage_format format) noexcept
       requires(__shape::is_dynamic())
        : _format(format), _storage(std::move(st)), _shape(dims),
@@ -855,9 +894,7 @@ class ranked_tensor final
    [[nodiscard]] __t *data() { return _node.get()->data(); }
 
    /// Returns the storage
-   [[nodiscard]] __storage &storage() const {
-      return _node.get()->storage();
-   }
+   [[nodiscard]] __storage &storage() const { return _node.get()->storage(); }
 
    /// Overloading the [] operator
    [[nodiscard]] inline const typename base_type::value_type &
@@ -1867,9 +1904,10 @@ template <class T, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<T, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<
-                T, __shape, __order, __storage, __allocator>>::value &&
-            ::ten::is_dense_storage<__storage>::value)
+   requires(
+       ::ten::is_dynamic_tensor<
+           ranked_tensor<T, __shape, __order, __storage, __allocator>>::value &&
+       ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto fill(__shape &&dims, T value) {
    using tensor_type =
        ranked_tensor<T, __shape, __order, __storage, __allocator>;
@@ -1880,9 +1918,10 @@ template <class T, class __shape, storage_order __order = default_order,
           class __storage = ::ten::default_storage<T, __shape>,
           class __allocator =
               typename ::ten::details::allocator_type<__storage>::type>
-   requires(::ten::is_dynamic_tensor<ranked_tensor<
-                T, __shape, __order, __storage, __allocator>>::value &&
-            ::ten::is_dense_storage<__storage>::value)
+   requires(
+       ::ten::is_dynamic_tensor<
+           ranked_tensor<T, __shape, __order, __storage, __allocator>>::value &&
+       ::ten::is_dense_storage<__storage>::value)
 [[nodiscard]] auto fill(std::initializer_list<size_type> &&dims, T value) {
    using tensor_type =
        ranked_tensor<T, __shape, __order, __storage, __allocator>;
@@ -1894,8 +1933,7 @@ template <class T, class __shape, storage_order __order = default_order,
 template <class T, size_type rank, storage_order __order = default_order>
 [[nodiscard]] auto fill(const dynamic_shape<rank> &shape, T value) {
    using shape_type = ::ten::dynamic_shape<rank>;
-   return fill<T, shape_type, __order>(std::forward<shape_type>(shape),
-                                         value);
+   return fill<T, shape_type, __order>(std::forward<shape_type>(shape), value);
 }
 
 template <class T, size_type rank, storage_order __order = default_order>
@@ -2338,7 +2376,7 @@ template <SDiagonal T> auto dense(T x) -> decltype(auto) {
 // Gemm
 // C <- alpha * X * Y + beta * C
 template <Expr X, Expr Y, Tensor C, class T>
-requires(std::is_same_v<T, typename C::value_type>)
+   requires(std::is_same_v<T, typename C::value_type>)
 void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
    using x_expr_type = std::remove_cvref_t<X>;
    using y_expr_type = std::remove_cvref_t<Y>;
@@ -2400,55 +2438,53 @@ void axpy(const T a, X &&x, Y &y) {
 /// Returns the maximum of an expression
 template <Expr ExprType> auto min(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
-   //using output_type = typename ::ten::details::output_type<expr_type>::type;
+   // using output_type = typename ::ten::details::output_type<expr_type>::type;
    using value_type = typename expr_type::value_type;
    using output_type = ten::scalar<value_type>;
    return unary_expr<expr_type, output_type, functional::min>(expr);
 }
 
-/*
 /// \fn max
 /// Return the maximum of an tensor or an expression
 template <Expr ExprType> auto max(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
-   using output_type = typename details::output_type<expr_type>::type;
-   return unary_expr<typename expr_type::node_type, functional::max>(
-       expr.node());
+   using value_type = typename expr_type::value_type;
+   using output_type = ten::scalar<value_type>;
+   return unary_expr<expr_type, output_type, functional::max>(expr);
 }
 
 /// \fn sum
-/// Return the maximum of an tensor or an expression
+/// Return the sum of a tensor or an expression
 template <Expr ExprType> auto sum(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
-   using output_type = typename details::output_type<expr_type>::type;
-   return unary_expr<typename expr_type::node_type, functional::sum>(
-       expr.node());
+   using value_type = typename expr_type::value_type;
+   using output_type = ten::scalar<value_type>;
+   return unary_expr<expr_type, output_type, functional::sum>(expr);
 }
 
 /// \fn cum_sum
-/// Return the maximum of an tensor or an expression
+/// Return the cumulative sum of a tensor or an expression
 template <Expr ExprType> auto cum_sum(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename details::output_type<expr_type>::type;
-   return unary_expr<typename expr_type::node_type, functional::cum_sum>(
-       expr.node());
+   return unary_expr<expr_type, output_type, functional::cum_sum>(expr);
 }
-/// \fn sum
+
+/// \fn prod
 /// Return the maximum of an tensor or an expression
 template <Expr ExprType> auto prod(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
-   using output_type = typename details::output_type<expr_type>::type;
-   return unary_expr<typename expr_type::node_type, functional::prod>(
-       expr.node());
-}*/
-
+   using value_type = typename expr_type::value_type;
+   using output_type = ten::scalar<value_type>;
+   return unary_expr<expr_type, output_type, functional::prod>(expr);
+}
 
 /// \fn abs
 /// Returns the absolute value of a scalar, a tensor or an expression
 template <Expr ExprType> auto abs(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type, output_type, functional::abs >(expr);
+   return unary_expr<expr_type, output_type, functional::abs>(expr);
 }
 
 /// \fn sqrt
@@ -2488,7 +2524,7 @@ template <Expr ExprType> auto sinh(ExprType &&expr) {
 template <Expr ExprType> auto asin(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type,output_type, functional::asin>(expr);
+   return unary_expr<expr_type, output_type, functional::asin>(expr);
 }
 
 /// \fn cos
@@ -2496,8 +2532,7 @@ template <Expr ExprType> auto asin(ExprType &&expr) {
 template <Expr ExprType> auto cos(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type, output_type, functional::cos>(
-       expr);
+   return unary_expr<expr_type, output_type, functional::cos>(expr);
 }
 
 /// \fn acos
@@ -2511,8 +2546,7 @@ template <Expr ExprType> auto acos(ExprType &&expr) {
 template <Expr ExprType> auto cosh(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type, output_type, functional::cosh>(
-       expr);
+   return unary_expr<expr_type, output_type, functional::cosh>(expr);
 }
 
 /// \fn tan
@@ -2520,24 +2554,21 @@ template <Expr ExprType> auto cosh(ExprType &&expr) {
 template <Expr ExprType> auto tan(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type, output_type, functional::tan>(
-       expr);
+   return unary_expr<expr_type, output_type, functional::tan>(expr);
 }
 
 /// \fn atan
 template <Expr ExprType> auto atan(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type, output_type, functional::atan>(
-       expr);
+   return unary_expr<expr_type, output_type, functional::atan>(expr);
 }
 
 /// \fn tanh
 template <Expr ExprType> auto tanh(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type, output_type, functional::tanh>(
-       expr);
+   return unary_expr<expr_type, output_type, functional::tanh>(expr);
 }
 
 /// \fn exp
@@ -2545,8 +2576,7 @@ template <Expr ExprType> auto tanh(ExprType &&expr) {
 template <Expr ExprType> auto exp(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type, output_type, functional::exp>(
-       expr);
+   return unary_expr<expr_type, output_type, functional::exp>(expr);
 }
 
 /// \fn log
@@ -2554,24 +2584,21 @@ template <Expr ExprType> auto exp(ExprType &&expr) {
 template <Expr ExprType> auto log(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type, output_type, functional::log>(
-       expr);
+   return unary_expr<expr_type, output_type, functional::log>(expr);
 }
 
 /// \fn log10
 template <Expr ExprType> auto log10(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type, output_type, functional::log10>(
-       expr);
+   return unary_expr<expr_type, output_type, functional::log10>(expr);
 }
 
 /// \fn floor
 template <Expr ExprType> auto floor(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
-   return unary_expr<expr_type, output_type, functional::floor>(
-       expr);
+   return unary_expr<expr_type, output_type, functional::floor>(expr);
 }
 
 /// \fn ceil

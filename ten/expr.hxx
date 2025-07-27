@@ -19,24 +19,22 @@ template <class T> struct input_type<scalar<T>> {
 
 template <class T, class Shape, storage_order order, class Storage,
           class Allocator>
-struct input_type<
-    ranked_tensor<T, Shape, order, Storage, Allocator>> {
+struct input_type<ranked_tensor<T, Shape, order, Storage, Allocator>> {
    using type = ranked_tensor<T, Shape, order, Storage, Allocator>;
 };
 
 template <class Input, class Output, template <typename...> class F,
           class... Args>
 struct input_type<::ten::unary_expr<Input, Output, F, Args...>> {
-   using type = typename ::ten::unary_expr<Input, Output, F,
-                                           Args...>::input_type;
+   using type =
+       typename ::ten::unary_expr<Input, Output, F, Args...>::input_type;
 };
 
-template <class Left, class Right, class Output,
-          template <typename...> class F, class... Args>
-struct input_type<
-    ::ten::binary_expr<Left, Right, Output, F, Args...>> {
-   using type = typename ::ten::binary_expr<Left, Right, Output, F,
-                                            Args...>::input_type;
+template <class Left, class Right, class Output, template <typename...> class F,
+          class... Args>
+struct input_type<::ten::binary_expr<Left, Right, Output, F, Args...>> {
+   using type =
+       typename ::ten::binary_expr<Left, Right, Output, F, Args...>::input_type;
 };
 
 // Output type
@@ -48,56 +46,53 @@ template <class T> struct output_type<scalar<T>> {
 
 template <class T, class Shape, storage_order order, class Storage,
           class Allocator>
-struct output_type<
-    ranked_tensor<T, Shape, order, Storage, Allocator>> {
+struct output_type<ranked_tensor<T, Shape, order, Storage, Allocator>> {
    using type = ranked_tensor<T, Shape, order, Storage, Allocator>;
 };
 
 template <class Input, class Output, template <typename...> class F,
           class... Args>
 struct output_type<::ten::unary_expr<Input, Output, F, Args...>> {
-   using type = typename ::ten::unary_expr<Input, Output, F,
-                                           Args...>::output_type;
+   using type =
+       typename ::ten::unary_expr<Input, Output, F, Args...>::output_type;
 };
 
-template <class Left, class Right, class Output,
-          template <typename...> class F, class... Args>
-struct output_type<
-    ::ten::binary_expr<Left, Right, Output, F, Args...>> {
+template <class Left, class Right, class Output, template <typename...> class F,
+          class... Args>
+struct output_type<::ten::binary_expr<Left, Right, Output, F, Args...>> {
    using type = typename ::ten::binary_expr<Left, Right, Output, F,
                                             Args...>::output_type;
 };
 
 // Input shape
-template<Tensor T>
-inline auto input_shape(const T& t) -> decltype(auto) {
+template <Tensor T> inline auto input_shape(const T &t) -> decltype(auto) {
    return t.shape();
 }
 
-template<UnaryExpr ExprType>
-inline auto input_shape(const ExprType& expr) -> decltype(auto) {
+template <UnaryExpr ExprType>
+inline auto input_shape(const ExprType &expr) -> decltype(auto) {
    return expr.value().shape();
 }
 
-template<BinaryExpr ExprType>
-inline auto input_shape(const ExprType& expr) -> decltype(auto) {
+template <BinaryExpr ExprType>
+inline auto input_shape(const ExprType &expr) -> decltype(auto) {
    return expr.value().shape();
 }
 
 // Input value
-template<Scalar T>
-inline auto input_value(T& t) {return t;}
+template <Scalar T> inline auto input_value(T &t) { return t; }
 
-template<Tensor T>
-inline auto input_value(T& t) {return t;}
+template <Tensor T> inline auto input_value(T &t) { return t; }
 
-template<UnaryExpr ExprType>
-inline auto input_value(ExprType& expr) {return expr.value();}
-
-template<BinaryExpr ExprType>
-inline auto input_value(ExprType& expr) {return expr.value();}
-
+template <UnaryExpr ExprType> inline auto input_value(ExprType &expr) {
+   return expr.value();
 }
+
+template <BinaryExpr ExprType> inline auto input_value(ExprType &expr) {
+   return expr.value();
+}
+
+} // namespace ten::details
 
 namespace ten {
 
@@ -105,7 +100,7 @@ namespace ten {
 // Apply a function to a tensor, column or row
 template <class Input, class Output, template <typename...> class Func,
           typename... Args>
-class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>>{
+class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
  public:
    using input_type = typename ::ten::details::input_type<Input>::type;
    using output_type = typename ::ten::details::output_type<Output>::type;
@@ -144,9 +139,7 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>>{
    [[nodiscard]] bool evaluated() const { return _evaluated; }
 
    /// Returns the evaluated expression of type ten::Scalar or ten::Tensor
-   [[nodiscard]] auto value() const -> output_type {
-      return _value;
-   }
+   [[nodiscard]] auto value() const -> output_type { return _value; }
 
    /// Evaluate the expression
    [[maybe_unused]] auto eval() noexcept -> output_type {
@@ -169,10 +162,12 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>>{
          _value = Output();
       } else {
          if constexpr (ten::functional::has_shape<func_type>::value) {
-            _value = Output(_func.value().output_shape(::ten::details::input_shape(_input)));
+            _value = Output(_func.value().output_shape(
+                ::ten::details::input_shape(_input)));
          }
          if constexpr (!ten::functional::has_shape<func_type>::value) {
-            _value = Output(_func.value().output_shape(::ten::details::input_shape(_input)));
+            _value = Output(_func.value().output_shape(
+                ::ten::details::input_shape(_input)));
          }
       }
 
@@ -191,7 +186,7 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>>{
 // Left and Right can be scalar, tensor, row, column, unary_expr or binary_expr
 template <class Left, class Right, class Output,
           template <typename...> class Func, typename... Args>
-class binary_expr {
+class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
  public:
    /// Left input type
    using left_type = typename details::output_type<Left>::type;
@@ -202,8 +197,7 @@ class binary_expr {
    /// Output type
    using output_type = Output;
 
-   using func_type =
-       Func<left_type, right_type, Output, Args...>;
+   using func_type = Func<left_type, right_type, Output, Args...>;
    // using shape_type = typename Output::shape_type;
 
  private:
@@ -221,7 +215,8 @@ class binary_expr {
  public:
    binary_expr() {}
 
-   /// Construct a binary expr if the function doesn't take additional parameters
+   /// Construct a binary expr if the function doesn't take additional
+   /// parameters
    binary_expr(const Left &l, const Right &r) noexcept
       requires(!::ten::functional::has_params<func_type>::value)
        : _left(l), _right(r), _func(func_type()) {}
@@ -242,9 +237,7 @@ class binary_expr {
    [[nodiscard]] bool evaluated() const { return _evaluated; }
 
    /// Returns the the evaluated expression of type ten::Scalar or ten::Tensor
-   [[nodiscard]] auto value() -> output_type {
-      return _value;
-   }
+   [[nodiscard]] auto value() const -> output_type { return _value; }
 
    /// Evaluate a binary expression
    /// If the input expression has not been evaluated, it will evaluate it
@@ -271,29 +264,116 @@ class binary_expr {
 
       if constexpr (Output::is_static()) {
          _value = Output();
-         // FIXME if right is unary expr
-      } else if constexpr (::ten::is_unary_expr<Left>::value) {
-         if constexpr (::ten::is_scalar<Left>::value) {
-            _value = Output(func_type::output_shape(::ten::details::input_shape(_right)));
+      } else if constexpr (::ten::is_unary_expr<Left>::value &&
+                           ::ten::is_unary_expr<Right>::value) {
+         // Left and Right are unary_expr
+         // They can't be both scalars
+         if constexpr (::ten::is_scalar<left_type>::value &&
+                       !::ten::is_scalar<right_type>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_right)));
+         }
+         if constexpr (!::ten::is_scalar<left_type>::value &&
+                       ::ten::is_scalar<right_type>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left)));
+         }
+         if constexpr (!::ten::is_scalar<left_type>::value &&
+                       !::ten::is_scalar<right_type>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left),
+                                        ::ten::details::input_shape(_right)));
+         }
+      } else if constexpr (::ten::is_binary_expr<Left>::value &&
+                           ::ten::is_binary_expr<Right>::value) {
+         // Left and Right are binary_expr
+         if constexpr (::ten::is_scalar<left_type>::value &&
+                       !::ten::is_scalar<right_type>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_right)));
+         }
+         if constexpr (!::ten::is_scalar<left_type>::value &&
+                       ::ten::is_scalar<right_type>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left)));
+         }
+         if constexpr (!::ten::is_scalar<left_type>::value &&
+                       !::ten::is_scalar<right_type>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left),
+                                        ::ten::details::input_shape(_right)));
+         }
+      } else if constexpr (::ten::is_unary_expr<Left>::value &&
+                           !::ten::is_unary_expr<Right>::value &&
+                           !::ten::is_binary_expr<Right>::value) {
+         // Left is unary expr and right is tensor or scalar
+         if constexpr (::ten::is_scalar<left_type>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_right)));
+         } else {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left),
+                                        ::ten::details::input_shape(_right)));
+         }
+      } else if constexpr (::ten::is_binary_expr<Left>::value &&
+                           !ten::is_unary_expr<Right>::value &&
+                           !::ten::is_binary_expr<Right>::value) {
+         // Left is binary expr and right is tensor or scalar
+         if constexpr (::ten::is_scalar<left_type>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_right)));
+         } else {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left),
+                                        ::ten::details::input_shape(_right)));
+         }
+      } else if constexpr (!::ten::is_unary_expr<Left>::value &&
+                           !::ten::is_binary_expr<Left>::value &&
+                           ::ten::is_unary_expr<Right>::value) {
+         // Left is tensor or scalar and Right is unary_expr
+         if constexpr (::ten::is_scalar<right_type>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left)));
+         } else {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left),
+                                        ::ten::details::input_shape(_right)));
+         }
+      } else if constexpr (!::ten::is_unary_expr<Left>::value &&
+                           !::ten::is_binary_expr<Left>::value &&
+                           ten::is_binary_expr<Right>::value) {
+         // Left is tensor or scalar and right is binary_expr
+         if constexpr (::ten::is_scalar<right_type>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left)));
+         } else {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left),
+                                        ::ten::details::input_shape(_right)));
          }
       } else {
-         // FIXME May requires using ten::functional::has_shape when
-         // a binary function has its own shape
-         if constexpr (!::ten::is_scalar<Left>::value && !::ten::is_scalar<Right>::value) {
-            _value = Output(func_type::output_shape(
-                ::ten::details::input_shape(_left),
-                ::ten::details::input_shape(_right)));
+         // Left and right are both tensor or scalar
+         if constexpr (!::ten::is_scalar<Left>::value &&
+                       !::ten::is_scalar<Right>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left),
+                                        ::ten::details::input_shape(_right)));
          }
-         if constexpr (::ten::is_scalar<Left>::value && !::ten::is_scalar<Right>::value) {
-            _value = Output(func_type::output_shape(::ten::details::input_shape(_right)));
+         if constexpr (::ten::is_scalar<Left>::value &&
+                       !::ten::is_scalar<Right>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_right)));
          }
-         if constexpr (!::ten::is_scalar<Left>::value && ::ten::is_scalar<Right>::value) {
-            _value = Output(func_type::output_shape(::ten::details::input_shape(_left)));
+         if constexpr (!::ten::is_scalar<Left>::value &&
+                       ::ten::is_scalar<Right>::value) {
+            _value = Output(
+                func_type::output_shape(::ten::details::input_shape(_left)));
          }
       }
 
       // Call the function
-      _func.value()(::ten::details::input_value(_left), ::ten::details::input_value(_right), _value);
+      _func.value()(::ten::details::input_value(_left),
+                    ::ten::details::input_value(_right), _value);
 
       // This expression has been evaluated
       _evaluated = true;
