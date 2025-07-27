@@ -4,5 +4,6 @@
 #include <ten/kernels/blas_api.hxx>
 #include <ten/kernels/mul.hxx>
 #include <ten/kernels/binary_ops.hxx>
+#include <ten/kernels/inplace_functions.hxx>
 
 #endif
