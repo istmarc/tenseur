@@ -1610,6 +1610,76 @@ class ranked_column final
       size_t rows = this->shape().dim(0);
       return (*_node.get())[index + _index * rows];
    }
+
+   /// Asignment from a static expression
+   template <class ExprType>
+      requires((::ten::is_unary_expr<std::remove_cvref_t<ExprType>>::value ||
+                ::ten::is_binary_expr<std::remove_cvref_t<ExprType>>::value) &&
+               std::remove_cvref_t<ExprType>::output_type::is_static())
+   ranked_column &operator=(ExprType &&expr) noexcept {
+      using expr_type = std::remove_cvref_t<ExprType>;
+      using evaluated_type = typename expr_type::output_type;
+
+      static_assert(::ten::is_tensor<evaluated_type>::value,
+                    "Error: Evaluated type must be a tensor.");
+
+      auto value = expr.eval();
+
+      // FIXME maybe static_assert(__shape::template  ==
+      // evaluated_type::static_size(),
+      //               "Expected equal shape size.");
+      size_t rows = _node.get()->shape().dim(0);
+      for (size_t idx = 0; idx < rows; idx++) {
+         (*_node.get())[idx + _index * rows] = value[idx];
+      }
+      return *this;
+   }
+
+   /// Asignment from a dynamic expression
+   template <class ExprType>
+      requires((::ten::is_unary_expr<std::remove_cvref_t<ExprType>>::value ||
+                ::ten::is_binary_expr<std::remove_cvref_t<ExprType>>::value) &&
+               std::remove_cvref_t<ExprType>::output_type::is_dynamic())
+   ranked_column &operator=(ExprType &&expr) noexcept {
+      using expr_type = std::remove_cvref_t<ExprType>;
+      using evaluated_type = typename expr_type::output_type;
+
+      static_assert(::ten::is_tensor<evaluated_type>::value,
+                    "Evaluated type must be a tensor.");
+      std::cout << "Assignemnt to column form expr\n";
+      auto value = expr.eval();
+      // Copy the data
+      size_t rows = _node.get()->shape().dim(0);
+      for (size_t idx = 0; idx < rows; idx++) {
+         (*_node.get())[idx + _index * rows] = value[idx];
+      }
+      return *this;
+   }
+
+   // Asignement from a static vector
+   template <StaticVector V> ranked_column &operator=(V &&value) {
+      size_t rows = _node.get()->shape().dim(0);
+      for (size_t idx = 0; idx < rows; idx++) {
+         (*_node.get())[idx + _index * rows] = value[idx];
+      }
+      return *this;
+   }
+
+   // Asgnement from a dynamic vector
+   template <DynamicVector V> ranked_column &operator=(V &&value) {
+      size_t rows = _node.get()->shape().dim(0);
+      for (size_t idx = 0; idx < rows; idx++) {
+         (*_node.get())[idx + _index * rows] = value[idx];
+      }
+      return *this;
+   }
+
+   template <class Type, class ShapeType, storage_order StorageOrder,
+             class StorageType, class AllocatorType>
+   friend std::ostream &
+   operator<<(std::ostream &,
+              const ranked_column<Type, ShapeType, StorageOrder, StorageType,
+                                  AllocatorType> &);
 };
 
 // column<T> or column<T, Shape>
@@ -1622,6 +1692,60 @@ using column = ranked_column<T, Shape, Order, Storage, Allocator>;
 
 // TODO template<class T, size_t Rows, size_t Cols>
 // using scolumn = ranked_column<T, ten::shape<Rows, Cols>>;
+
+/// Overload << operator for column
+template <class T, class Shape, storage_order order, class Storage,
+          class Allocator>
+   requires(::ten::is_dynamic_column<
+            ranked_column<T, Shape, order, Storage, Allocator>>::value)
+std::ostream &
+operator<<(std::ostream &os,
+           const ranked_column<T, Shape, order, Storage, Allocator> &t) {
+   os << "column<" << ::ten::to_string<T>() << "," << t.size() << ">";
+   size_type size = t.size();
+   if (size <= 10) {
+      for (size_type i = 0; i < t.size(); i++) {
+         os << "\n" << t[i];
+      }
+   } else {
+      for (size_type i = 0; i < 5; i++) {
+         os << "\n" << t[i];
+      }
+      os << "\n⋮";
+      for (size_type i = t.size() - 5; i < t.size(); i++) {
+         os << "\n" << t[i];
+      }
+   }
+   return os;
+}
+
+/*
+/// Overload << operator for a static vector
+template <class T, class Shape, storage_order order, class Storage,
+          class Allocator>
+   requires(::ten::is_svector<ranked_tensor<T, Shape, order, Storage,
+                                            Allocator>>::value)
+std::ostream &operator<<(
+    std::ostream &os,
+    const ranked_tensor<T, Shape, order, Storage, Allocator> &t) {
+   os << "svector<" << ::ten::to_string<T>() << "," << Shape::static_size()
+      << ">";
+   size_type size = t.size();
+   if (size <= 10) {
+      for (size_type i = 0; i < t.size(); i++) {
+         os << "\n" << t[i];
+      }
+   } else {
+      for (size_type i = 0; i < 5; i++) {
+         os << "\n" << t[i];
+      }
+      os << "\n⋮";
+      for (size_type i = t.size() - 5; i < t.size(); i++) {
+         os << "\n" << t[i];
+      }
+   }
+   return os;
+}*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rows
@@ -1721,11 +1845,139 @@ class ranked_row final
       size_t rows = this->shape().dim(0);
       return (*_node.get())[_index + index * rows];
    }
+
+   /// Asignment from a static expression
+   template <class ExprType>
+      requires((::ten::is_unary_expr<std::remove_cvref_t<ExprType>>::value ||
+                ::ten::is_binary_expr<std::remove_cvref_t<ExprType>>::value) &&
+               std::remove_cvref_t<ExprType>::output_type::is_static())
+   ranked_row &operator=(ExprType &&expr) noexcept {
+      using expr_type = std::remove_cvref_t<ExprType>;
+      using evaluated_type = typename expr_type::output_type;
+
+      static_assert(::ten::is_tensor<evaluated_type>::value,
+                    "Error: Evaluated type must be a tensor.");
+
+      auto value = expr.eval();
+
+      // FIXME maybe static_assert(__shape::template  ==
+      // evaluated_type::static_size(),
+      //               "Expected equal shape size.");
+      size_t rows = _node.get()->shape().dim(0);
+      size_t cols = _node.get()->shape().dim(1);
+      for (size_t idx = 0; idx < cols; idx++) {
+         (*_node.get())[_index + idx * rows] = value[idx];
+      }
+      return *this;
+   }
+
+   /// Asignment from a dynamic expression
+   template <class ExprType>
+      requires((::ten::is_unary_expr<std::remove_cvref_t<ExprType>>::value ||
+                ::ten::is_binary_expr<std::remove_cvref_t<ExprType>>::value) &&
+               std::remove_cvref_t<ExprType>::output_type::is_dynamic())
+   ranked_row &operator=(ExprType &&expr) noexcept {
+      using expr_type = std::remove_cvref_t<ExprType>;
+      using evaluated_type = typename expr_type::output_type;
+
+      static_assert(::ten::is_tensor<evaluated_type>::value,
+                    "Evaluated type must be a tensor.");
+      std::cout << "Assignemnt to column form expr\n";
+      auto value = expr.eval();
+      // Copy the data
+      size_t rows = _node.get()->shape().dim(0);
+      size_t cols = _node.get()->shape().dim(1);
+      for (size_t idx = 0; idx < cols; idx++) {
+         (*_node.get())[_index + idx * rows] = value[idx];
+      }
+      return *this;
+   }
+
+   // Asignement from a static vector
+   template <StaticVector V> ranked_row &operator=(V &&value) {
+      size_t rows = _node.get()->shape().dim(0);
+      size_t cols = _node.get()->shape().dim(1);
+      for (size_t idx = 0; idx < cols; idx++) {
+         (*_node.get())[_index + idx * rows] = value[idx];
+      }
+      return *this;
+   }
+
+   // Asgnement from a dynamic vector
+   template <DynamicVector V> ranked_row &operator=(V &&value) {
+      size_t rows = _node.get()->shape().dim(0);
+      size_t cols = _node.get()->shape().dim(1);
+      for (size_t idx = 0; idx < cols; idx++) {
+         (*_node.get())[_index + idx * rows] = value[idx];
+      }
+      return *this;
+   }
+
+   template <class Type, class ShapeType, storage_order StorageOrder,
+             class StorageType, class AllocatorType>
+   friend std::ostream &
+   operator<<(std::ostream &, const ranked_row<Type, ShapeType, StorageOrder,
+                                               StorageType, AllocatorType> &);
 };
 
 // TODO row
 // TODO static rows srow
 
+/// Overload << operator for row
+template <class T, class Shape, storage_order order, class Storage,
+          class Allocator>
+   requires(::ten::is_dynamic_row<
+            ranked_row<T, Shape, order, Storage, Allocator>>::value)
+std::ostream &
+operator<<(std::ostream &os,
+           const ranked_row<T, Shape, order, Storage, Allocator> &t) {
+   os << "row<" << ::ten::to_string<T>() << "," << t.size() << ">\n";
+   size_type size = t.size();
+   if (size <= 10) {
+      os << t[0];
+      for (size_type i = 1; i < t.size(); i++) {
+         os << " " << t[i];
+      }
+   } else {
+      os << t[0];
+      for (size_type i = 0; i < 5; i++) {
+         os << " " << t[i];
+      }
+      os << "\n...";
+      for (size_type i = t.size() - 5; i < t.size(); i++) {
+         os << " " << t[i];
+      }
+   }
+   return os;
+}
+
+/*
+/// Overload << operator for a static vector
+template <class T, class Shape, storage_order order, class Storage,
+          class Allocator>
+   requires(::ten::is_svector<ranked_tensor<T, Shape, order, Storage,
+                                            Allocator>>::value)
+std::ostream &operator<<(
+    std::ostream &os,
+    const ranked_tensor<T, Shape, order, Storage, Allocator> &t) {
+   os << "svector<" << ::ten::to_string<T>() << "," << Shape::static_size()
+      << ">";
+   size_type size = t.size();
+   if (size <= 10) {
+      for (size_type i = 0; i < t.size(); i++) {
+         os << "\n" << t[i];
+      }
+   } else {
+      for (size_type i = 0; i < 5; i++) {
+         os << "\n" << t[i];
+      }
+      os << "\n⋮";
+      for (size_type i = t.size() - 5; i < t.size(); i++) {
+         os << "\n" << t[i];
+      }
+   }
+   return os;
+}*/
 ////////////////////////////////////////////////////////////////////////////////
 // Basic functions
 
