@@ -76,6 +76,34 @@ using size_type = TENSEUR_SIZE_TYPE;
 template <class> struct is_complex : std::false_type {};
 template <class T> struct is_complex<std::complex<T>> : std::true_type {};
 
+// Traits for float
+template <class> struct is_float : std::false_type {};
+template <> struct is_float<float> : std::true_type {};
+
+// Traits for double
+template <class> struct is_double : std::false_type {};
+template <> struct is_double<double> : std::true_type {};
+
+// Traits for int32
+template <class> struct is_int32 : std::false_type {};
+template <> struct is_int32<int32_t> : std::true_type {};
+
+// Traits for uint32
+template <class> struct is_uint32 : std::false_type {};
+template <> struct is_uint32<uint32_t> : std::true_type {};
+
+// Traits for int64
+template <class> struct is_int64 : std::false_type {};
+template <> struct is_int64<int64_t> : std::true_type {};
+
+// Traits for uint64
+template <class> struct is_uint64 : std::false_type {};
+template <> struct is_uint64<uint64_t> : std::true_type {};
+
+// Traits for bool
+template <class> struct is_bool : std::false_type {};
+template <> struct is_bool<bool> : std::true_type {};
+
 // Forward declaration of shape
 template <size_type Dim, size_type... Rest> class shape;
 
@@ -144,6 +172,10 @@ template <class T> class scalar;
 template <class> struct is_scalar : std::false_type {};
 template <class T> struct is_scalar<scalar<T>> : std::true_type {};
 
+// Scalar concept
+template <class T>
+concept Scalar = is_scalar<std::remove_cvref_t<T>>::value;
+
 // Forward declaration of tensor operations
 template <class T, class Shape, storage_order Order, class Storage,
           class Allocator>
@@ -176,9 +208,33 @@ struct is_vector<ranked_tensor<Scalar, Shape, order, Storage, Allocator>> {
    static constexpr bool value = Shape::rank() == 1;
 };
 
+// Dynamic vector
+template <typename> struct is_dynamic_vector : std::false_type {};
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+struct is_dynamic_vector<ranked_tensor<T, shape, order, storage, allocator>> {
+   static constexpr bool value = shape::is_dynamic() && shape::rank() == 1;
+};
+
+// Static vector
+template <typename> struct is_svector : std::false_type {};
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+struct is_svector<ranked_tensor<T, shape, order, storage, allocator>> {
+   static constexpr bool value = shape::is_static() && shape::rank() == 1;
+};
+
 /// Concept Vector dense
 template <class T>
 concept Vector = is_vector<std::remove_cvref_t<T>>::value;
+
+/// Concept Dynamic vector
+template <class T>
+concept DynamicVector = is_dynamic_vector<std::remove_cvref_t<T>>::value;
+
+/// Concept Static vector
+template <class T>
+concept StaticVector = is_svector<std::remove_cvref_t<T>>::value;
 
 /// Column type
 template <class T, class shape, storage_order order, class storage,
@@ -211,6 +267,38 @@ concept Column = is_column<std::remove_cvref_t<T>>::value;
 /// Concept Row
 template <class T>
 concept Row = is_row<std::remove_cvref_t<T>>::value;
+
+// Dynamic column
+template <typename> struct is_dynamic_column : std::false_type {};
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+struct is_dynamic_column<ranked_column<T, shape, order, storage, allocator>> {
+   static constexpr bool value = shape::is_dynamic();
+};
+
+// Static column
+template <typename> struct is_scolumn : std::false_type {};
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+struct is_scolumn<ranked_column<T, shape, order, storage, allocator>> {
+   static constexpr bool value = shape::is_static();
+};
+
+// Dynamic row
+template <typename> struct is_dynamic_row : std::false_type {};
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+struct is_dynamic_row<ranked_row<T, shape, order, storage, allocator>> {
+   static constexpr bool value = shape::is_dynamic();
+};
+
+// Static row
+template <typename> struct is_srow : std::false_type {};
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+struct is_srow<ranked_row<T, shape, order, storage, allocator>> {
+   static constexpr bool value = shape::is_static();
+};
 
 /// Matrix (dense)
 template <typename> struct is_matrix : std::false_type {};
@@ -247,7 +335,7 @@ struct is_dynamic_tensor<ranked_tensor<T, shape, order, allocator, storage>> {
 };
 
 template <class T>
-concept DynamicTensor = is_dynamic_tensor<T>::value;
+concept DynamicTensor = is_dynamic_tensor<std::remove_cvref_t<T>>::value;
 
 // Static tensor
 template <typename> struct is_stensor : std::false_type {};
@@ -258,22 +346,14 @@ struct is_stensor<ranked_tensor<T, shape, order, storage, allocator>> {
 };
 
 template <class T>
-concept StaticTensor = is_stensor<T>::value;
+concept StaticTensor = is_stensor<std::remove_cvref_t<T>>::value;
 
-// Dynamic vector
+// FIXME Remove this Dynamic vector
 template <typename> struct is_dvector : std::false_type {};
 template <class T, class shape, storage_order order, class storage,
           class allocator>
 struct is_dvector<ranked_tensor<T, shape, order, storage, allocator>> {
    static constexpr bool value = shape::is_dynamic() && shape::rank() == 1;
-};
-
-// Static vector
-template <typename> struct is_svector : std::false_type {};
-template <class T, class shape, storage_order order, class storage,
-          class allocator>
-struct is_svector<ranked_tensor<T, shape, order, storage, allocator>> {
-   static constexpr bool value = shape::is_static() && shape::rank() == 1;
 };
 
 /// \typedef default_allocator
@@ -410,34 +490,37 @@ struct is_tensor_node<tensor_node<T, shape, order, storage, allocator>>
 // Unary Node
 template <class input, class output, template <typename...> class Func,
           typename... Args>
-class unary_node;
+class unary_expr;
 
-template <class> struct is_unary_node : std::false_type {};
+template <class> struct is_unary_expr : std::false_type {};
 template <class input, class output, template <typename...> class Func,
           typename... Args>
-struct is_unary_node<unary_node<input, output, Func, Args...>>
+struct is_unary_expr<unary_expr<input, output, Func, Args...>>
     : std::true_type {};
 
 // Unary Expr
+/*
 template <class E, template <typename...> class Func, typename... Args>
 class unary_expr;
 
 template <class> struct is_unary_expr : std::false_type {};
 template <class E, template <typename...> class Func, typename... Args>
 struct is_unary_expr<unary_expr<E, Func, Args...>> : std::true_type {};
+*/
 
 // Binary Node
 template <class left, class right, class output,
           template <typename...> class Func, typename... Args>
-class binary_node;
+class binary_expr;
 
-template <class> struct is_binary_node : std::false_type {};
+template <class> struct is_binary_expr : std::false_type {};
 template <class left, class right, class O, template <typename...> class Func,
           typename... Args>
-struct is_binary_node<binary_node<left, right, O, Func, Args...>>
+struct is_binary_expr<binary_expr<left, right, O, Func, Args...>>
     : std::true_type {};
 
 // Binary Expr
+/*
 template <class left, class right, template <typename...> class Func,
           typename... Args>
 class binary_expr;
@@ -447,11 +530,20 @@ template <class left, class right, template <typename...> class Func,
           typename... Args>
 struct is_binary_expr<binary_expr<left, right, Func, Args...>>
     : std::true_type {};
+*/
 
 /////////////////////////////////////////////////////////////////////////////////
 // Concepts
 
 /// Unary node
+template <class T>
+concept UnaryExpr = is_unary_expr<T>::value;
+
+/// Binary node
+template <class T>
+concept BinaryExpr = is_binary_expr<T>::value;
+
+/*/// Unary node
 template <class T>
 concept UnaryNode = is_unary_node<T>::value;
 
@@ -461,7 +553,7 @@ concept BinaryNode = is_binary_node<T>::value;
 
 /// Unary or binary node
 template <class T>
-concept Node = UnaryNode<T> || BinaryNode<T>;
+concept Node = UnaryNode<T> || BinaryNode<T>;*/
 
 /// Diagonal matrix
 template <typename T>

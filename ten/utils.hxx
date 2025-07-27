@@ -10,13 +10,19 @@
 namespace ten {
 template <class> std::string to_string();
 
+template <> std::string to_string<bool>() { return "bool"; }
+
 template <> std::string to_string<float>() { return "float"; }
 
-template <> std::string to_string<int>() { return "int32"; }
-
-template <> std::string to_string<long>() { return "int64"; }
-
 template <> std::string to_string<double>() { return "double"; }
+
+template <> std::string to_string<int32_t>() { return "int32"; }
+
+template <> std::string to_string<uint32_t>() { return "uint32"; }
+
+template <> std::string to_string<int64_t>() { return "int64"; }
+
+template <> std::string to_string<uint64_t>() { return "uint64"; }
 
 template <> std::string to_string<std::complex<float>>() {
    return "complex<float>";

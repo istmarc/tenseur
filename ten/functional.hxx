@@ -17,6 +17,173 @@ namespace ten {
 enum class binary_operation;
 }
 
+namespace ten::details {
+template <class, class> struct common_type;
+
+// Tensor, Tensor
+template <Tensor A, Tensor B>
+   requires(same_shape<A, B> && same_storage_order<A, B> &&
+            same_storage<A, B> && same_allocator<A, B>)
+struct common_type<A, B> {
+   using value_type =
+       std::common_type_t<typename A::value_type, typename B::value_type>;
+   using type =
+       ranked_tensor<value_type, typename A::shape_type, A::storage_order(),
+                     typename A::storage_type, typename A::allocator_type>;
+};
+
+// Scalar, Tensor
+template <Scalar A, Tensor B>
+//   requires(::ten::same_value_type<A, B>)
+struct common_type<A, B> {
+   using type = B;
+};
+
+// Tensor, Scalar
+template <Tensor A, Scalar B>
+//   requires(::ten::same_value_type<A, B>)
+struct common_type<A, B> {
+   using type = A;
+};
+
+template <class A, class B>
+using common_type_t = typename common_type<A, B>::type;
+
+template <class, class> struct mul_result;
+
+template <class A, class B>
+using mul_result_t = typename mul_result<A, B>::type;
+
+// vector * vector
+template <Vector A, Vector B>
+   requires(same_shape<A, B> && same_storage_order<A, B> &&
+            same_storage<A, B> && same_allocator<A, B>)
+struct mul_result<A, B> {
+   using value_type =
+       std::common_type_t<typename A::value_type, typename B::value_type>;
+   using type =
+       ranked_tensor<value_type, typename A::shape_type, A::storage_order(),
+                     typename A::storage_type, typename A::allocator_type>;
+};
+
+// matrix * matrix
+template <Matrix A, Matrix B>
+   requires(same_storage_order<A, B> && same_storage<A, B> &&
+            same_allocator<A, B>)
+struct mul_result<A, B> {
+   using value_type =
+       std::common_type_t<typename A::value_type, typename B::value_type>;
+   using type =
+       ranked_tensor<value_type,
+                     ::ten::shape<A::shape_type::template static_dim<0>(),
+                                  B::shape_type::template static_dim<1>()>,
+                     A::storage_order(), typename A::storage_type,
+                     typename A::allocator_type>;
+};
+
+// matrix * vector
+template <Matrix A, Vector B>
+   requires(same_storage_order<A, B> && same_storage<A, B> &&
+            same_allocator<A, B>)
+struct mul_result<A, B> {
+   using value_type =
+       std::common_type_t<typename A::value_type, typename B::value_type>;
+   using type =
+       ranked_tensor<value_type, shape<A::shape_type::template static_dim<0>()>,
+                     A::storage_order(), typename A::storage_type,
+                     typename A::allocator_type>;
+};
+
+// scalar * tensor
+template <Scalar A, Tensor B> struct mul_result<A, B> {
+   using type = B;
+};
+
+/// scalar * unary_expr
+template <Scalar A, UnaryExpr B> struct mul_result<A, B> {
+   using type = std::remove_cvref_t<B>::output_type;
+};
+
+/// scalar * binary_expr
+template <Scalar A, BinaryExpr B> struct mul_result<A, B> {
+   using type = std::remove_cvref_t<B>::output_type;
+};
+
+/// UnaryExpr * vector
+template <UnaryExpr A, Vector B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
+   using type = mul_result<evaluated_type, B>::type;
+};
+
+/// BinaryExpr * vector
+template <BinaryExpr A, Vector B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
+   using type = mul_result<evaluated_type, B>::type;
+};
+
+/// UnaryExpr * matrix
+template <UnaryExpr A, Matrix B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
+   using type = mul_result<evaluated_type, B>::type;
+};
+
+/// matrix * UnaryExpr
+template <Matrix A, UnaryExpr B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<B>::output_type;
+   using type = mul_result<evaluated_type, A>::type;
+};
+
+/// BinaryExpr * Matrix
+template <BinaryExpr A, Matrix B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
+   using type = mul_result<evaluated_type, B>::type;
+};
+
+/// Matrix * BinaryExpr
+template <Matrix A, BinaryExpr B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<B>::output_type;
+   using type = mul_result<evaluated_type, A>::type;
+};
+
+/// UnaryExpr * tensor
+template <UnaryExpr A, Tensor B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
+   using type = mul_result<evaluated_type, B>::type;
+};
+
+/// BinaryExpr * tensor
+template <BinaryExpr A, Tensor B> struct mul_result<A, B> {
+   using evaluated_type = std::remove_cvref_t<A>::output_type;
+   using type = mul_result<evaluated_type, B>::type;
+};
+
+// dynamic reshape result
+template <class A, class Shape> struct reshape_result {
+   using type =
+       tensor_node<typename A::value_type, Shape, A::storage_order(),
+                   typename A::storage_type, typename A::allocator_type>;
+};
+
+// static transpose result
+template <class A, class Shape> struct static_transpose_result {
+   static_assert(Shape::is_static(), "Shape must be static.");
+   static_assert(Shape::rank() == 2, "Shape rank must be 2.");
+
+   using type = tensor_node<typename A::value_type,
+                            ::ten::shape<Shape::template static_dim<1>(),
+                                         Shape::template static_dim<0>()>,
+                            A::storage_order(), typename A::storage_type,
+                            typename A::allocator_type>;
+};
+// dynamic transpose result
+template <class A, class Shape> struct transpose_result {
+   using type =
+       tensor_node<typename A::value_type, Shape, A::storage_order(),
+                   typename A::storage_type, typename A::allocator_type>;
+};
+
+} // namespace ten::details
+
 namespace ten::functional {
 ////////////////////////////////////////////////////////////////////////////////
 // Functions types
@@ -33,111 +200,108 @@ template <class Func> struct has_shape {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// TODO Apply for unary function with same input and output type
-/*template<std::function<float(float)> Function> struct Apply{
-   template<class A, class __b = A>
-   struct fun : func<>{
-      using output_type = __b;
-
-      void operator()(const A &a, __b &b) {
-         using value_type = typename __b::value_type;
-         for (size_t i = 0; i < a.size(); i++) {
-            b[i] = Function(static_cast<value_type>(a[i]));
-         }
-      }
-
-      static typename __b::shape_type
-      output_shape(const typename __b::shape_type &right) {
-         return right;
-      }
-
-   };
-};*/
-
-////////////////////////////////////////////////////////////////////////////////
 // Unary functions
 
 /// Square root
-template <class __a, class __b = __a> struct sqrt : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct sqrt : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using value_type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using value_type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::sqrt(static_cast<value_type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Square
-template <class __a, class __b = __a> struct sqr : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct sqr : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using value_type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using value_type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = static_cast<value_type>(a[i]) * static_cast<value_type>(a[i]);
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// absolute value
-template <class __a, class __b = __a> struct abs : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct abs : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using value_type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using value_type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::abs(static_cast<value_type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Power
-template <class __a, class __b = __a> struct pow : func<true> {
+template <class A, class B>
+   requires((ten::is_tensor<A>::value || ten::is_column<A>::value ||
+             ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct pow : func<true> {
  private:
    double _n;
 
  public:
-   using output_type = __b;
+   using output_type = B;
 
    explicit pow(double n) : _n(n) {}
 
-   void operator()(const __a &a, __b &b) const {
-      using value_type = typename __b::value_type;
+   void operator()(const A &a, B &b) const {
+      using value_type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::pow(static_cast<value_type>(a[i]), _n);
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Minimum
-template <class __a, class __b = typename __a::scalarnode_type>
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_scalar<B>::value)
 struct min : func<> {
-   using output_type = __b;
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __a::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename A::value_type;
       type res = a[0];
       for (size_t i = 1; i < a.size(); i++) {
          res = std::min(static_cast<type>(a[i]), res);
@@ -145,19 +309,22 @@ struct min : func<> {
       b = res;
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
-      return right;
+   static typename A::shape_type
+   output_shape(const typename A::shape_type &left) {
+      return left;
    }
 };
 
 /// Maximum
-template <class __a, class __b = typename __a::scalarnode_type>
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_scalar<B>::value)
 struct max : func<> {
-   using output_type = __b;
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       type res = a[0];
       for (size_t i = 1; i < a.size(); i++) {
          res = std::max(static_cast<type>(a[i]), res);
@@ -165,18 +332,21 @@ struct max : func<> {
       b = res;
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
-      return right;
+   static typename A::shape_type
+   output_shape(const typename A::shape_type &left) {
+      return left;
    }
 };
 /// Sum
-template <class __a, class __b = typename __a::scalarnode_type>
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_scalar<B>::value)
 struct sum : func<> {
-   using output_type = __b;
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       type res = 0.;
       for (size_t i = 0; i < a.size(); i++) {
          res += static_cast<type>(a[i]);
@@ -184,37 +354,44 @@ struct sum : func<> {
       b = res;
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
-/// cum__Sum
-template <class __a, class __b = __a> struct cum_sum : func<> {
-   using output_type = __b;
+/// Cumulative sum
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct cum_sum : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       b[0] = static_cast<type>(a[0]);
       for (size_t i = 1; i < a.size(); i++) {
          b[i] = static_cast<type>(a[i]) + b[i - 1];
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Prod
-template <class __a, class __b = typename __a::scalarnode_type>
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_scalar<B>::value)
 struct prod : func<> {
-   using output_type = __b;
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       type res = 1.;
       for (size_t i = 0; i < a.size(); i++) {
          res *= static_cast<type>(a[i]);
@@ -222,475 +399,475 @@ struct prod : func<> {
       b = res;
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
-      return right;
+   static typename A::shape_type
+   output_shape(const typename A::shape_type &left) {
+      return left;
    }
 };
 
 // TODO use simd for cos, sin and tan
 
 /// Sine
-template <class __a, class __b = __a> struct sin : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct sin : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::sin(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// asin
-template <class __a, class __b = __a> struct asin : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct asin : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::asin(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Sinh
-template <class __a, class __b = __a> struct sinh : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct sinh : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::sinh(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Cosine
-template <class __a, class __b = __a> struct cos : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct cos : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::cos(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// acos
-template <class __a, class __b = __a> struct acos : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct acos : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::acos(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// cosh
-template <class __a, class __b = __a> struct cosh : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct cosh : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::cosh(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Tangent
-template <class __a, class __b = __a> struct tan : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct tan : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::tan(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
-template <class __a, class __b = __a> struct atan : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct atan : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::atan(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
-template <class __a, class __b = __a> struct tanh : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct tanh : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::tanh(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Exponential
-template <class __a, class __b = __a> struct exp : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct exp : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::exp(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Natural logarithm
-template <class __a, class __b = __a> struct log : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct log : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::log(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Logarithm
-template <class __a, class __b = __a> struct log10 : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct log10 : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::log10(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Floor
-template <class __a, class __b = __a> struct floor : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct floor : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::floor(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 /// Ceil
-template <class __a, class __b = __a> struct ceil : func<> {
-   using output_type = __b;
+template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value) &&
+            ::ten::is_tensor<B>::value)
+struct ceil : func<> {
+   using output_type = B;
 
-   void operator()(const __a &a, __b &b) {
-      using type = typename __b::value_type;
+   void operator()(const A &a, B &b) {
+      using type = typename B::value_type;
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::ceil(static_cast<type>(a[i]));
       }
    }
 
-   static typename __b::shape_type
-   output_shape(const typename __b::shape_type &right) {
+   static typename B::shape_type
+   output_shape(const typename B::shape_type &right) {
       return right;
    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// __binary functions (__add, Sub, Mul and Div)
-namespace details {
-template <class, class> struct common_type;
+// Binary functions (Add, Sub, Mul and Div)
 
-template <TensorNode __a, TensorNode __b>
-   requires same_shape<__a, __b> && same_storage_order<__a, __b> &&
-            same_storage<__a, __b> && same_allocator<__a, __b>
-struct common_type<__a, __b> {
-   using value_type =
-       std::common_type_t<typename __a::value_type, typename __b::value_type>;
-   using type =
-       tensor_node<value_type, typename __a::shape_type, __a::storage_order(),
-                   typename __a::storage_type, typename __a::allocator_type>;
-};
+/// Binary function
+template <::ten::binary_operation Kind> struct binary_func {
 
-template <class __a, class __b>
-using common_type_t = typename common_type<__a, __b>::type;
-} // namespace details
-
-// __binary function
-template <::ten::binary_operation __kind> struct binary_func {
-
-   template <class __a, class __b, class __c = details::common_type_t<__a, __b>>
+   template <class A, class B, class C>
    struct func : ::ten::functional::func<> {
 
-      using output_type = __c;
+      using output_type = C;
 
-      static constexpr typename __c::shape_type
-      output_shape(const typename __a::shape_type &left,
-                   const typename __b::shape_type &right) {
-         typename __c::shape_type s(left);
+      static constexpr typename C::shape_type
+      output_shape(const typename A::shape_type &left,
+                   const typename B::shape_type &right) {
+         // FIXME Maybe check that left == right
+         typename C::shape_type s(left);
          return s;
       }
 
-      static auto output_shape(const __a &a, const __b &b) { return a.shape(); }
+      static auto output_shape(const A &a, const B &b) { return a.shape(); }
 
-      void operator()(const __a &left, const __b &right, __c &result) {
-         ::ten::kernels::binary_ops<__kind>(left, right, result);
+      void operator()(const A &left, const B &right, C &result) {
+         ::ten::kernels::binary_ops<Kind>(left, right, result);
       }
    };
 };
 
-namespace details {
-template <class, class> struct mul_result;
+/// Binary function with scalar
+template <::ten::binary_operation Kind> struct scalar_left_binary_func {
 
-// vector * vector
-template <VectorNode __a, VectorNode __b>
-   requires same_shape<__a, __b> && same_storage_order<__a, __b> &&
-            same_storage<__a, __b> && same_allocator<__a, __b>
-struct mul_result<__a, __b> {
-   using value_type =
-       std::common_type_t<typename __a::value_type, typename __b::value_type>;
-   using type =
-       tensor_node<value_type, typename __a::shape_type, __a::storage_order(),
-                   typename __a::storage_type, typename __a::allocator_type>;
+   template <Scalar A, class B, class C>
+   struct func : ::ten::functional::func<> {
+
+      using output_type = C;
+
+      static constexpr typename C::shape_type
+      output_shape( // const typename A::shape_type &left,
+          const typename B::shape_type &right) {
+         // FIXME Maybe check that left == right
+         typename C::shape_type s(right);
+         return s;
+      }
+
+      static auto output_shape(/*const A &a, */ const B &b) {
+         return b.shape();
+      }
+
+      void operator()(const A &left, const B &right, C &result) {
+         /// FIXME use broadcast
+         if constexpr (B::is_static()) {
+            B x;
+            for (size_t i = 0; i < x.size(); i++) {
+               x[i] = left.value();
+            }
+            ::ten::kernels::binary_ops<Kind>(x, right, result);
+         } else {
+            B x(right.shape());
+            for (size_t i = 0; i < x.size(); i++) {
+               x[i] = left.value();
+            }
+            ::ten::kernels::binary_ops<Kind>(x, right, result);
+         }
+      }
+   };
 };
 
-// matrix * matrix
-template <MatrixNode __a, MatrixNode __b>
-   requires same_storage_order<__a, __b> && same_storage<__a, __b> &&
-            same_allocator<__a, __b>
-struct mul_result<__a, __b> {
-   using value_type =
-       std::common_type_t<typename __a::value_type, typename __b::value_type>;
-   using type =
-       tensor_node<value_type,
-                   ::ten::shape<__a::shape_type::template static_dim<0>(),
-                                __b::shape_type::template static_dim<1>()>,
-                   __a::storage_order(), typename __a::storage_type,
-                   typename __a::allocator_type>;
+/// Binary function with scalar right type
+template <::ten::binary_operation Kind> struct scalar_right_binary_func {
+
+   template <class A, Scalar B, class C>
+   struct func : ::ten::functional::func<> {
+
+      using output_type = C;
+
+      static constexpr typename C::shape_type
+      output_shape(const typename A::shape_type &left) {
+         typename C::shape_type s(left);
+         return s;
+      }
+
+      static auto output_shape(const A &a) { return a.shape(); }
+
+      void operator()(const A &left, const B &right, C &result) {
+         /// FIXME use broadcast
+         if constexpr (A::is_static()) {
+            A x;
+            for (size_t i = 0; i < x.size(); i++) {
+               x[i] = right.value();
+            }
+            ::ten::kernels::binary_ops<Kind>(left, x, result);
+         } else {
+            A x(left.shape());
+            for (size_t i = 0; i < x.size(); i++) {
+               x[i] = right.value();
+            }
+            ::ten::kernels::binary_ops<Kind>(left, x, result);
+         }
+      }
+   };
 };
 
-// matrix * vector
-template <MatrixNode __a, VectorNode __b>
-   requires same_storage_order<__a, __b> && same_storage<__a, __b> &&
-            same_allocator<__a, __b>
-struct mul_result<__a, __b> {
-   using value_type =
-       std::common_type_t<typename __a::value_type, typename __b::value_type>;
-   using type =
-       tensor_node<value_type, shape<__a::shape_type::template static_dim<0>()>,
-                   __a::storage_order(), typename __a::storage_type,
-                   typename __a::allocator_type>;
-};
-
-// scalar * tensor
-template <ScalarNode __a, TensorNode __b> struct mul_result<__a, __b> {
-   using type = __b;
-};
-
-/// scalar * node
-template <ScalarNode __a, Node __b> struct mul_result<__a, __b> {
-   using type = std::remove_cvref_t<__b>::evaluated_type::node_type;
-};
-
-/// node * vector
-template <Node __a, VectorNode __b> struct mul_result<__a, __b> {
-   using evaluated_type = std::remove_cvref_t<__a>::evaluated_type::node_type;
-   using value_type = mul_result<evaluated_type, __b>::value_type;
-   using type = mul_result<evaluated_type, __b>::type;
-};
-
-/// matrix_node * matrix
-template <Node __a, MatrixNode __b>
-   requires(
-       ten::is_matrix_node<
-           typename std::remove_cvref_t<__a>::evaluated_type::node_type>::value)
-struct mul_result<__a, __b> {
-   using evaluated_type = std::remove_cvref_t<__a>::evaluated_type::node_type;
-   using value_type = mul_result<evaluated_type, __b>::value_type;
-   using type = mul_result<evaluated_type, __b>::type;
-};
-
-/// scalar_node * tensor
-template <Node __a, TensorNode __b>
-   requires(
-       ten::is_scalar_node<
-           typename std::remove_cvref_t<__a>::evaluated_type::node_type>::value)
-struct mul_result<__a, __b> {
-   // using evaluated_type =
-   // std::remove_cvref_t<__a>::evaluated_type::node_type; using value_type =
-   // mul_result<evaluated_type, __b>::value_type;
-   using type = __b; // mul_result<evaluated_type, __b>::type;
-};
-
-/// vector * node
-template <VectorNode __a, Node __b> struct mul_result<__a, __b> {
-   using evaluated_type = std::remove_cvref_t<__b>::evaluated_type::node_type;
-   using value_type = mul_result<evaluated_type, __a>::value_type;
-   using type = mul_result<evaluated_type, __a>::type;
-};
-
-/// matrix * node
-template <MatrixNode __a, Node __b> struct mul_result<__a, __b> {
-   using evaluated_type = std::remove_cvref_t<__b>::evaluated_type::node_type;
-   using value_type = mul_result<evaluated_type, __a>::value_type;
-   using type = mul_result<evaluated_type, __a>::type;
-};
-
-/// tensor * node
-template <TensorNode __a, Node __b> struct mul_result<__a, __b> {
-   using evaluated_type = std::remove_cvref_t<__b>::evaluated_type::node_type;
-   using value_type = mul_result<evaluated_type, __a>::value_type;
-   using type = mul_result<evaluated_type, __a>::type;
-};
-
-} // namespace details
-
-template <class __a, class __b,
-          class __c = typename details::mul_result<__a, __b>::type>
+template <class A, class B, class C>
+// = typename details::mul_result<A, B>::type>
 struct mul;
 
 // vector * vector
-template <VectorNode __x, VectorNode __y, VectorNode __z>
-struct mul<__x, __y, __z> {
+template <Vector X, Vector Y, Vector Z> struct mul<X, Y, Z> {
 
-   template <VectorNode __a, VectorNode __b,
-             VectorNode __c = typename details::mul_result<__a, __b>::type>
-   using func = binary_func<::ten::binary_operation::mul>::func<__a, __b, __c>;
+   template <Vector A, Vector B, Vector C>
+   using func = binary_func<::ten::binary_operation::mul>::func<A, B, C>;
 };
 
 // matrix * matrix
-template <MatrixNode __x, MatrixNode __y, MatrixNode __z>
-struct mul<__x, __y, __z> {
+template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> {
 
-   template <MatrixNode __a, MatrixNode __b,
-             MatrixNode __c = typename details::mul_result<__a, __b>::type>
+   template <Matrix A, Matrix B, Matrix C>
    struct func : ::ten::functional::func<> {
-      using output_type = __c;
+      using output_type = C;
 
-      static typename __c::shape_type
-      output_shape(const typename __a::shape_type &left,
-                   const typename __b::shape_type &right) {
+      static typename C::shape_type
+      output_shape(const typename A::shape_type &left,
+                   const typename B::shape_type &right) {
          std::initializer_list<size_type> &&dims = {left.dim(0), right.dim(1)};
-         typename __c::shape_type s(std::move(dims));
+         typename C::shape_type s(std::move(dims));
          return s;
       }
 
-      void operator()(const __a &left, const __b &right, __c &result) {
+      void operator()(const A &left, const B &right, C &result) {
          kernels::mul(left, right, result);
       }
    };
 };
 
 // matrix * vector
-template <MatrixNode __x, VectorNode __y, VectorNode __z>
-struct mul<__x, __y, __z> {
+template <Matrix X, Vector Y, Vector Z> struct mul<X, Y, Z> {
 
-   template <MatrixNode __a, VectorNode __b,
-             VectorNode __c = typename details::mul_result<__a, __b>::type>
+   template <Matrix A, Vector B, Vector C>
    struct func : ::ten::functional::func<> {
-      using output_type = __c;
+      using output_type = C;
 
-      static typename __c::shape_type
-      output_shape(const typename __a::shape_type &left,
-                   const typename __b::shape_type &right) {
+      static typename C::shape_type
+      output_shape(const typename A::shape_type &left,
+                   const typename B::shape_type &right) {
          std::initializer_list<size_type> &&dims = {left.dim(0)};
-         typename __c::shape_type s(std::move(dims));
+         typename C::shape_type s(std::move(dims));
          return s;
       }
 
-      void operator()(const __a &left, const __b &right, __c &result) {
+      void operator()(const A &left, const B &right, C &result) {
          kernels::mul(left, right, result);
       }
    };
 };
 
 // scalar * tensor
-template <ScalarNode __x, TensorNode __y, TensorNode __z>
-struct mul<__x, __y, __z> {
+template <Scalar X, Tensor Y, Tensor Z> struct mul<X, Y, Z> {
 
-   template <ScalarNode __a, TensorNode __b,
-             TensorNode __c = typename details::mul_result<__a, __b>::type>
+   template <Scalar A, Tensor B, Tensor C>
    struct func : ::ten::functional::func<> {
-      using output_type = __c;
+      using output_type = C;
 
-      static typename __c::shape_type
-      output_shape(const typename __b::shape_type &right) {
+      static typename C::shape_type
+      output_shape(const typename B::shape_type &right) {
          return right;
       }
 
-      void operator()(const __a &left, const __b &right, __c &result) {
+      void operator()(const A &left, const B &right, C &result) {
          size_t n = result.size();
-         using value_type = typename __c::value_type;
+         using value_type = typename C::value_type;
          for (size_t i = 0; i < n; i++) {
             result[i] = static_cast<value_type>(left.value()) *
                         static_cast<value_type>(right[i]);
@@ -699,47 +876,48 @@ struct mul<__x, __y, __z> {
    };
 };
 
-// matrix_node * matrix
-template <Node __x, MatrixNode __y, MatrixNode __z>
-   requires(
-       ten::is_matrix_node<
-           typename std::remove_cvref_t<__x>::evaluated_type::node_type>::value)
-struct mul<__x, __y, __z> {
-   using evaluated_type = std::remove_cvref_t<__x>::evaluated_type::node_type;
-   // matrix_node * matrix_node
-   template <MatrixNode __a, MatrixNode __b,
-             MatrixNode __c = typename details::mul_result<__a, __b>::type>
-   using func = mul<__a, __b, __c>::template func<__a, __b, __c>;
+// UnaryExpr * matrix
+template <UnaryExpr X, Matrix Y, Matrix Z>
+// FIXME REquire X::output_type to be a matrix
+struct mul<X, Y, Z> {
+   // using evaluated_type = std::remove_cvref_t<X>::output_type;
+   //  matrix * matrix
+   template <Matrix A, Matrix B, Matrix C>
+   using func = mul<A, B, C>::template func<A, B, C>;
 };
 
-// scalar_node * tensor
-template <Node __x, TensorNode __y, TensorNode __z>
-   requires(
-       ten::is_scalar_node<
-           typename std::remove_cvref_t<__x>::evaluated_type::node_type>::value)
-struct mul<__x, __y, __z> {
-   using evaluated_type = std::remove_cvref_t<__x>::evaluated_type::node_type;
-   template <ScalarNode __a, TensorNode __b,
-             TensorNode __c = typename details::mul_result<__a, __b>::type>
-   using func = mul<__a, __b, __c>::template func<__a, __b, __c>;
+// BinaryExpr * matrix
+template <BinaryExpr X, Matrix Y, Matrix Z>
+// FIXME REquire X::output_type to be a matrix
+struct mul<X, Y, Z> {
+   // using evaluated_type = std::remove_cvref_t<X>::output_type;
+   //  matrix * matrix
+   template <Matrix A, Matrix B, Matrix C>
+   using func = mul<A, B, C>::template func<A, B, C>;
 };
+
+// UnaryExpr * tensor
+/*template <UnaryExpr X, Tensor Y, Tensor  Z>
+struct mul<X, Y, Z> {
+   using evaluated_type = std::remove_cvref_t<X>::evaluated_type::node_type;
+   template <Scalar A, Tensor B, Tensor C>
+   using func = mul<A, B, C>::template func<A, B, C>;
+};*/
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Other BLAS functions
 
 // C <- alpha * X * Y + beta * C
-/*template<class A, class B, class C, class D = typename ::ten::functional::details::mul_result<A, B>::type>
-class gemm : ::ten::functional::func<true> {
-private:
-   T _alpha;
-   T _beta;
-public:
-   gemm(const T alpha, const T beta) : _alpha(alpha), _beta(beta) {}
+/*template<class A, class B, class C, class D = typename
+::ten::functional::details::mul_result<A, B>::type> class gemm :
+::ten::functional::func<true> { private: T _alpha; T _beta; public: gemm(const T
+alpha, const T beta) : _alpha(alpha), _beta(beta) {}
 
    using output_type = C;
 
-   static constexpr typename C::shape_type 
-   output_shape(const typename A::shape_type& left, const typename B::shape_type& right) {
+   static constexpr typename C::shape_type
+   output_shape(const typename A::shape_type& left, const typename
+B::shape_type& right) {
    }
 
    void operator()(const A& a, const B& b, C& result) {
@@ -777,27 +955,14 @@ struct __axpy2 : ::ten::functional::func<> {
 ////////////////////////////////////////////////////////////////////////////////
 // Reshape
 
-namespace details {
-// dynamic reshape result
-template <class __a, class __shape> struct reshape_result {
-   using type =
-       tensor_node<typename __a::value_type, __shape, __a::storage_order(),
-                   typename __a::storage_type, typename __a::allocator_type>;
-};
-} // namespace details
-
 // Reshape to static
-template <class __shape> struct static_reshape {
-   static_assert(__shape::is_static(), "Shape must be static");
+template <class Shape> struct static_reshape {
+   static_assert(Shape::is_static(), "Shape must be static");
 
-   template <class __a,
-             class __b = typename details::reshape_result<__a, __shape>::type>
-   struct func : ::ten::functional::func<> {
-      using output_type = __b;
+   template <class A, class B> struct func : ::ten::functional::func<> {
+      using output_type = B;
 
-      void operator()(const __a &left, __b &right) {
-         right = __b(left.storage());
-      }
+      void operator()(const A &left, B &right) { right = B(left.node()); }
    };
 };
 
@@ -805,28 +970,27 @@ template <size_type... __dims>
 using dims_static_reshape = static_reshape<::ten::shape<__dims...>>;
 
 // Dynamic reshape
-// __shape is the target shape type
-template <class __shape> struct dynamic_reshape {
+// Shape is the target shape type
+template <class Shape> struct dynamic_reshape {
 
-   template <class __a,
-             class __b = typename details::reshape_result<__a, __shape>::type>
+   template <class A, class B>
    struct func : ::ten::functional::func<true, true> {
     public:
-      using output_type = __b;
+      using output_type = B;
 
     private:
-      __shape _shape;
+      Shape _shape;
 
     public:
-      func(const __shape &s) : _shape(s) {}
-      func(__shape &&s) : _shape(std::move(s)) {}
+      func(const Shape &s) : _shape(s) {}
+      func(Shape &&s) : _shape(std::move(s)) {}
 
-      typename __b::shape_type output_shape(const typename __a::shape_type &) {
+      typename B::shape_type output_shape(const typename A::shape_type &) {
          return _shape;
       }
 
-      void operator()(const __a &left, __b &right) {
-         right = __b(left.storage(), _shape);
+      void operator()(const A &left, B &right) {
+         right = B(left.storage(), _shape);
       }
    };
 };
@@ -834,48 +998,25 @@ template <class __shape> struct dynamic_reshape {
 ////////////////////////////////////////////////////////////////////////////////
 // Transpose a matrix
 
-namespace details {
-// static transpose result
-template <class __a, class __shape> struct static_transpose_result {
-   static_assert(__shape::is_static(), "Shape must be static.");
-   static_assert(__shape::rank() == 2, "Shape rank must be 2.");
-
-   using type = tensor_node<typename __a::value_type,
-                            ::ten::shape<__shape::template static_dim<1>(),
-                                         __shape::template static_dim<0>()>,
-                            __a::storage_order(), typename __a::storage_type,
-                            typename __a::allocator_type>;
-};
-// dynamic transpose result
-template <class __a, class __shape> struct transpose_result {
-   using type =
-       tensor_node<typename __a::value_type, __shape, __a::storage_order(),
-                   typename __a::storage_type, typename __a::allocator_type>;
-};
-} // namespace details
-
 // Reshape to static
-template <class __shape> struct static_transpose {
-   static_assert(__shape::is_static(), "Shape must be static.");
-   static_assert(__shape::rank() == 2, "Shape rank must be 2.");
+template <class Shape> struct static_transpose {
+   static_assert(Shape::is_static(), "Shape must be static.");
+   static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
-   template <class __a,
-             class __b =
-                 typename details::static_transpose_result<__a, __shape>::type>
-   struct func : ::ten::functional::func<> {
-      using output_type = __b;
+   template <class A, class B> struct func : ::ten::functional::func<> {
+      using output_type = B;
 
-      void operator()(const __a &left, __b &right) {
-         using shape_type = __b::shape_type;
-         using storage_type = __b::storage_type;
+      void operator()(const A &left, B &right) {
+         using shape_type = B::shape_type;
+         using storage_type = B::storage_type;
 
          std::shared_ptr<storage_type> storage(new storage_type());
          // FIXME use auto storage =
          // std::make_shared<storage_type>(storage_type());
-         right = __b(storage);
+         right = B(storage);
          // copy transposed data
-         size_type m = __a::shape_type::template static_dim<0>();
-         size_type n = __a::shape_type::template static_dim<1>();
+         size_type m = A::shape_type::template static_dim<0>();
+         size_type n = A::shape_type::template static_dim<1>();
          for (size_type i = 0; i < n; i++) {
             for (size_type j = 0; j < m; j++) {
                right(i, j) = left(j, i);
@@ -890,25 +1031,23 @@ template <size_type rows, size_type cols>
 using DimsStaticTranspose = StaticTranspose<::ten::Shape<cols, rows>>;*/
 
 // Dynamic transpose
-template <class __shape> struct dynamic_transpose {
+template <class Shape> struct dynamic_transpose {
 
-   template <class __a,
-             class __b = typename details::transpose_result<__a, __shape>::type>
-   struct func : ::ten::functional::func<true> {
-      static_assert(__shape::is_dynamic(), "Shape must be dynamic");
+   template <class A, class B> struct func : ::ten::functional::func<true> {
+      static_assert(Shape::is_dynamic(), "Shape must be dynamic");
       // FIXME Currently defined only for matrices
-      static_assert(__shape::rank() == 2, "Shape rank must be 2.");
+      static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
-      using output_type = __b;
+      using output_type = B;
 
-      typename __b::shape_type output_shape(const typename __a::shape_type &s) {
-         typename __b::shape_type res({s.dim(1), s.dim(0)});
+      typename B::shape_type output_shape(const typename A::shape_type &s) {
+         typename B::shape_type res({s.dim(1), s.dim(0)});
          return res;
       }
 
-      void operator()(const __a &left, __b &right) {
-         using storage_type = __b::storage_type;
-         using shape_type = __b::shape_type;
+      void operator()(const A &left, B &right) {
+         using storage_type = B::storage_type;
+         using shape_type = B::shape_type;
 
          size_type m = left.dim(0);
          size_type n = left.dim(1);
@@ -916,7 +1055,7 @@ template <class __shape> struct dynamic_transpose {
          std::shared_ptr<storage_type> storage(new storage_type(s));
          // FIXME use auto storage =
          // std::make_shared<storage_type>(storage_type()); copy elements
-         right = __b(storage, s);
+         right = B(storage, s);
          for (size_type i = 0; i < n; i++) {
             for (size_type j = 0; j < m; j++) {
                right(i, j) = left(j, i);
