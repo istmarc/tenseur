@@ -135,6 +135,9 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
    /// Returns a shared ptr to the output
    /*[[nodiscard]] inline Output output() { return _value; }*/
 
+   /// Return the input
+   [[nodiscard]] inline const Input &input() const { return input; }
+
    /// Returns whether the expression is evaluated
    [[nodiscard]] bool evaluated() const { return _evaluated; }
 
@@ -230,8 +233,11 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
        : _func(func_type(std::forward<func_args>(fargs)...)), _left(l),
          _right(r) {}
 
-   /// Returns the shared ptr to the output node
-   //[[nodiscard]] inline std::shared_ptr<Output> node() { return _value; }
+   /// Returns the left input
+   [[nodiscard]] const Left &left() const { return _left; }
+
+   // Returns the right input
+   [[nodiscard]] const Right &right() const { return _right; }
 
    /// Returns whether the expression is evaluated
    [[nodiscard]] bool evaluated() const { return _evaluated; }

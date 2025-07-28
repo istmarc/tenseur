@@ -198,6 +198,8 @@ struct is_tensor<ranked_tensor<Scalar, Shape, order, Storage, Allocator>> {
    static constexpr bool value = true;
 };
 
+template <typename T> static constexpr bool is_tensor_v = is_tensor<T>::value;
+
 template <class T>
 concept Tensor = is_tensor<std::remove_cvref_t<T>>::value;
 
@@ -253,12 +255,16 @@ template <class T, class shape, storage_order order, class storage,
 struct is_column<ranked_column<T, shape, order, storage, allocator>>
     : std::true_type {};
 
+template <class T> static constexpr bool is_column_v = is_column<T>::value;
+
 /// is_row
 template <class> struct is_row : std::false_type {};
 template <class T, class shape, storage_order order, class storage,
           class allocator>
 struct is_row<ranked_row<T, shape, order, storage, allocator>>
     : std::true_type {};
+
+template <class T> static constexpr bool is_row_v = is_row<T>::value;
 
 /// Concept Column
 template <class T>

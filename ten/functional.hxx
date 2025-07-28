@@ -4,12 +4,12 @@
 #include <cmath>
 #include <functional>
 #include <initializer_list>
-//#include <iostream>
+// #include <iostream>
 #include <memory>
 #include <type_traits>
 
-#include <ten/types.hxx>
 #include <ten/kernels/host>
+#include <ten/types.hxx>
 
 namespace ten {
 enum class binary_operation;
@@ -159,7 +159,7 @@ template <BinaryExpr A, Tensor B> struct mul_result<A, B> {
 template <class A, class Shape> struct reshape_result {
    using type =
        ranked_tensor<typename A::value_type, Shape, A::storage_order(),
-                   typename A::storage_type, typename A::allocator_type>;
+                     typename A::storage_type, typename A::allocator_type>;
 };
 
 // static transpose result
@@ -168,17 +168,17 @@ template <class A, class Shape> struct static_transpose_result {
    static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
    using type = ranked_tensor<typename A::value_type,
-                            ::ten::shape<Shape::template static_dim<1>(),
-                                         Shape::template static_dim<0>()>,
-                            A::storage_order(), typename A::storage_type,
-                            typename A::allocator_type>;
+                              ::ten::shape<Shape::template static_dim<1>(),
+                                           Shape::template static_dim<0>()>,
+                              A::storage_order(), typename A::storage_type,
+                              typename A::allocator_type>;
 };
 
 // dynamic transpose result
 template <class A, class Shape> struct transpose_result {
    using type =
        ranked_tensor<typename A::value_type, Shape, A::storage_order(),
-                   typename A::storage_type, typename A::allocator_type>;
+                     typename A::storage_type, typename A::allocator_type>;
 };
 
 } // namespace ten::details
@@ -207,6 +207,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct sqrt : func<> {
+   static constexpr std::string name() { return std::string("sqrt"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -228,6 +230,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct sqr : func<> {
+   static constexpr std::string name() { return std::string("sqr"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -249,6 +253,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct abs : func<> {
+   static constexpr std::string name() { return std::string("abs"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -270,6 +276,8 @@ template <class A, class B>
              ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct pow : func<true> {
+   static constexpr std::string name() { return std::string("pow"); }
+
  private:
    double _n;
 
@@ -297,6 +305,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_scalar<B>::value)
 struct min : func<> {
+   static constexpr std::string name() { return std::string("min"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -320,6 +330,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_scalar<B>::value)
 struct max : func<> {
+   static constexpr std::string name() { return std::string("max"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -342,6 +354,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_scalar<B>::value)
 struct sum : func<> {
+   static constexpr std::string name() { return std::string("sum"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -365,6 +379,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct cum_sum : func<> {
+   static constexpr std::string name() { return std::string("cum_sum"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -387,6 +403,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_scalar<B>::value)
 struct prod : func<> {
+   static constexpr std::string name() { return std::string("prod"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -412,6 +430,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct sin : func<> {
+   static constexpr std::string name() { return std::string("sin"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -433,6 +453,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct asin : func<> {
+   static constexpr std::string name() { return std::string("asin"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -454,6 +476,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct sinh : func<> {
+   static constexpr std::string name() { return std::string("asin"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -475,6 +499,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct cos : func<> {
+   static constexpr std::string name() { return std::string("cos"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -496,6 +522,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct acos : func<> {
+   static constexpr std::string name() { return std::string("acos"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -517,6 +545,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct cosh : func<> {
+   static constexpr std::string name() { return std::string("cosh"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -538,6 +568,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct tan : func<> {
+   static constexpr std::string name() { return std::string("tan"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -558,6 +590,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct atan : func<> {
+   static constexpr std::string name() { return std::string("atan"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -578,6 +612,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct tanh : func<> {
+   static constexpr std::string name() { return std::string("tanh"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -599,6 +635,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct exp : func<> {
+   static constexpr std::string name() { return std::string("exp"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -620,6 +658,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct log : func<> {
+   static constexpr std::string name() { return std::string("log"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -641,6 +681,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct log10 : func<> {
+   static constexpr std::string name() { return std::string("log10"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -662,6 +704,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct floor : func<> {
+   static constexpr std::string name() { return std::string("floor"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -683,6 +727,8 @@ template <class A, class B>
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
 struct ceil : func<> {
+   static constexpr std::string name() { return std::string("ceil"); }
+
    using output_type = B;
 
    void operator()(const A &a, B &b) {
@@ -706,6 +752,20 @@ template <::ten::binary_operation Kind> struct binary_func {
 
    template <class A, class B, class C>
    struct func : ::ten::functional::func<> {
+      static constexpr std::string name() {
+         if constexpr (Kind == ::ten::binary_operation::add) {
+            return std::string("add");
+         }
+         if constexpr (Kind == ::ten::binary_operation::sub) {
+            return std::string("sub");
+         }
+         if constexpr (Kind == ::ten::binary_operation::mul) {
+            return std::string("mul");
+         }
+         if constexpr (Kind == ::ten::binary_operation::div) {
+            return std::string("div");
+         }
+      }
 
       using output_type = C;
 
@@ -730,6 +790,20 @@ template <::ten::binary_operation Kind> struct scalar_left_binary_func {
 
    template <Scalar A, class B, class C>
    struct func : ::ten::functional::func<> {
+      static constexpr std::string name() {
+         if constexpr (Kind == ::ten::binary_operation::add) {
+            return std::string("add");
+         }
+         if constexpr (Kind == ::ten::binary_operation::sub) {
+            return std::string("sub");
+         }
+         if constexpr (Kind == ::ten::binary_operation::mul) {
+            return std::string("mul");
+         }
+         if constexpr (Kind == ::ten::binary_operation::div) {
+            return std::string("div");
+         }
+      }
 
       using output_type = C;
 
@@ -769,6 +843,20 @@ template <::ten::binary_operation Kind> struct scalar_right_binary_func {
 
    template <class A, Scalar B, class C>
    struct func : ::ten::functional::func<> {
+      static constexpr std::string name() {
+         if constexpr (Kind == ::ten::binary_operation::add) {
+            return std::string("add");
+         }
+         if constexpr (Kind == ::ten::binary_operation::sub) {
+            return std::string("sub");
+         }
+         if constexpr (Kind == ::ten::binary_operation::mul) {
+            return std::string("mul");
+         }
+         if constexpr (Kind == ::ten::binary_operation::div) {
+            return std::string("div");
+         }
+      }
 
       using output_type = C;
 
@@ -815,6 +903,8 @@ template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> {
 
    template <Matrix A, Matrix B, Matrix C>
    struct func : ::ten::functional::func<> {
+      static constexpr std::string name() { return std::string("mul"); }
+
       using output_type = C;
 
       static typename C::shape_type
@@ -836,6 +926,8 @@ template <Matrix X, Vector Y, Vector Z> struct mul<X, Y, Z> {
 
    template <Matrix A, Vector B, Vector C>
    struct func : ::ten::functional::func<> {
+      static constexpr std::string name() { return std::string("mul"); }
+
       using output_type = C;
 
       static typename C::shape_type
@@ -857,6 +949,8 @@ template <Scalar X, Tensor Y, Tensor Z> struct mul<X, Y, Z> {
 
    template <Scalar A, Tensor B, Tensor C>
    struct func : ::ten::functional::func<> {
+      static constexpr std::string name() { return std::string("mul"); }
+
       using output_type = C;
 
       static typename C::shape_type
@@ -956,12 +1050,17 @@ struct __axpy2 : ::ten::functional::func<> {
 
 // Reshape to static
 template <class Shape> struct static_reshape {
+   static constexpr std::string name() { return std::string("static_reshape"); }
+
    static_assert(Shape::is_static(), "Shape must be static");
 
    template <class A, class B>
-   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+      requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+                ::ten::is_row<A>::value) &&
+               ::ten::is_tensor<B>::value)
    struct func : ::ten::functional::func<> {
-         static_assert(A::is_static(), "A must be static tensor or static column or static row.");
+      static_assert(A::is_static(),
+                    "A must be static tensor or static column or static row.");
 
       using output_type = B;
 
@@ -983,8 +1082,12 @@ using dims_static_reshape = static_reshape<::ten::shape<__dims...>>;
 template <class Shape> struct dynamic_reshape {
 
    template <class A, class B>
-   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+      requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+                ::ten::is_row<A>::value) &&
+               ::ten::is_tensor<B>::value)
    struct func : ::ten::functional::func<true, true> {
+      static constexpr std::string name() { return std::string("reshape"); }
+
     public:
       using output_type = B;
 
@@ -1019,6 +1122,10 @@ template <class Shape> struct static_transpose {
    static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
    template <class A, class B> struct func : ::ten::functional::func<> {
+      static constexpr std::string name() {
+         return std::string("static_transpose");
+      }
+
       using output_type = B;
 
       void operator()(const A &left, B &right) {
@@ -1051,6 +1158,8 @@ template <class Shape> struct dynamic_transpose {
       // FIXME Currently defined only for matrices
       static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
+      static constexpr std::string name() { return std::string("transpose"); }
+
       using output_type = B;
 
       typename B::shape_type output_shape(const typename A::shape_type &s) {
@@ -1063,7 +1172,7 @@ template <class Shape> struct dynamic_transpose {
 
          size_type m = left.dim(0);
          size_type n = left.dim(1);
-         //shape_type s({left.dim(1), left.dim(0)});
+         // shape_type s({left.dim(1), left.dim(0)});
          //
          for (size_type i = 0; i < n; i++) {
             for (size_type j = 0; j < m; j++) {

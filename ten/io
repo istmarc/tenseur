@@ -3,5 +3,6 @@
 
 #include <ten/ios/serialization.hxx>
 #include <ten/ios/mtx.hxx>
+#include <ten/ios/expr.hxx>
 
 #endif
