@@ -158,7 +158,7 @@ template <BinaryExpr A, Tensor B> struct mul_result<A, B> {
 // dynamic reshape result
 template <class A, class Shape> struct reshape_result {
    using type =
-       tensor_node<typename A::value_type, Shape, A::storage_order(),
+       ranked_tensor<typename A::value_type, Shape, A::storage_order(),
                    typename A::storage_type, typename A::allocator_type>;
 };
 
@@ -167,16 +167,17 @@ template <class A, class Shape> struct static_transpose_result {
    static_assert(Shape::is_static(), "Shape must be static.");
    static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
-   using type = tensor_node<typename A::value_type,
+   using type = ranked_tensor<typename A::value_type,
                             ::ten::shape<Shape::template static_dim<1>(),
                                          Shape::template static_dim<0>()>,
                             A::storage_order(), typename A::storage_type,
                             typename A::allocator_type>;
 };
+
 // dynamic transpose result
 template <class A, class Shape> struct transpose_result {
    using type =
-       tensor_node<typename A::value_type, Shape, A::storage_order(),
+       ranked_tensor<typename A::value_type, Shape, A::storage_order(),
                    typename A::storage_type, typename A::allocator_type>;
 };
 
@@ -957,10 +958,20 @@ struct __axpy2 : ::ten::functional::func<> {
 template <class Shape> struct static_reshape {
    static_assert(Shape::is_static(), "Shape must be static");
 
-   template <class A, class B> struct func : ::ten::functional::func<> {
+   template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
+   struct func : ::ten::functional::func<> {
+         static_assert(A::is_static(), "A must be static tensor or static column or static row.");
+
       using output_type = B;
 
-      void operator()(const A &left, B &right) { right = B(left.node()); }
+      void operator()(const A &left, B &right) {
+         // FIXME Fix static reshape, right now it does copy the data
+         // Maybe get shape outside tensor_node
+         for (size_t i = 0; i < right.size(); i++) {
+            right[i] = left[i];
+         }
+      }
    };
 };
 
@@ -972,6 +983,7 @@ using dims_static_reshape = static_reshape<::ten::shape<__dims...>>;
 template <class Shape> struct dynamic_reshape {
 
    template <class A, class B>
+   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value || ::ten::is_row<A>::value) && ::ten::is_tensor<B>::value)
    struct func : ::ten::functional::func<true, true> {
     public:
       using output_type = B;
@@ -988,7 +1000,12 @@ template <class Shape> struct dynamic_reshape {
       }
 
       void operator()(const A &left, B &right) {
-         right = B(left.storage(), _shape);
+         // FIXME Maybe move shape out of node
+         // and set right = B(left.node(), _shape)
+         // Copy the data
+         for (size_type i = 0; i < right.size(); i++) {
+            right[i] = left[i];
+         }
       }
    };
 };

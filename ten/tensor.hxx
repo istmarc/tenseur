@@ -1901,45 +1901,57 @@ template <class To, StaticTensor T> auto cast(const T &x) {
    return r;
 }
 
-/* TODO
 // reshape<shape>(x)
-template <class __shape, Expr __expr> auto reshape(__expr &&expr) {
-   using node_type = typename std::remove_cvref_t<__expr>::node_type;
+template <class Shape, Expr ExprType>
+requires(::ten::is_shape<Shape>::value)
+auto reshape(ExprType &&expr) {
+   static_assert(Shape::is_static(), "Shape must be static.");
+
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename details::output_type<expr_type>::type;
+   using reshape_type = typename ::ten::details::reshape_result<output_type, Shape>::type;
+
    return ::ten::unary_expr<
-       node_type, ::ten::functional::static_reshape<__shape>::template func>(
-       expr.node());
+       expr_type, reshape_type, ::ten::functional::static_reshape<Shape>::template func>(expr);
 }
 
 // reshape<dims...>(x)
-template <size_type... dims, Expr __expr> auto reshape(__expr &&expr) {
-   using node_type = typename std::remove_cvref_t<__expr>::node_type;
-   return ::ten::unary_expr<node_type, ::ten::functional::dims_static_reshape<
-                                           dims...>::template func>(
-       expr.node());
+template <size_type... dims, Expr ExprType> auto reshape(ExprType &&expr) {
+   using expr_type = typename std::remove_cvref_t<ExprType>;
+   using output_type = typename details::output_type<expr_type>::type;
+   using shape_type = ::ten::shape<dims...>;
+   using reshape_type = typename ::ten::details::reshape_result<output_type, shape_type>::type;
+
+   return ::ten::unary_expr<expr_type, reshape_type, ::ten::functional::dims_static_reshape<
+                                           dims...>::template func>(expr);
 }
 
+
 // reshape(x, shape)
-template <Expr __expr, class __shape>
-auto reshape(__expr &&expr, __shape &&dims) {
-   using node_type = typename std::remove_cvref_t<__expr>::node_type;
-   using shape_type = std::remove_cvref_t<__shape>;
+template <Expr ExprType, class Shape>
+auto reshape(ExprType &&expr, Shape &&dims) {
+   using expr_type = typename std::remove_cvref_t<ExprType>;
+   using output_type = typename details::output_type<expr_type>::type;
+   using shape_type = std::remove_cvref_t<Shape>;
+   using reshape_type = typename ::ten::details::reshape_result<output_type, shape_type>::type;
    return ::ten::unary_expr<
-       node_type, ::ten::functional::dynamic_reshape<shape_type>::template func,
-       shape_type>(expr.node(), dims);
+       expr_type, reshape_type, ::ten::functional::dynamic_reshape<shape_type>::template func>(expr, dims);
 }
 
 // reshape<rank>(x, shape)
-template <size_type __rank, Expr __expr>
-auto reshape(__expr &&expr, std::initializer_list<size_type> &&dims) {
-   using expr_type = std::remove_cvref_t<__expr>;
-   using shape_type = ::ten::dynamic_shape<__rank>;
-   return reshape<expr_type, shape_type>(std::forward<expr_type>(expr),
-                                         shape_type(std::move(dims)));
+template <size_type Rank, Expr ExprType>
+auto reshape(ExprType &&expr, std::initializer_list<size_type> &&dims) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename details::output_type<expr_type>::type;
+   using shape_type = ::ten::dynamic_shape<Rank>;
+   auto Shape = shape_type(std::move(dims));
+   return reshape<expr_type, shape_type>(std::forward<expr_type>(expr), std::move(Shape));
 }
 
+/*
 // flatten(x)
-template <Expr __expr> auto flatten(__expr expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+template <Expr ExprType> auto flatten(ExprType expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
 
    // tensor
    if constexpr (is_tensor<expr_type>::value) {
@@ -1963,8 +1975,7 @@ template <Expr __expr> auto flatten(__expr expr) {
       return reshape<::ten::shape<shape_type::static_size()>, expr_type>(
           std::forward<expr_type>(expr));
    }
-}
-*/
+}*/
 
 /*// transpose(x)
 template <Expr __expr> auto transpose(__expr &&expr) {
