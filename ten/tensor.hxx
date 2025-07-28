@@ -602,7 +602,10 @@ class ranked_tensor final
    }
 
  public:
-   // TODO default constructor for serialization / deserialization
+   // TODO default constructor for serialization / deserialization and unary_expr, binary_expr
+   ranked_tensor() noexcept : _format(::ten::storage_format::dense), _shape(std::nullopt), 
+      _stride(std::nullopt), _node(nullptr) {}
+
    /*
    ranked_tensor(): _format(::ten::storage_format::dense), _shape(std::nullopt),
       _stride(std::nullopt), _node(nullptr) {}*/

@@ -1065,11 +1065,8 @@ template <class Shape> struct static_reshape {
       using output_type = B;
 
       void operator()(const A &left, B &right) {
-         // FIXME Fix static reshape, right now it does copy the data
-         // Maybe get shape outside tensor_node
-         for (size_t i = 0; i < right.size(); i++) {
-            right[i] = left[i];
-         }
+         // Does not copy the data
+         right = B(left.node(), left.format());
       }
    };
 };
@@ -1103,12 +1100,8 @@ template <class Shape> struct dynamic_reshape {
       }
 
       void operator()(const A &left, B &right) {
-         // FIXME Maybe move shape out of node
-         // and set right = B(left.node(), _shape)
-         // Copy the data
-         for (size_type i = 0; i < right.size(); i++) {
-            right[i] = left[i];
-         }
+         // Does not copy the data
+         right = B(left.node(), _shape, left.format());
       }
    };
 };
