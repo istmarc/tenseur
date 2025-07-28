@@ -30,7 +30,9 @@ template <typename T, typename allocator> class dense_storage final {
 
    dense_storage() noexcept {}
 
-   template <typename Shape> dense_storage(const Shape &shape) noexcept {
+   template <typename Shape>
+   requires(::ten::is_shape<Shape>::value)
+   dense_storage(const Shape &shape) noexcept {
       _size = shape.size();
       _data = allocator_traits::allocate(_allocator, _size * sizeof(T));
    }

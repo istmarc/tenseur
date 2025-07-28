@@ -182,9 +182,7 @@ template <class T, class Shape, storage_order Order, class Storage,
 struct tensor_operations;
 
 // Forward declaration of tensor node
-template <class T, class shape, storage_order Order, class storage,
-          class allocator>
-struct tensor_node;
+template <class T, class storage, class allocator> struct tensor_node;
 
 // Forward declaration of tensor type
 template <class T, class shape, storage_order order, class storage,
@@ -485,10 +483,8 @@ template <class T> struct is_scalar_node<scalar_node<T>> : std::true_type {};
 
 // tensor_node traits
 template <class> struct is_tensor_node : std::false_type {};
-template <class T, class shape, storage_order order, class storage,
-          class allocator>
-struct is_tensor_node<tensor_node<T, shape, order, storage, allocator>>
-    : std::true_type {};
+template <class T, class storage, class allocator>
+struct is_tensor_node<tensor_node<T, storage, allocator>> : std::true_type {};
 //{
 //   static constexpr bool value = ::ten::is_dense_storage<storage>::value;
 //};
@@ -584,18 +580,17 @@ concept TensorNode = is_tensor_node<T>::value;
 ////////////////////////////////////////////////////////////////////////////////
 // Vector node
 
-template <class> struct is_vector_node : std::false_type {};
-template <class T, class shape, storage_order order, class storage,
-          class allocator>
-struct is_vector_node<tensor_node<T, shape, order, storage, allocator>> {
+/*template <class> struct is_vector_node : std::false_type {};
+template <class T, class storage, class allocator>
+struct is_vector_node<tensor_node<T, storage, allocator>> {
    static constexpr bool value = shape::rank() == 1;
-};
+};*/
 
 template <class T>
 concept VectorShape = T::shape_type::rank() == 1;
 
-template <class T>
-concept VectorNode = VectorShape<T> && TensorNode<T>;
+// template <class T>
+// concept VectorNode = VectorShape<T> && TensorNode<T>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Matrix shape
@@ -605,35 +600,33 @@ concept MatrixShape = T::shape_type::rank() == 2;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Matrix node
-template <class> struct is_matrix_node : std::false_type {};
-template <class T, class shape, storage_order order, class storage,
-          class allocator>
-struct is_matrix_node<tensor_node<T, shape, order, storage, allocator>> {
+/*template <class> struct is_matrix_node : std::false_type {};
+template <class T, class storage, class allocator>
+struct is_matrix_node<tensor_node<T, storage, allocator>> {
    static constexpr bool value =
        shape::rank() == 2 && ::ten::is_dense_storage<storage>::value;
 };
 
 template <class T>
-concept MatrixNode = MatrixShape<T> && TensorNode<T>;
+concept MatrixNode = MatrixShape<T> && TensorNode<T>;*/
 
 // Static matrix node
+/*
 template <class> struct is_smatrix_node : std::false_type {};
-template <class T, class shape, storage_order order, class storage,
-          class allocator>
-struct is_smatrix_node<tensor_node<T, shape, order, storage, allocator>> {
+template <class T, class storage, class allocator>
+struct is_smatrix_node<tensor_node<T, storage, allocator>> {
    static constexpr bool value =
        shape::rank() == 2 && ::ten::is_static_storage<storage>::value;
-};
+};*/
 
-template <class T>
-concept SMatrixNode = MatrixShape<T> && StaticStorage<T> && TensorNode<T>;
+// template <class T>
+// concept SMatrixNode = MatrixShape<T> && StaticStorage<T> && TensorNode<T>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Special matrices node
-template <class> struct is_diagonal_node : std::false_type {};
-template <class T, class shape, storage_order order, class storage,
-          class allocator>
-struct is_diagonal_node<tensor_node<T, shape, order, storage, allocator>> {
+/*template <class> struct is_diagonal_node : std::false_type {};
+template <class T, class storage, class allocator>
+struct is_diagonal_node<tensor_node<T, storage, allocator>> {
    static constexpr bool value =
        ::ten::is_diagonal_storage<storage>::value && shape::rank() == 2;
 };
@@ -642,7 +635,7 @@ template <class T>
 concept diagonal_node = is_diagonal_node<T>::value;
 
 template <class T>
-concept DiagonalNode = is_diagonal_node<T>::value;
+concept DiagonalNode = is_diagonal_node<T>::value;*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // Concepts Same
