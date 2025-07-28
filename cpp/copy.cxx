@@ -1,4 +1,5 @@
 #include <ten/tensor>
+#include <ten/io>
 
 int main() {
    auto a = ten::range<ten::matrix<float>>({2, 3});

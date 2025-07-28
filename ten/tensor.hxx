@@ -627,10 +627,18 @@ class ranked_tensor final
    explicit ranked_tensor() noexcept
       requires(Shape::is_static())
        : _format(::ten::storage_format::dense), _shape(std::nullopt),
-         _stride(std::nullopt) {
+         _stride(typename base_type::stride_type()) {
       auto storage = std::make_unique<storage_type>();
       _node = std::make_shared<node_type>(std::move(storage));
    }
+
+   /// Construct a static ranked_tensor from node and format
+   explicit ranked_tensor(std::shared_ptr<node_type> &&node,
+                          ::ten::storage_format format) noexcept
+      requires(Shape::is_static())
+       : _format(format), _shape(std::nullopt),
+         _stride(typename base_type::stride_type()),
+         _node(std::move(node)) {}
 
    /// Construct a ranked_tensor from node, shape and format
    /// TODO Check size
@@ -702,7 +710,7 @@ class ranked_tensor final
    /// Tensor node from data
    explicit ranked_tensor(std::initializer_list<T> &&data) noexcept
       requires(Shape::is_static())
-       : _shape(std::nullopt), _stride(std::nullopt) {
+       : _shape(std::nullopt), _stride(typename base_type::stride_type()) {
       auto storage = std::make_unique<storage_type>();
       size_type i = 0;
       for (auto x : data) {
@@ -943,21 +951,19 @@ class ranked_tensor final
 
    // copy
    auto copy() const {
-      auto format = _node.get()->format();
       if constexpr (Shape::is_dynamic()) {
-         auto shape = _node.get()->shape();
-         auto st = std::make_shared<typename node_type::storage_type>(shape);
-         auto node = std::make_shared<node_type>(std::move(st), shape, format);
-         ranked_tensor t(std::move(node));
+         auto st = std::make_unique<Storage>(_shape.value());
+         auto node = std::make_shared<node_type>(std::move(st));
+         ranked_tensor t(std::move(node), _shape.value(), _format);
          // Copy the data to the new tensor
          for (size_t i = 0; i < this->size(); i++) {
             t[i] = (*_node.get())[i];
          }
          return t;
       } else {
-         auto st = std::make_shared<typename node_type::storage_type>();
-         auto node = std::make_shared<node_type>(std::move(st), format);
-         ranked_tensor t(std::move(node));
+         auto st = std::make_unique<Storage>();
+         auto node = std::make_shared<node_type>(std::move(st));
+         ranked_tensor t(std::move(node), _format);
          // Copy the data to the new tensor
          for (size_t i = 0; i < this->size(); i++) {
             t[i] = (*_node.get())[i];
