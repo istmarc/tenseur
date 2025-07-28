@@ -1948,7 +1948,6 @@ auto reshape(ExprType &&expr, std::initializer_list<size_type> &&dims) {
    return reshape<expr_type, shape_type>(std::forward<expr_type>(expr), std::move(Shape));
 }
 
-/*
 // flatten(x)
 template <Expr ExprType> auto flatten(ExprType expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
@@ -1975,42 +1974,43 @@ template <Expr ExprType> auto flatten(ExprType expr) {
       return reshape<::ten::shape<shape_type::static_size()>, expr_type>(
           std::forward<expr_type>(expr));
    }
-}*/
+}
 
-/*// transpose(x)
-template <Expr __expr> auto transpose(__expr &&expr) {
-   using expr_type = std::remove_cvref_t<__expr>;
+// transpose(x)
+template <Expr ExprType> auto transpose(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   static_assert(::ten::is_tensor<expr_type>::value || ::ten::is_column<expr_type>::value || ::ten::is_row<expr_type>::value,
+      "Currently transpose support only tensor, column and row.");
 
    // tensor
    if constexpr (is_tensor<expr_type>::value) {
       using shape_type = expr_type::shape_type;
-      using node_type = expr_type::node_type;
 
       if constexpr (shape_type::is_static()) {
+         using transpose_type = ::ten::details::static_transpose_result<expr_type, shape_type>::type;
          return ::ten::unary_expr<
-             typename expr_type::node_type,
-             ::ten::functional::static_transpose<shape_type>::template func,
-             shape_type>(expr.node());
+             expr_type, transpose_type,
+             ::ten::functional::static_transpose<shape_type>::template func>(expr);
       }
 
       if constexpr (shape_type::is_dynamic()) {
+         using transpose_result = ::ten::details::transpose_result<expr_type, shape_type>::type;
          return ::ten::unary_expr<
-             node_type,
-             ::ten::functional::dynamic_transpose<shape_type>::template func,
-             shape_type>(expr.node());
+             expr_type, transpose_result,
+             ::ten::functional::dynamic_transpose<shape_type>::template func>(expr);
       }
    }
 
    // TODO unar_expr or binary_expr
    //if constexpr (is_unary_expr<expr_type>::value ||
-                 is_binary_expr<expr_type>::value) {
+    //             is_binary_expr<expr_type>::value) {
     //  using output_type = typename expr_type::evaluated_type;
     //  using shape_type = typename output_type::shape_type;
 
     //  return reshape<::ten::shape<shape_type::staticSize()>, expr_type>(
    //       std::forward<expr_type>(expr));
    //}
-}*/
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions for creating a new tensor

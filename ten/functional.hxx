@@ -1023,12 +1023,10 @@ template <class Shape> struct static_transpose {
 
       void operator()(const A &left, B &right) {
          using shape_type = B::shape_type;
-         using storage_type = B::storage_type;
-
-         std::shared_ptr<storage_type> storage(new storage_type());
          // FIXME use auto storage =
          // std::make_shared<storage_type>(storage_type());
-         right = B(storage);
+         // right = B(storage);
+         // right = B();
          // copy transposed data
          size_type m = A::shape_type::template static_dim<0>();
          size_type n = A::shape_type::template static_dim<1>();
@@ -1061,16 +1059,12 @@ template <class Shape> struct dynamic_transpose {
       }
 
       void operator()(const A &left, B &right) {
-         using storage_type = B::storage_type;
          using shape_type = B::shape_type;
 
          size_type m = left.dim(0);
          size_type n = left.dim(1);
-         shape_type s({left.dim(1), left.dim(0)});
-         std::shared_ptr<storage_type> storage(new storage_type(s));
-         // FIXME use auto storage =
-         // std::make_shared<storage_type>(storage_type()); copy elements
-         right = B(storage, s);
+         //shape_type s({left.dim(1), left.dim(0)});
+         //
          for (size_type i = 0; i < n; i++) {
             for (size_type j = 0; j < m; j++) {
                right(i, j) = left(j, i);

@@ -22,7 +22,21 @@ int main() {
 
    {
       auto x = ten::range<ten::smatrix<float, 3, 3>>();
+      std::cout << x << std::endl;
       auto y = ten::transpose(x);
+      std::cout << y.eval() << std::endl;
+   }
+
+   {
+      auto x = ten::range<ten::matrix<float>>({3, 3});
+      std::cout << x << std::endl;
+      auto y = ten::transpose(x);
+      std::cout << y.eval() << std::endl;
+   }
+
+   {
+      auto x = ten::range<ten::matrix<float>>({3, 3});
+      auto y = ten::flatten(x);
       std::cout << y.eval() << std::endl;
    }
 
