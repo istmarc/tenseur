@@ -9,14 +9,13 @@ Factorization routines
 .. code-block:: cpp
 
    #include <ten/tensor>
+   #include <ten/io>
    #include <ten/linalg>
 
    int main() {
       auto a = ten::range<ten::matrix<float>>({4, 4});
 
-      ten::linalg::qr qr_fact;
-      qr_fact.factorize(a);
-      auto [q, r] = qr_fact.factors();
+      auto [q, r] = ten::linalg::qr(a);
 
       std::cout << q << std::endl;
       std::cout << r << std::endl;
@@ -30,17 +29,13 @@ Factorization routines
 .. code-block:: cpp
 
    #include <ten/tensor>
+   #include <ten/io>
    #include <ten/linalg>
 
    int main() {
       auto a = ten::range<ten::matrix<float>>({4, 4});
 
-      ten::linalg::lu lu_fact;
-      lu_fact.factorize(a);
-
-      auto p = lu_fact.p();
-      auto l = lu_fact.l();
-      auto u = lu_fact.u();
+      auto [p, l, u] = ten::linalg::lu(a);
 
       std::cout << "PA = LU" << std::endl;
       ten::matrix<float> x = p * l * u;
@@ -54,6 +49,7 @@ Factorization routines
 .. code-block:: cpp
 
    #include <ten/tensor>
+   #include <ten/io>
    #include <ten/linalg>
 
    int main() {
@@ -61,11 +57,7 @@ Factorization routines
       ten::matrix<float> a({3, 3}, {4., 12., -16., 12., 37., -43.,
          -16., -43., 98.});
 
-      ten::linalg::cholesky cholesky_fact;
-      cholesky_fact.factorize(a);
-
-      auto l = cholesky_fact.l();
-      auto u = cholesky_fact.u();
+      auto [l, u] = ten::linalg::cholesky(a);
 
       std::cout << "LU" << std::endl;
       ten::matrix<float> lu = l * u;
@@ -87,12 +79,7 @@ Factorization routines
       ten::matrix<float> a({3, 3}, {4., 12., -16., 12., 37., -43.,
          -16., -43., 98.});
 
-      ten::linalg::svd svd_fact;
-      svd_fact.factorize(a);
-
-      auto u = svd_fact.u();
-      auto s = svd_fact.sigma();
-      auto vt = svd_fact.vt();
+      auto [u, s, vt] = ten::linalg::svd(a);
 
       std::cout << u << std::endl;
       std::cout << s << std::endl;

@@ -1,7 +1,7 @@
 Benchmarks
 ==========
 
-Benchmarks agains `Eigen <https://eigen.tuxfamily.org/index.php?title=Main_Page>`_ on a AMD Ryzen 5 processor:
+Benchmarks against `Eigen <https://eigen.tuxfamily.org/index.php?title=Main_Page>`_ on a AMD Ryzen 5 processor:
 
 - Generalized matrix multiplication 
 
