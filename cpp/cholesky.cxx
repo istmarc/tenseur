@@ -1,4 +1,5 @@
 #include <ten/tensor>
+#include <ten/io>
 #include <ten/linalg>
 
 int main() {
@@ -7,11 +8,7 @@ int main() {
       -16., -43., 98.});
    std::cout << a << std::endl;
 
-   cholesky cholesky_fact;
-   cholesky_fact.factorize(a);
-
-   auto l = cholesky_fact.l();
-   auto u = cholesky_fact.u();
+   auto [l, u] = ten::linalg::cholesky(a);
 
    std::cout << l << std::endl;
    std::cout << u << std::endl;
@@ -20,6 +17,6 @@ int main() {
    std::cout << (l * u).eval() << std::endl;
 
    ::ten::matrix<float> v = (l*u).eval() - a;
-   std::cout << ten::all_close(v) << std::endl;
+   std::cout << ten::all_close(v, 1e-3) << std::endl;
 
 }

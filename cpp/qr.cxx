@@ -1,14 +1,15 @@
 #include <ten/tensor>
+#include <ten/io>
 #include <ten/linalg>
 
 int main() {
    using namespace ten;
    auto a = ten::range<matrix<float>>({4, 4});
    std::cout << a << std::endl;
-   qr qr_fact;
-   qr_fact.factorize(a);
-   auto q = qr_fact.q();
-   auto r = qr_fact.r();
+   ten::linalg::qr_fact<float> qrfact;
+   qrfact.factorize(a);
+   auto q = qrfact.q();
+   auto r = qrfact.r();
 
    std::cout << q << std::endl;
    std::cout << r << std::endl;
@@ -18,7 +19,14 @@ int main() {
    std::cout << a << std::endl;
 
    std::cout << "Factors\n";
-   auto [qq, rr] = qr_fact.factors();
+   auto [qq, rr] = qrfact.factors();
    std::cout << qq << std::endl;
    std::cout << rr << std::endl;
+
+   {
+      auto [q, r] = ten::linalg::qr(a);
+      std::cout << "Factors" << std::endl;
+      std::cout << q << std::endl;
+      std::cout << r << std::endl;
+   }
 }

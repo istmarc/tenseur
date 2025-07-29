@@ -31,17 +31,13 @@ template <class T = float> class linear_system {
    /// Solve Ax=b
    void solve(const matrix<T> &A, const vector<T> &b) {
       if (_options._method == ls_method::qr) {
-         ::ten::linalg::qr<T> qr_fact;
-         qr_fact.factorize(A);
-         auto [q, r] = qr_fact.factors();
+         auto [q, r] = ::ten::linalg::qr(A);
          ::ten::vector<T> z = ::ten::transposed(q) * b;
          size_t n = b.size();
          _x = ten::vector<T>({n});
          ::ten::linalg::backward_subtitution(r, z, _x);
       } else if (_options._method == ls_method::lu) {
-         ::ten::linalg::lu<T> lu_fact;
-         lu_fact.factorize(A);
-         auto [P, L, U] = lu_fact.factors();
+         auto [P, L, U] = ::ten::linalg::lu(A);
          // Solve Lz = t using forward subtitution where z = Ux and t = P^T b
          ::ten::vector<T> t = ::ten::transposed(P) * b;
          size_t n = b.size();
@@ -51,9 +47,7 @@ template <class T = float> class linear_system {
          _x = ten::vector<T>({n});
          ::ten::linalg::backward_subtitution(U, z, _x);
       } else if (_options._method == ls_method::svd) {
-         ::ten::linalg::svd<T> svd_fact;
-         svd_fact.factorize(A);
-         auto [U, Sigma, Vt] = svd_fact.factors();
+         auto [U, Sigma, Vt] = ::ten::linalg::svd(A);
          size_t n = b.size();
          // TODO Make invSigma = ten::fill<diagonal<T>>({n, n}, 1) / Sigma
          ::ten::diagonal<T> invSigma({n, n});
@@ -70,6 +64,17 @@ template <class T = float> class linear_system {
 
    ::ten::vector<T> solution() { return _x; }
 };
+
+/// Solve Ax=b
+template<Matrix M, Vector V>
+requires(std::is_same_v<typename M::value_type, typename V::value_type>)
+auto solve(M&& A, V&& b, const ls_method method = ls_method::qr) -> decltype(auto) {
+   using value_type = M::value_type;
+   ls_options options(method);
+   ::ten::linalg::linear_system<value_type> ls(std::move(options));
+   ls.solve(A, b);
+   return ls.solution();
+}
 
 /// TODO Linear least squares
 

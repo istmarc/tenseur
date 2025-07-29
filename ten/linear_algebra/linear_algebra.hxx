@@ -171,9 +171,7 @@ template <class M>
 typename M::value_type det(const M &m) {
    using value_type = M::value_type;
 
-   ten::linalg::lu<value_type> lufact;
-   lufact.factorize(m);
-   auto [p, l, u] = lufact.factors();
+   auto [p, l, u] = ::ten::linalg::lu(m);
 
    value_type d = 1.;
    // Number of rows exchange

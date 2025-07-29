@@ -1,4 +1,5 @@
 #include <ten/tensor>
+#include <ten/io>
 #include <ten/linalg>
 
 int main() {
@@ -7,13 +8,7 @@ int main() {
       -16., -43., 98.});
    std::cout << a << std::endl;
 
-   svd svd_fact;
-   svd_fact.factorize(a);
-
-
-   auto u = svd_fact.u();
-   auto s = svd_fact.sigma();
-   auto vt = svd_fact.vt();
+   auto [u, s, vt] = ten::linalg::svd(a);
 
    std::cout << u << std::endl;
    std::cout << s << std::endl;

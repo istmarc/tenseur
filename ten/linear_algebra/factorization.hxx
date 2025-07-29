@@ -9,16 +9,16 @@ namespace linalg {
 
 /// QR factorization
 /// Factorize a matrix A = QR
-template <class __t = float> class qr {
+template <class T = float> class qr_fact {
  public:
-   using value_type = __t;
+   using value_type = T;
 
  private:
    matrix<value_type> _q;
    matrix<value_type> _r;
 
  public:
-   qr(){};
+   qr_fact() {};
 
    void factorize(const matrix<value_type> &x) {
       // Copy x
@@ -57,12 +57,21 @@ template <class __t = float> class qr {
    auto factors() const { return std::make_tuple(_q, _r); }
 };
 
+/// QR facttorization of a matrix, returns the factors
+template<Matrix T>
+auto qr(T&& A) -> decltype(auto) {
+   using value_type = typename std::remove_cvref_t<T>::value_type;
+   qr_fact<value_type> qr;
+   qr.factorize(A);
+   return qr.factors();
+}
+
 /// LU factorization
 /// Factorize a matrix PA = LU
 /// P i a permutation matrix, the inverse of P is its transpose
-template <class __t = float> class lu {
+template <class T = float> class lu_fact {
  public:
-   using value_type = __t;
+   using value_type = T;
 
  private:
    matrix<value_type> _l;
@@ -70,6 +79,8 @@ template <class __t = float> class lu {
    ::ten::vector<int32_t> _p;
 
  public:
+   lu_fact() {}
+
    void factorize(const matrix<value_type> &x) {
       // Copy x
       matrix<value_type> a = x.copy();
@@ -135,17 +146,28 @@ template <class __t = float> class lu {
    auto factors() const { return std::make_tuple(p(), _l, _u); }
 };
 
+/// LU factorization of a matrix, returns the factors
+template<Matrix T>
+auto lu(T&& A) -> decltype(auto) {
+   using value_type = typename std::remove_cvref_t<T>::value_type;
+   lu_fact<value_type> lu;
+   lu.factorize(A);
+   return lu.factors();
+}
+
 // Cholesky factorization
 // Factorize a matrix A = LU = L L^T = U^T U
-template <class __t = float> class cholesky {
+template <class T = float> class cholesky_fact {
  public:
-   using value_type = __t;
+   using value_type = T;
 
  private:
    matrix<value_type> _l;
    matrix<value_type> _u;
 
  public:
+   cholesky_fact() {}
+
    void factorize(const matrix<value_type> &a) {
       matrix<value_type> x = a.copy();
 
@@ -183,11 +205,21 @@ template <class __t = float> class cholesky {
    auto factors() const { return std::make_tuple(_l, _u); }
 };
 
+
+/// Cholesky factorization of a matrix, returns the factors
+template<Matrix T>
+auto cholesky(T&& A) -> decltype(auto) {
+   using value_type = typename std::remove_cvref_t<T>::value_type;
+   cholesky_fact<value_type> chol;
+   chol.factorize(A);
+   return chol.factors();
+}
+
 /// SVD factorization
 /// Factorize a matrix A = U * Sigma * V^T
-template <class __t = float> class svd {
+template <class T = float> class svd_fact {
  public:
-   using value_type = __t;
+   using value_type = T;
 
  private:
    matrix<value_type> _u;
@@ -195,6 +227,8 @@ template <class __t = float> class svd {
    matrix<value_type> _vt;
 
  public:
+   svd_fact() {}
+
    void factorize(const matrix<value_type> &a) {
       matrix<value_type> x = a.copy();
 
@@ -222,6 +256,16 @@ template <class __t = float> class svd {
 
    auto factors() const { return std::make_tuple(_u, _sigma, _vt); }
 };
+
+/// SVD factorization of a matrix, returns the factors
+template<Matrix T>
+auto svd(T&& A) -> decltype(auto) {
+   using value_type = typename std::remove_cvref_t<T>::value_type;
+   svd_fact<value_type> svd;
+   svd.factorize(A);
+   return svd.factors();
+}
+
 } // namespace linalg
 } // namespace ten
 
