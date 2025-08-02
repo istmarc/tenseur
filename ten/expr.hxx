@@ -102,6 +102,9 @@ template <class Input, class Output, template <typename...> class Func,
           typename... Args>
 class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
  public:
+   using input_ty = Input;
+   using output_ty = Output;
+
    using input_type = typename ::ten::details::input_type<Input>::type;
    using output_type = typename ::ten::details::output_type<Output>::type;
 
@@ -136,7 +139,7 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
    /*[[nodiscard]] inline Output output() { return _value; }*/
 
    /// Return the input
-   [[nodiscard]] inline const Input &input() const { return input; }
+   [[nodiscard]] inline const Input &input() const { return _input; }
 
    /// Returns whether the expression is evaluated
    [[nodiscard]] bool evaluated() const { return _evaluated; }
@@ -191,6 +194,10 @@ template <class Left, class Right, class Output,
           template <typename...> class Func, typename... Args>
 class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
  public:
+   using left_ty = Left;
+   using right_ty = Right;
+   using output_ty = Output;
+
    /// Left input type
    using left_type = typename details::output_type<Left>::type;
 

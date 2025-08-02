@@ -26,6 +26,16 @@ static constexpr arch arch_type = get_arch_type();
 
 static_assert(is_supported_arch<arch_type>::value, "Unsuported architecture.");
 
+// Verbose mode
+/*MAYBE #ifndef TENSEUR_VERBOSE
+#define TENSEUR_VERBOSE false
+#endif*/
+static bool is_verbose = false;
+
+static void verbose(bool verbose_mode) {
+   is_verbose = verbose_mode;
+}
+
 // Simd
 enum class simd_backend { std, unknown };
 

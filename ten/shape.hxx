@@ -110,6 +110,28 @@ template <size_type __first, size_type... __rest> class shape {
 
    shape() noexcept {}
 
+   shape(const shape& r) {
+      _size = r._size;
+      _dims = r._dims;
+   }
+
+   shape(shape&& r) {
+      _size = std::move(r._size);
+      _dims = std::move(r._dims);
+   }
+
+   shape& operator=(const shape& r) {
+      _size = r._size;
+      _dims = r._dims;
+      return *this;
+   }
+
+   shape& operator=(shape&& r) {
+      _size = std::move(r._size);
+      _dims = std::move(r._dims);
+      return *this;
+   }
+
    /*explicit shape(std::vector<size_type> &&dims) noexcept
       requires(_is_dynamic)
    {

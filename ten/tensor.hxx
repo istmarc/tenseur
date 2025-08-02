@@ -29,6 +29,9 @@
 #include <ten/storage/dense_storage.hxx>
 #include <ten/storage/diagonal_storage.hxx>
 
+// For expression matching
+#include <ten/matching.hxx>
+
 namespace ten {
 
 /// \class Expr
@@ -602,9 +605,11 @@ class ranked_tensor final
    }
 
  public:
-   // TODO default constructor for serialization / deserialization and unary_expr, binary_expr
-   ranked_tensor() noexcept : _format(::ten::storage_format::dense), _shape(std::nullopt), 
-      _stride(std::nullopt), _node(nullptr) {}
+   // TODO default constructor for serialization / deserialization and
+   // unary_expr, binary_expr
+   ranked_tensor() noexcept
+       : _format(::ten::storage_format::dense), _shape(std::nullopt),
+         _stride(std::nullopt), _node(nullptr) {}
 
    /*
    ranked_tensor(): _format(::ten::storage_format::dense), _shape(std::nullopt),
@@ -640,8 +645,7 @@ class ranked_tensor final
                           ::ten::storage_format format) noexcept
       requires(Shape::is_static())
        : _format(format), _shape(std::nullopt),
-         _stride(typename base_type::stride_type()),
-         _node(std::move(node)) {}
+         _stride(typename base_type::stride_type()), _node(std::move(node)) {}
 
    /// Construct a ranked_tensor from node, shape and format
    /// TODO Check size
@@ -735,11 +739,13 @@ class ranked_tensor final
       static_assert(::ten::is_tensor<evaluated_type>::value,
                     "Error: Evaluated type must be a tensor.");
 
-      auto node = expr.eval().node();
-
       static_assert(Shape::static_size() == evaluated_type::static_size(),
                     "Expected equal shape size.");
+      // bool matched_fused = ::ten::match_fuse(expr, *this);
+      // if (!matched_fused) {
+      auto node = expr.eval().node();
       _node = node;
+      //}
    }
 
    /// Asignment from a dynamic expression
@@ -747,15 +753,19 @@ class ranked_tensor final
       requires((::ten::is_unary_expr<std::remove_cvref_t<ExprType>>::value ||
                 ::ten::is_binary_expr<std::remove_cvref_t<ExprType>>::value) &&
                std::remove_cvref_t<ExprType>::output_type::is_dynamic())
-   ranked_tensor(ExprType &&expr) noexcept {
+   ranked_tensor &operator=(ExprType &&expr) noexcept {
       using expr_type = std::remove_cvref_t<ExprType>;
       using evaluated_type = typename expr_type::output_type;
 
       static_assert(::ten::is_tensor<evaluated_type>::value,
                     "Evaluated type must be a tensor.");
 
-      auto node = expr.eval().node();
-      _node = node;
+      bool matched_fused = ::ten::match_fuse(expr, *this);
+      if (!matched_fused) {
+         auto node = expr.eval().node();
+         _node = node;
+      }
+      return *this;
    }
 
    /// Constructor for vector
@@ -987,9 +997,11 @@ class ranked_tensor final
    }
 
    // Overload == operator
-   template<class Type, class ShapeType, storage_order StorageOrder,
-      class StorageType, class AllocatorType>
-   bool operator==(const ranked_tensor<Type, ShapeType, StorageOrder, StorageType, AllocatorType>& right) const {
+   template <class Type, class ShapeType, storage_order StorageOrder,
+             class StorageType, class AllocatorType>
+   bool
+   operator==(const ranked_tensor<Type, ShapeType, StorageOrder, StorageType,
+                                  AllocatorType> &right) const {
       // Template parameters must be the same
       if (!std::is_same_v<T, Type>) {
          return false;
@@ -1003,7 +1015,7 @@ class ranked_tensor final
       if (!std::is_same_v<Storage, StorageType>) {
          return false;
       }
-      if (!std::is_same_v<Allocator, AllocatorType>){
+      if (!std::is_same_v<Allocator, AllocatorType>) {
          return false;
       }
       // They must have the same storage format
@@ -1011,8 +1023,8 @@ class ranked_tensor final
          return false;
       }
       // They must have the same shape
-      if constexpr (Shape::is_dynamic()) {
-         if (_shape != right.shape()) {
+      if constexpr (Shape::is_dynamic() && ShapeType::is_dynamic()) {
+         if (_shape.value() != right.shape()) {
             return false;
          }
       }
@@ -1024,9 +1036,11 @@ class ranked_tensor final
    }
 
    // Overload != operator
-   template<class Type, class ShapeType, storage_order StorageOrder,
-      class StorageType, class AllocatorType>
-   bool operator!=(const ranked_tensor<Type, ShapeType, StorageOrder, StorageType, AllocatorType>& right) const {
+   template <class Type, class ShapeType, storage_order StorageOrder,
+             class StorageType, class AllocatorType>
+   bool
+   operator!=(const ranked_tensor<Type, ShapeType, StorageOrder, StorageType,
+                                  AllocatorType> &right) const {
       return !operator==(right);
    }
 
