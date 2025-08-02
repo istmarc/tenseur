@@ -986,11 +986,55 @@ class ranked_tensor final
       return to_data_type<T>();
    }
 
+   // Overload == operator
+   template<class Type, class ShapeType, storage_order StorageOrder,
+      class StorageType, class AllocatorType>
+   bool operator==(const ranked_tensor<Type, ShapeType, StorageOrder, StorageType, AllocatorType>& right) const {
+      // Template parameters must be the same
+      if (!std::is_same_v<T, Type>) {
+         return false;
+      }
+      if (!std::is_same_v<Shape, ShapeType>) {
+         return false;
+      }
+      if (order != StorageOrder) {
+         return false;
+      }
+      if (!std::is_same_v<Storage, StorageType>) {
+         return false;
+      }
+      if (!std::is_same_v<Allocator, AllocatorType>){
+         return false;
+      }
+      // They must have the same storage format
+      if (_format != right.format()) {
+         return false;
+      }
+      // They must have the same shape
+      if constexpr (Shape::is_dynamic()) {
+         if (_shape != right.shape()) {
+            return false;
+         }
+      }
+      // They must have the same node
+      if (_node != right.node()) {
+         return false;
+      }
+      return true;
+   }
+
+   // Overload != operator
+   template<class Type, class ShapeType, storage_order StorageOrder,
+      class StorageType, class AllocatorType>
+   bool operator!=(const ranked_tensor<Type, ShapeType, StorageOrder, StorageType, AllocatorType>& right) const {
+      return !operator==(right);
+   }
+
    // Serialize friend function
-   template <class Type, class ShapeType, storage_order StorageOder,
+   template <class Type, class ShapeType, storage_order StorageOrder,
              class StorageType, class AllocatorType>
    friend bool serialize(std::ostream &os,
-                         ranked_tensor<Type, ShapeType, StorageOder,
+                         ranked_tensor<Type, ShapeType, StorageOrder,
                                        StorageType, AllocatorType> &t);
 
    // Deserialize friend function
