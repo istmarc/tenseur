@@ -25,6 +25,14 @@ template <class> struct is_sqrt : std::false_type {};
 template <class A, class B>
 struct is_sqrt<::ten::functional::sqrt<A, B>> : std::true_type {};
 
+template <class> struct is_sqr : std::false_type {};
+template <class A, class B>
+struct is_sqr<::ten::functional::sqr<A, B>> : std::true_type {};
+
+template <class> struct is_abs : std::false_type {};
+template <class A, class B>
+struct is_abs<::ten::functional::abs<A, B>> : std::true_type {};
+
 } // namespace ten
 
 #endif

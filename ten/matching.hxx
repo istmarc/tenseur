@@ -9,6 +9,8 @@
 
 namespace ten {
 
+
+////////////////////////////////////////////////////////////////////////////////
 /// Match gemm for dense matrix
 /// C = A*B + C or C = binary_expr(left: binary_expr(left: A, right: B, func:
 /// Mul), right: C, func: add)
@@ -65,6 +67,18 @@ void fuse_gemm(ExprType &&expr, C &x) {
    ten::gemm(T(1), A, B, T(1), x);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// TODO Match GEMM C <- alpha * A * B + C
+
+
+////////////////////////////////////////////////////////////////////////////////
+// TODO Match GEMM C <- A * B + beta * C
+
+
+////////////////////////////////////////////////////////////////////////////////
+// TODO Match GEMM C <- alpha * A * B + beta * C
+
+////////////////////////////////////////////////////////////////////////////////
 /// Match sqrt
 template <Expr ExprType, class T>
    requires(::ten::is_tensor_v<T> || ::ten::is_column_v<T> ||
@@ -103,6 +117,85 @@ void fuse_sqrt(ExprType &&expr, T &x) {
    ::ten::kernels::inplace::sqrt(x);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// Match sqr
+template <Expr ExprType, class T>
+   requires(::ten::is_tensor_v<T> || ::ten::is_column_v<T> ||
+            ::ten::is_row_v<T>)
+bool match_sqr(ExprType &&expr, const T &x) {
+
+   using expr_type = std::remove_cvref_t<ExprType>;
+   if constexpr (!::ten::is_unary_expr_v<expr_type>) {
+      return false;
+   } else {
+      using input_type = expr_type::input_ty;
+      // Input type must be tensor or column or row
+      if (!::ten::is_tensor_v<T> && !::ten::is_column_v<T> &&
+          !::ten::is_row_v<T>) {
+         return false;
+      }
+      auto input = expr.input();
+      // Input and output (x) must be of the same type
+      if (!std::is_same_v<input_type, T>) {
+         return false;
+      }
+      // And must be equal
+      if (input != x) {
+         return false;
+      }
+      using func_type = expr_type::func_type;
+      return ::ten::is_sqr<func_type>::value;
+   }
+}
+
+/// Fuse sqr inplace
+template <Expr ExprType, class T>
+   requires(::ten::is_tensor_v<T> || ::ten::is_column_v<T> ||
+            ::ten::is_row_v<T>)
+void fuse_sqr(ExprType &&expr, T &x) {
+   ::ten::kernels::inplace::sqr(x);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Match abs
+template <Expr ExprType, class T>
+   requires(::ten::is_tensor_v<T> || ::ten::is_column_v<T> ||
+            ::ten::is_row_v<T>)
+bool match_abs(ExprType &&expr, const T &x) {
+
+   using expr_type = std::remove_cvref_t<ExprType>;
+   if constexpr (!::ten::is_unary_expr_v<expr_type>) {
+      return false;
+   } else {
+      using input_type = expr_type::input_ty;
+      // Input type must be tensor or column or row
+      if (!::ten::is_tensor_v<T> && !::ten::is_column_v<T> &&
+          !::ten::is_row_v<T>) {
+         return false;
+      }
+      auto input = expr.input();
+      // Input and output (x) must be of the same type
+      if (!std::is_same_v<input_type, T>) {
+         return false;
+      }
+      // And must be equal
+      if (input != x) {
+         return false;
+      }
+      using func_type = expr_type::func_type;
+      return ::ten::is_abs<func_type>::value;
+   }
+}
+
+/// Fuse abs inplace
+template <Expr ExprType, class T>
+   requires(::ten::is_tensor_v<T> || ::ten::is_column_v<T> ||
+            ::ten::is_row_v<T>)
+void fuse_abs(ExprType &&expr, T &x) {
+   ::ten::kernels::inplace::abs(x);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 /// Macth and fuse
 template <Expr ExprType, class T>
    requires(::ten::is_tensor_v<T> || ::ten::is_column_v<T> ||
@@ -123,6 +216,22 @@ bool match_fuse(ExprType &&expr, T &x) {
          std::cout << "Matched inplace sqrt\n";
       }
       fuse_sqrt(expr, x);
+      return true;
+   }
+
+   if (match_sqr(expr, x)) {
+      if (::ten::is_verbose) {
+         std::cout << "Matched inplace sqr\n";
+      }
+      fuse_sqr(expr, x);
+      return true;
+   }
+
+   if (match_abs(expr, x)) {
+      if (::ten::is_verbose) {
+         std::cout << "Matched inplace abs\n";
+      }
+      fuse_abs(expr, x);
       return true;
    }
 
