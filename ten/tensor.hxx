@@ -146,10 +146,8 @@ auto operator*(LeftExpr &&left, RightExpr &&right) {
 
    using output_type = ::ten::details::mul_result_t<left_input, right_input>;
 
-   return ::ten::binary_expr<
-       L, R, output_type,
-       ::ten::functional::mul<left_input, right_input,
-                              output_type>::template func>(left, right);
+   return ::ten::binary_expr<L, R, output_type, ::ten::functional::mul>(left,
+                                                                        right);
 }
 
 template <typename T, Expr E>
@@ -727,7 +725,7 @@ class ranked_tensor final
       _node = std::make_shared<node_type>(std::move(storage));
    }
 
-   /// Asignment from a static expression
+   /// Copy asignment from a static expression
    template <class ExprType>
       requires((::ten::is_unary_expr<std::remove_cvref_t<ExprType>>::value ||
                 ::ten::is_binary_expr<std::remove_cvref_t<ExprType>>::value) &&
@@ -741,11 +739,62 @@ class ranked_tensor final
 
       static_assert(Shape::static_size() == evaluated_type::static_size(),
                     "Expected equal shape size.");
-      // bool matched_fused = ::ten::match_fuse(expr, *this);
-      // if (!matched_fused) {
-      auto node = expr.eval().node();
+      auto value = expr.eval();
+      auto format = value.format();
+      _format = format;
+      auto shape = value.shape();
+      _shape = shape;
+      auto stride = value.strides();
+      _stride = stride;
+      auto node = value.node();
       _node = node;
-      //}
+   }
+
+   /// Copy asignment from a dynamic expression
+   template <class ExprType>
+      requires((::ten::is_unary_expr<std::remove_cvref_t<ExprType>>::value ||
+                ::ten::is_binary_expr<std::remove_cvref_t<ExprType>>::value) &&
+               std::remove_cvref_t<ExprType>::output_type::is_dynamic())
+   ranked_tensor(ExprType &&expr) noexcept {
+      using expr_type = std::remove_cvref_t<ExprType>;
+      using evaluated_type = typename expr_type::output_type;
+
+      static_assert(::ten::is_tensor<evaluated_type>::value,
+                    "Evaluated type must be a tensor.");
+      auto value = expr.eval();
+      auto format = value.format();
+      _format = format;
+      auto shape = value.shape();
+      _shape = shape;
+      auto stride = value.strides();
+      _stride = stride;
+      auto node = value.node();
+      _node = node;
+   }
+
+   /// Asignment from a static expression
+   template <class ExprType>
+      requires((::ten::is_unary_expr<std::remove_cvref_t<ExprType>>::value ||
+                ::ten::is_binary_expr<std::remove_cvref_t<ExprType>>::value) &&
+               std::remove_cvref_t<ExprType>::output_type::is_static())
+   ranked_tensor &operator=(ExprType &&expr) noexcept {
+      using expr_type = std::remove_cvref_t<ExprType>;
+      using evaluated_type = typename expr_type::output_type;
+
+      static_assert(::ten::is_tensor<evaluated_type>::value,
+                    "Error: Evaluated type must be a tensor.");
+
+      static_assert(Shape::static_size() == evaluated_type::static_size(),
+                    "Expected equal shape size.");
+      bool matched_fused = ::ten::match_fuse(expr, *this);
+      if (!matched_fused) {
+         auto value = expr.eval();
+         _format = value.format();
+         _shape = value.shape();
+         _stride = value.strides();
+         _node = value.node();
+      }
+      return *this;
    }
 
    /// Asignment from a dynamic expression
@@ -762,8 +811,11 @@ class ranked_tensor final
 
       bool matched_fused = ::ten::match_fuse(expr, *this);
       if (!matched_fused) {
-         auto node = expr.eval().node();
-         _node = node;
+         auto value = expr.eval();
+         _format = value.format();
+         _shape = value.shape();
+         _stride = value.strides();
+         _node = value.node();
       }
       return *this;
    }
@@ -2280,32 +2332,31 @@ template <SDiagonal T> auto dense(T x) -> decltype(auto) {
 
 // Gemm
 // C <- alpha * X * Y + beta * C
-template <Expr X, Expr Y, Tensor C, class T>
+template <class T, Expr X, Expr Y, Tensor C>
    requires(std::is_same_v<T, typename C::value_type>)
-void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
+static void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
    using x_expr_type = std::remove_cvref_t<X>;
    using y_expr_type = std::remove_cvref_t<Y>;
 
    if constexpr (::ten::is_tensor<x_expr_type>::value &&
                  ::ten::is_tensor<y_expr_type>::value) {
-      ::ten::kernels::mul_add(std::forward<X>(x), std::forward<Y>(y), c, alpha,
-                              beta);
+      ::ten::kernels::mul_add<T>(alpha, std::forward<X>(x), std::forward<Y>(y), beta, c);
    }
 
    if constexpr (::ten::is_tensor<x_expr_type>::value &&
                  !::ten::is_tensor<y_expr_type>::value) {
       auto ytensor = y.eval();
       using YTensor = decltype(ytensor);
-      ::ten::kernels::mul_add(std::forward<X>(x),
-                              std::forward<YTensor>(ytensor), c, alpha, beta);
+      ::ten::kernels::mul_add<T>(alpha, std::forward<X>(x),
+                              std::forward<YTensor>(ytensor), beta, c);
    }
 
    if constexpr (!::ten::is_tensor<x_expr_type>::value &&
                  ::ten::is_tensor<y_expr_type>::value) {
       auto xtensor = x.eval();
       using XTensor = decltype(xtensor);
-      ::ten::kernels::mul_add(std::forward<XTensor>(xtensor),
-                              std::forward<Y>(y), c, alpha, beta);
+      ::ten::kernels::mul_add<T>(alpha, std::forward<XTensor>(xtensor),
+                              std::forward<Y>(y), beta, c);
    }
 
    if constexpr (!::ten::is_tensor<x_expr_type>::value &&
@@ -2314,8 +2365,8 @@ void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
       using XTensor = decltype(xtensor);
       auto ytensor = y.eval();
       using YTensor = decltype(ytensor);
-      ::ten::kernels::mul_add(std::forward<XTensor>(x),
-                              std::forward<YTensor>(y), c, alpha, beta);
+      ::ten::kernels::mul_add<T>(alpha, std::forward<XTensor>(x),
+                              std::forward<YTensor>(y), beta, c);
    }
 }
 
@@ -2323,7 +2374,7 @@ void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
 // y <- a*x + y
 template <Expr X, Tensor Y, typename T>
    requires(std::is_same_v<T, typename Y::value_type>)
-void axpy(const T a, X &&x, Y &y) {
+static void axpy(const T a, X &&x, Y &y) {
    using x_expr_type = std::remove_cvref_t<X>;
 
    if constexpr (::ten::is_tensor<x_expr_type>::value) {

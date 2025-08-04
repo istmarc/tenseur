@@ -87,7 +87,12 @@ operator<<(std::ostream &os,
    }
    if constexpr (::ten::is_unary_expr<Left>::value ||
                  ::ten::is_binary_expr<Left>::value) {
-      os << expr.input();
+      if constexpr (::ten::is_unary_expr<Left>::value) {
+         os << "unary_expr";
+      } else {
+         os << "binary_expr";
+         ///os << expr.left();
+      }
    }
    // print the right input
    os << ", Right: ";
@@ -107,7 +112,13 @@ operator<<(std::ostream &os,
    }
    if constexpr (::ten::is_unary_expr<Right>::value ||
                  ::ten::is_binary_expr<Right>::value) {
-      os << expr.input();
+      if constexpr (::ten::is_unary_expr<Left>::value) {
+         os << "unary_expr";
+      } else {
+         os << "binary_expr";
+         ///os << expr.left();
+      }
+      //os << expr.right();
    }
    // Print the output
    os << ", Output: ";

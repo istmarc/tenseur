@@ -3,11 +3,11 @@
 
 #include <ten/types.hxx>
 
-namespace ten::kernels{
+namespace ten::kernels::inplace{
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_cum_sum(X& x) {
+void cum_sum(X& x) {
    for (size_t i = 1; i < x.size(); i++) {
       x[i] += x[i-1];
    }
@@ -15,7 +15,7 @@ void inplace_cum_sum(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_abs(X& x) {
+void abs(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::abs(x[i]);
    }
@@ -23,7 +23,7 @@ void inplace_abs(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_sqrt(X& x) {
+void sqrt(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::sqrt(x[i]);
    }
@@ -31,7 +31,7 @@ void inplace_sqrt(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_sqr(X& x) {
+void sqr(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = x[i] * x[i];
    }
@@ -39,7 +39,7 @@ void inplace_sqr(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_sin(X& x) {
+void sin(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::sin(x[i]);
    }
@@ -47,7 +47,7 @@ void inplace_sin(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_sinh(X& x) {
+void sinh(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::sinh(x[i]);
    }
@@ -55,7 +55,7 @@ void inplace_sinh(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_asin(X& x) {
+void asin(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::asin(x[i]);
    }
@@ -63,7 +63,7 @@ void inplace_asin(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_cos(X& x) {
+void cos(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::cos(x[i]);
    }
@@ -71,7 +71,7 @@ void inplace_cos(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_cosh(X& x) {
+void cosh(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::cosh(x[i]);
    }
@@ -79,7 +79,7 @@ void inplace_cosh(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_acos(X& x) {
+void acos(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::acos(x[i]);
    }
@@ -87,7 +87,7 @@ void inplace_acos(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_tan(X& x) {
+void tan(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::tan(x[i]);
    }
@@ -95,7 +95,7 @@ void inplace_tan(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_tanh(X& x) {
+void tanh(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::tanh(x[i]);
    }
@@ -103,7 +103,7 @@ void inplace_tanh(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_atan(X& x) {
+void atan(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::atan(x[i]);
    }
@@ -111,7 +111,7 @@ void inplace_atan(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_exp(X& x) {
+void exp(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::exp(x[i]);
    }
@@ -119,7 +119,7 @@ void inplace_exp(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_log(X& x) {
+void log(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::log(x[i]);
    }
@@ -127,7 +127,7 @@ void inplace_log(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_log10(X& x) {
+void log10(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::log10(x[i]);
    }
@@ -135,7 +135,7 @@ void inplace_log10(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_floor(X& x) {
+void floor(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::floor(x[i]);
    }
@@ -143,7 +143,7 @@ void inplace_floor(X& x) {
 
 template<class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_ceil(X& x) {
+void ceil(X& x) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::ceil(x[i]);
    }
@@ -151,7 +151,7 @@ void inplace_ceil(X& x) {
 
 template<class T, class X>
 requires(::ten::is_tensor<X>::value || ::ten::is_column<X>::value || ::ten::is_row<X>::value)
-void inplace_pow(X& x, const T n) {
+void pow(X& x, const T n) {
    for (size_t i = 0; i < x.size(); i++) {
       x[i] = std::pow(x[i], n);
    }

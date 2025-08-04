@@ -773,11 +773,11 @@ template <::ten::binary_operation Kind> struct binary_func {
       output_shape(const typename A::shape_type &left,
                    const typename B::shape_type &right) {
          // FIXME Maybe check that left == right
-         typename C::shape_type s(left);
+         typename C::shape_type s(right);
          return s;
       }
 
-      static auto output_shape(const A &a, const B &b) { return a.shape(); }
+      // static auto output_shape(const A &a, const B &b) { return a.shape(); }
 
       void operator()(const A &left, const B &right, C &result) {
          ::ten::kernels::binary_ops<Kind>(left, right, result);
@@ -887,92 +887,98 @@ template <::ten::binary_operation Kind> struct scalar_right_binary_func {
    };
 };
 
-template <class A, class B, class C>
-// = typename details::mul_result<A, B>::type>
-struct mul;
+template <class A, class B, class C> struct mul : func<> {};
 
 // vector * vector
-template <Vector X, Vector Y, Vector Z> struct mul<X, Y, Z> {
+template <Vector A, Vector B, Vector C>
+struct mul<A, B, C> : ::ten::functional::func<> {
+   static constexpr std::string name() { return std::string("mul"); }
 
-   template <Vector A, Vector B, Vector C>
-   using func = binary_func<::ten::binary_operation::mul>::func<A, B, C>;
+   using output_type = C;
+
+   static constexpr typename C::shape_type
+   output_shape(const typename A::shape_type &left,
+                const typename B::shape_type &right) {
+      // FIXME Maybe check that left == right
+      typename C::shape_type s(right);
+      return s;
+   }
+
+   void operator()(const A &left, const B &right, C &result) {
+      ::ten::kernels::binary_ops<::ten::binary_operation::mul>(left, right,
+                                                               result);
+   }
 };
 
 // matrix * matrix
-template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> {
+template <Matrix A, Matrix B, Matrix C> struct mul<A, B, C> : func<> {
 
-   template <Matrix A, Matrix B, Matrix C>
-   struct func : ::ten::functional::func<> {
-      static constexpr std::string name() { return std::string("mul"); }
+   static constexpr std::string name() { return std::string("mul"); }
 
-      using output_type = C;
+   using output_type = C;
 
-      static typename C::shape_type
-      output_shape(const typename A::shape_type &left,
-                   const typename B::shape_type &right) {
-         std::initializer_list<size_type> &&dims = {left.dim(0), right.dim(1)};
-         typename C::shape_type s(std::move(dims));
-         return s;
-      }
+   static typename C::shape_type
+   output_shape(const typename A::shape_type &left,
+                const typename B::shape_type &right) {
+      std::initializer_list<size_type> &&dims = {left.dim(0), right.dim(1)};
+      typename C::shape_type s(std::move(dims));
+      return s;
+   }
 
-      void operator()(const A &left, const B &right, C &result) {
-         kernels::mul(left, right, result);
-      }
-   };
+   void operator()(const A &left, const B &right, C &result) {
+      kernels::mul(left, right, result);
+   }
 };
 
 // matrix * vector
-template <Matrix X, Vector Y, Vector Z> struct mul<X, Y, Z> {
+template <Matrix A, Vector B, Vector C>
+struct mul<A, B, C> : ::ten::functional::func<> {
+   static constexpr std::string name() { return std::string("mul"); }
 
-   template <Matrix A, Vector B, Vector C>
-   struct func : ::ten::functional::func<> {
-      static constexpr std::string name() { return std::string("mul"); }
+   using output_type = C;
 
-      using output_type = C;
+   static typename C::shape_type
+   output_shape(const typename A::shape_type &left,
+                const typename B::shape_type &right) {
+      std::initializer_list<size_type> &&dims = {left.dim(0)};
+      typename C::shape_type s(std::move(dims));
+      return s;
+   }
 
-      static typename C::shape_type
-      output_shape(const typename A::shape_type &left,
-                   const typename B::shape_type &right) {
-         std::initializer_list<size_type> &&dims = {left.dim(0)};
-         typename C::shape_type s(std::move(dims));
-         return s;
-      }
-
-      void operator()(const A &left, const B &right, C &result) {
-         kernels::mul(left, right, result);
-      }
-   };
+   void operator()(const A &left, const B &right, C &result) {
+      kernels::mul(left, right, result);
+   }
+   //};
 };
 
 // scalar * tensor
-template <Scalar X, Tensor Y, Tensor Z> struct mul<X, Y, Z> {
+template <Scalar A, Tensor B, Tensor C> struct mul<A, B, C> : func<> {
 
-   template <Scalar A, Tensor B, Tensor C>
-   struct func : ::ten::functional::func<> {
-      static constexpr std::string name() { return std::string("mul"); }
+   static constexpr std::string name() { return std::string("mul"); }
 
-      using output_type = C;
+   using output_type = C;
 
-      static typename C::shape_type
-      output_shape(const typename B::shape_type &right) {
-         return right;
+   static typename C::shape_type
+   output_shape(const typename B::shape_type &right) {
+      return right;
+   }
+
+   void operator()(const A &left, const B &right, C &result) {
+      // TODO Broadcasting
+      size_t n = result.size();
+      using value_type = typename C::value_type;
+      for (size_t i = 0; i < n; i++) {
+         result[i] = static_cast<value_type>(left.value()) *
+                     static_cast<value_type>(right[i]);
       }
-
-      void operator()(const A &left, const B &right, C &result) {
-         size_t n = result.size();
-         using value_type = typename C::value_type;
-         for (size_t i = 0; i < n; i++) {
-            result[i] = static_cast<value_type>(left.value()) *
-                        static_cast<value_type>(right[i]);
-         }
-      }
-   };
+   }
 };
 
+/*
 // UnaryExpr * matrix
 template <UnaryExpr X, Matrix Y, Matrix Z>
 // FIXME REquire X::output_type to be a matrix
-struct mul<X, Y, Z> {
+struct mul<X, Y, Z>  {
    // using evaluated_type = std::remove_cvref_t<X>::output_type;
    //  matrix * matrix
    template <Matrix A, Matrix B, Matrix C>
@@ -987,7 +993,7 @@ struct mul<X, Y, Z> {
    //  matrix * matrix
    template <Matrix A, Matrix B, Matrix C>
    using func = mul<A, B, C>::template func<A, B, C>;
-};
+};*/
 
 // UnaryExpr * tensor
 /*template <UnaryExpr X, Tensor Y, Tensor  Z>
@@ -995,54 +1001,6 @@ struct mul<X, Y, Z> {
    using evaluated_type = std::remove_cvref_t<X>::evaluated_type::node_type;
    template <Scalar A, Tensor B, Tensor C>
    using func = mul<A, B, C>::template func<A, B, C>;
-};*/
-
-////////////////////////////////////////////////////////////////////////////////
-/// Other BLAS functions
-
-// C <- alpha * X * Y + beta * C
-/*template<class A, class B, class C, class D = typename
-::ten::functional::details::mul_result<A, B>::type> class gemm :
-::ten::functional::func<true> { private: T _alpha; T _beta; public: gemm(const T
-alpha, const T beta) : _alpha(alpha), _beta(beta) {}
-
-   using output_type = C;
-
-   static constexpr typename C::shape_type
-   output_shape(const typename A::shape_type& left, const typename
-B::shape_type& right) {
-   }
-
-   void operator()(const A& a, const B& b, C& result) {
-      ::ten::kernels::mul_add(a, b, result, alpha, beta);
-   }
-};*/
-
-/// axpy2
-/// __a <- alpha * __b + __a
-/*template <class __a, class __b, class __c = __a>
-struct __axpy2 : ::ten::functional::func<> {
-   static_assert(::ten::istensor_node<__a>::value &&
-::ten::istensor_node<__b>::value
-      && SameTensor<__a, __b>
-      "Different tensor types.");
-
-   using output_type = __c;
-
-   static constexpr typename __c::shape_type
-   output_shape(const typename __a::shape_type &left,
-               const typename __b::shape_type &right) {
-      typename __c::shape_type s(left);
-      return s;
-   }
-
-   static auto output_shape(const __a &a, const __b &b) { return a.shape(); }
-
-   void operator()(const __a &left, const __b &right, __c &result) {
-      const size_type n = right.size();
-      const T alpha = 1.;
-      ::ten::kernels::blas::axpy(n, alpha, right.data(), 1, result.data(), 1);
-   }
 };*/
 
 ////////////////////////////////////////////////////////////////////////////////

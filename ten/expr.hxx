@@ -65,30 +65,31 @@ struct output_type<::ten::binary_expr<Left, Right, Output, F, Args...>> {
 };
 
 // Input shape
-template <Tensor T> inline auto input_shape(const T &t) -> decltype(auto) {
+template <Tensor T>
+static inline auto input_shape(const T &t) -> decltype(auto) {
    return t.shape();
 }
 
 template <UnaryExpr ExprType>
-inline auto input_shape(const ExprType &expr) -> decltype(auto) {
+static inline auto input_shape(const ExprType &expr) -> decltype(auto) {
    return expr.value().shape();
 }
 
 template <BinaryExpr ExprType>
-inline auto input_shape(const ExprType &expr) -> decltype(auto) {
+static inline auto input_shape(const ExprType &expr) -> decltype(auto) {
    return expr.value().shape();
 }
 
 // Input value
-template <Scalar T> inline auto input_value(T &t) { return t; }
+template <Scalar T> static inline auto input_value(T &t) { return t; }
 
-template <Tensor T> inline auto input_value(T &t) { return t; }
+template <Tensor T> static inline auto input_value(T &t) { return t; }
 
-template <UnaryExpr ExprType> inline auto input_value(ExprType &expr) {
+template <UnaryExpr ExprType> static inline auto input_value(ExprType &expr) {
    return expr.value();
 }
 
-template <BinaryExpr ExprType> inline auto input_value(ExprType &expr) {
+template <BinaryExpr ExprType> static inline auto input_value(ExprType &expr) {
    return expr.value();
 }
 
@@ -260,16 +261,16 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
          return _value;
 
       // Evaluate the left expr
-      if constexpr (::ten::is_unary_expr<Left>::value ||
-                    ::ten::is_binary_expr<Left>::value) {
+      if constexpr (::ten::is_unary_expr_v<Left> ||
+                    ::ten::is_binary_expr_v<Left>) {
          if (!_left.evaluated()) {
             _left.eval();
          }
       }
 
       // Evaluate the right expr
-      if constexpr (::ten::is_unary_expr<Right>::value ||
-                    ::ten::is_binary_expr<Right>::value) {
+      if constexpr (::ten::is_unary_expr_v<Right> ||
+                    ::ten::is_binary_expr_v<Right>) {
          if (!_right.evaluated()) {
             _right.eval();
          }
@@ -328,9 +329,9 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
                 func_type::output_shape(::ten::details::input_shape(_left),
                                         ::ten::details::input_shape(_right)));
          }
-      } else if constexpr (::ten::is_binary_expr<Left>::value &&
-                           !ten::is_unary_expr<Right>::value &&
-                           !::ten::is_binary_expr<Right>::value) {
+      } else if constexpr (::ten::is_binary_expr_v<Left> &&
+                           !ten::is_unary_expr_v<Right> &&
+                           !::ten::is_binary_expr_v<Right>) {
          // Left is binary expr and right is tensor or scalar
          if constexpr (::ten::is_scalar<left_type>::value) {
             _value = Output(

@@ -40,8 +40,9 @@ void mul(A &&a, B &&b, C &c)
 
 /// Multiply and add two dense matrices
 /// C <- alpha * A * B + beta * C
-template <Matrix A, Matrix B, Matrix C, class T>
-void mul_add(A &&a, B &&b, C &c, const T &alpha, const T &beta) {
+template <class T, Matrix A, Matrix B, Matrix C>
+requires(::ten::is_float<T>::value || ::ten::is_double<T>::value)
+void mul_add(const T alpha, A &&a, B &&b, const T beta, C &c) {
    size_t m = a.dim(0);
    size_t k = a.dim(1);
    size_t n = b.dim(1);

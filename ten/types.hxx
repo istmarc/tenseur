@@ -485,11 +485,8 @@ template <class T> struct is_scalar_node<scalar_node<T>> : std::true_type {};
 template <class> struct is_tensor_node : std::false_type {};
 template <class T, class storage, class allocator>
 struct is_tensor_node<tensor_node<T, storage, allocator>> : std::true_type {};
-//{
-//   static constexpr bool value = ::ten::is_dense_storage<storage>::value;
-//};
 
-// Unary Node
+// Unary expr
 template <class input, class output, template <typename...> class Func,
           typename... Args>
 class unary_expr;
@@ -500,17 +497,9 @@ template <class input, class output, template <typename...> class Func,
 struct is_unary_expr<unary_expr<input, output, Func, Args...>>
     : std::true_type {};
 
-// Unary Expr
-/*
-template <class E, template <typename...> class Func, typename... Args>
-class unary_expr;
+template <typename T> static constexpr bool is_unary_expr_v = is_unary_expr<T>::value;
 
-template <class> struct is_unary_expr : std::false_type {};
-template <class E, template <typename...> class Func, typename... Args>
-struct is_unary_expr<unary_expr<E, Func, Args...>> : std::true_type {};
-*/
-
-// Binary Node
+// Binary expr
 template <class left, class right, class output,
           template <typename...> class Func, typename... Args>
 class binary_expr;
@@ -521,18 +510,7 @@ template <class left, class right, class O, template <typename...> class Func,
 struct is_binary_expr<binary_expr<left, right, O, Func, Args...>>
     : std::true_type {};
 
-// Binary Expr
-/*
-template <class left, class right, template <typename...> class Func,
-          typename... Args>
-class binary_expr;
-
-template <class> struct is_binary_expr : std::false_type {};
-template <class left, class right, template <typename...> class Func,
-          typename... Args>
-struct is_binary_expr<binary_expr<left, right, Func, Args...>>
-    : std::true_type {};
-*/
+template <typename T> static constexpr bool is_binary_expr_v = is_binary_expr<T>::value;
 
 /////////////////////////////////////////////////////////////////////////////////
 // Concepts

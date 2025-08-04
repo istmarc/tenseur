@@ -2,6 +2,7 @@
 #define TENSEUR_MATCHING
 
 #include <ten/functional_types.hxx>
+#include <ten/functions.hxx>
 #include <ten/types.hxx>
 
 #include <iostream>
@@ -9,19 +10,60 @@
 namespace ten {
 
 /// Match gemm for dense matrix
-/// m = a*b + m
-/// m = add()
-/*template<Expr ExprType, Matrix A>
-bool match_gemm(ExprType&& expr, A& m) {
+/// C = A*B + C or C = binary_expr(left: binary_expr(left: A, right: B, func:
+/// Mul), right: C, func: add)
+template <Expr ExprType, Matrix C>
+bool match_gemm(ExprType &&expr, const C &x) {
    using expr_type = std::remove_cvref_t<ExprType>;
-   if (!::ten::is_binary_expr<expr_type>::value) {
+   if constexpr (!::ten::is_binary_expr_v<expr_type>) {
       return false;
+   } else {
+      using left_type = expr_type::left_ty;
+      // Left type must be binary expr (A, B, mul)
+      if constexpr (!::ten::is_binary_expr<left_type>::value) {
+         return false;
+      } else {
+         // Function must be mul
+         // left and right of left can be matrices or expressions
+         using left_func_type = left_type::func_type;
+         // left_func_type
+         if (!::ten::is_mul<left_func_type>::value) {
+            return false;
+         }
+         // Right type must be a matrix or static matrix, equal to c
+         using right_type = expr_type::right_ty;
+         std::cout << ::ten::is_matrix<right_type>::value << std::endl;
+         if (!::ten::is_matrix<right_type>::value &&
+             !::ten::is_smatrix<right_type>::value) {
+            return false;
+         }
+         // Right type and output (x) must be of the same type
+         if (!std::is_same_v<right_type, C>) {
+            return false;
+         }
+         // They must also be equal
+         auto right = expr.right();
+         if (right != x) {
+            return false;
+         }
+         // The function must be elementwise add
+         using func_type = expr_type::func_type;
+         return ::ten::is_add<func_type>::value;
+      }
    }
+}
+
+template <Expr ExprType, Matrix C>
+// FIXME Currently GEMM support only float and double types
+   requires(::ten::is_float<typename C::value_type>::value ||
+            ::ten::is_double<typename C::value_type>::value)
+void fuse_gemm(ExprType &&expr, C &x) {
    auto left = expr.left();
-   auto right = expr.right();
-   if () {
-   }
-}*/
+   auto A = left.left();
+   auto B = left.right();
+   using T = C::value_type;
+   ten::gemm(T(1), A, B, T(1), x);
+}
 
 /// Match sqrt
 template <Expr ExprType, class T>
@@ -30,26 +72,27 @@ template <Expr ExprType, class T>
 bool match_sqrt(ExprType &&expr, const T &x) {
 
    using expr_type = std::remove_cvref_t<ExprType>;
-   if (!::ten::is_unary_expr<expr_type>::value) {
+   if constexpr (!::ten::is_unary_expr_v<expr_type>) {
       return false;
+   } else {
+      using input_type = expr_type::input_ty;
+      // Input type must be tensor or column or row
+      if (!::ten::is_tensor_v<T> && !::ten::is_column_v<T> &&
+          !::ten::is_row_v<T>) {
+         return false;
+      }
+      auto input = expr.input();
+      // Input and output (x) must be of the same type
+      if (!std::is_same_v<input_type, T>) {
+         return false;
+      }
+      // And must be equal
+      if (input != x) {
+         return false;
+      }
+      using func_type = expr_type::func_type;
+      return ::ten::is_sqrt<func_type>::value;
    }
-   using input_type = expr_type::input_ty;
-   // Input type must be tensor or column or row
-   if (!::ten::is_tensor_v<T> && !::ten::is_column_v<T> &&
-       !::ten::is_row_v<T>) {
-      return false;
-   }
-   auto input = expr.input();
-   // Input and output (x) must be of the same type
-   if (!std::is_same_v<input_type, T>) {
-      return false;
-   }
-   // And must be equal
-   if (input != x) {
-      return false;
-   }
-   using func_type = expr_type::func_type;
-   return ::ten::is_sqrt<func_type>::value;
 }
 
 /// Fuse sqrt inplace
@@ -57,7 +100,7 @@ template <Expr ExprType, class T>
    requires(::ten::is_tensor_v<T> || ::ten::is_column_v<T> ||
             ::ten::is_row_v<T>)
 void fuse_sqrt(ExprType &&expr, T &x) {
-   ::ten::kernels::inplace_sqrt(x);
+   ::ten::kernels::inplace::sqrt(x);
 }
 
 /// Macth and fuse
@@ -65,12 +108,24 @@ template <Expr ExprType, class T>
    requires(::ten::is_tensor_v<T> || ::ten::is_column_v<T> ||
             ::ten::is_row_v<T>)
 bool match_fuse(ExprType &&expr, T &x) {
-   // TODO Match gemm
+
+   if (match_gemm(expr, x)) {
+      if (::ten::is_verbose) {
+         std::cout << "Matched gemm\n";
+      }
+      fuse_gemm(expr, x);
+      return true;
+   }
    // TODO Match gemv
+
    if (match_sqrt(expr, x)) {
+      if (::ten::is_verbose) {
+         std::cout << "Matched inplace sqrt\n";
+      }
       fuse_sqrt(expr, x);
       return true;
    }
+
    // The expression wasn't matched and fused
    return false;
 }
