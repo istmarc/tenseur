@@ -30,6 +30,22 @@ A header only C++20 tensor library [WIP]
 - BLAS library (OpenBlas or BLIS)
 
 ## Examples
+- Gemm
+```c++
+#include <ten/tensor>
+#include <ten/io>
+
+int main() {
+   auto a = ten::range<ten::matrix<float>>({3, 3});
+   auto b = ten::range<ten::matrix<float>>({3, 3});
+   auto c = ten::range<ten::matrix<float>>({3, 3});
+
+   // Match and fuse to a single call to gemm
+   c = a * b + c;
+   std::cout << c << std::endl;
+}
+```
+
 
 - Multiply and add
 
@@ -53,9 +69,7 @@ int main() {
 
 int main() {
    auto a = ten::range<matrix<float>>({4, 4});
-   ten::linalg::qr qr_fact;
-   qr_fact.factorize(a);
-   auto [q, r] = qr_fact.factors();
+   auto [q, r] = ten::linalg::qr(a);
 
    std::cout << q << std::endl;
    std::cout << r << std::endl;
