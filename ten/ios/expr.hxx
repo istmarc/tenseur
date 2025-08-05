@@ -7,21 +7,32 @@
 
 namespace ten {
 
+/// Forward declaration
+template <class Input, class Output, template <typename...> class Func,
+          typename... Args>
+static void print(std::ostream &os,
+           const ::ten::unary_expr<Input, Output, Func, Args...> &expr);
+
+template <class Left, class Right, class Output,
+          template <typename...> class Func, typename... Args>
+static void print(std::ostream &os,
+           const ::ten::binary_expr<Left, Right, Output, Func, Args...> &expr);
+
 /// print unary_expr
 template <class Input, class Output, template <typename...> class Func,
           typename... Args>
-std::ostream &
-operator<<(std::ostream &os,
-           ::ten::unary_expr<Input, Output, Func, Args...> &expr) {
+static void print(std::ostream &os,
+           const ::ten::unary_expr<Input, Output, Func, Args...> &expr) {
    using expr_type = ::ten::unary_expr<Input, Output, Func, Args...>;
-   if (expr.evaluated()) {
-      os << "evaluated ";
-   } else {
-      os << "unevaluated ";
-   }
    os << "unary_expr(Input: ";
    if constexpr (::ten::is_tensor_v<Input>) {
-      os << "tensor<";
+      if constexpr (::ten::is_vector_v<Input>) {
+         os << "vector<";
+      } else if constexpr (::ten::is_matrix_v<Input>) {
+         os << "matrix<";
+      } else {
+         os << "tensor<";
+      }
    }
    if constexpr (::ten::is_column_v<Input>) {
       os << "column<";
@@ -42,7 +53,13 @@ operator<<(std::ostream &os,
       os << "scalar<";
    }
    if constexpr (::ten::is_tensor_v<Output>) {
-      os << "tensor<";
+      if constexpr (::ten::is_vector_v<Output>) {
+         os << "vector<";
+      } else if constexpr (::ten::is_matrix_v<Output>) {
+         os << "matrix<";
+      } else {
+         os << "tensor<";
+      }
    }
    if constexpr (::ten::is_column_v<Output>) {
       os << "column<";
@@ -54,25 +71,35 @@ operator<<(std::ostream &os,
    os << ">, Function: ";
    os << expr_type::func_type::name();
    os << ")";
+
+}
+
+/// print unary_expr
+template <class Input, class Output, template <typename...> class Func,
+          typename... Args>
+std::ostream &
+operator<<(std::ostream &os,
+           const ::ten::unary_expr<Input, Output, Func, Args...> &expr) {
+   print(os, expr);
    return os;
 }
 
-/// Print binary_expr
+/// print binary expr
 template <class Left, class Right, class Output,
           template <typename...> class Func, typename... Args>
-std::ostream &
-operator<<(std::ostream &os,
-           ::ten::binary_expr<Left, Right, Output, Func, Args...> &expr) {
+static void print(std::ostream &os,
+           const ::ten::binary_expr<Left, Right, Output, Func, Args...> &expr) {
    using expr_type = ::ten::binary_expr<Left, Right, Output, Func, Args...>;
-   if (expr.evaluated()) {
-      os << "evaluated ";
-   } else {
-      os << "unevaluated ";
-   }
    // Print the left input
    os << "binary_expr(Left: ";
    if constexpr (::ten::is_tensor_v<Left>) {
-      os << "tensor<";
+      if constexpr (::ten::is_vector_v<Left>) {
+         os << "vector<";
+      } else if constexpr (::ten::is_matrix_v<Left>) {
+         os << "matrix<";
+      } else {
+         os << "tensor<";
+      }
    }
    if constexpr (::ten::is_column_v<Left>) {
       os << "column<";
@@ -87,17 +114,18 @@ operator<<(std::ostream &os,
    }
    if constexpr (::ten::is_unary_expr<Left>::value ||
                  ::ten::is_binary_expr<Left>::value) {
-      if constexpr (::ten::is_unary_expr<Left>::value) {
-         os << "unary_expr";
-      } else {
-         os << "binary_expr";
-         ///os << expr.left();
-      }
+      print(os, expr.left());
    }
    // print the right input
    os << ", Right: ";
    if constexpr (::ten::is_tensor_v<Right>) {
-      os << "tensor<";
+      if constexpr (::ten::is_vector_v<Right>) {
+         os << "vector<";
+      } else if constexpr (::ten::is_matrix_v<Right>) {
+         os << "matrix<";
+      } else {
+         os << "tensor<";
+      }
    }
    if constexpr (::ten::is_column_v<Right>) {
       os << "column<";
@@ -112,13 +140,7 @@ operator<<(std::ostream &os,
    }
    if constexpr (::ten::is_unary_expr<Right>::value ||
                  ::ten::is_binary_expr<Right>::value) {
-      if constexpr (::ten::is_unary_expr<Left>::value) {
-         os << "unary_expr";
-      } else {
-         os << "binary_expr";
-         ///os << expr.left();
-      }
-      //os << expr.right();
+      print(os, expr.right());
    }
    // Print the output
    os << ", Output: ";
@@ -126,7 +148,13 @@ operator<<(std::ostream &os,
       os << "scalar<";
    }
    if constexpr (::ten::is_tensor_v<Output>) {
-      os << "tensor<";
+      if constexpr (::ten::is_vector_v<Output>) {
+         os << "vector<";
+      } else if constexpr (::ten::is_matrix_v<Output>) {
+         os << "matrix<";
+      } else {
+         os << "tensor<";
+      }
    }
    if constexpr (::ten::is_column_v<Output>) {
       os << "column<";
@@ -139,6 +167,15 @@ operator<<(std::ostream &os,
    os << ">, Function: ";
    os << expr_type::func_type::name();
    os << ")";
+}
+
+/// Print binary_expr
+template <class Left, class Right, class Output,
+          template <typename...> class Func, typename... Args>
+std::ostream &
+operator<<(std::ostream &os,
+           const ::ten::binary_expr<Left, Right, Output, Func, Args...> &expr) {
+   print(os, expr);
    return os;
 }
 
