@@ -28,6 +28,7 @@
 
 #include <ten/storage/dense_storage.hxx>
 #include <ten/storage/diagonal_storage.hxx>
+#include <ten/storage/sparse_storage.hxx>
 
 // For expression matching
 #include <ten/matching.hxx>
@@ -668,7 +669,16 @@ class ranked_tensor final
       requires(Shape::is_dynamic())
        : _format(::ten::storage_format::dense), _shape(std::move(dims)),
          _stride(typename base_type::stride_type(_shape.value())) {
-      std::cout << "Called ranked_tensor(dims)\n";
+      auto storage = std::make_unique<storage_type>(_shape.value());
+      _node = std::make_shared<node_type>(std::move(storage));
+   }
+
+   /// Construct a tensor_node from a list of shape and format
+   explicit ranked_tensor(std::initializer_list<size_type> &&dims,
+                          ten::storage_format format) noexcept
+      requires(Shape::is_dynamic())
+       : _format(format), _shape(std::move(dims)),
+         _stride(typename base_type::stride_type(_shape.value())) {
       auto storage = std::make_unique<storage_type>(_shape.value());
       _node = std::make_shared<node_type>(std::move(storage));
    }
@@ -691,7 +701,7 @@ class ranked_tensor final
    /// Construct a ranked_tensor from the shape
    explicit ranked_tensor(const Shape &dims) noexcept
       requires(Shape::is_dynamic())
-       : _shape(dims),
+       : _format(ten::storage_format::dense), _shape(dims),
          _stride(typename base_type::stride_type(_shape.value())) {
       auto storage = std::make_unique<storage_type>(dims);
       _node = std::make_shared<node_type>(std::move(storage));
@@ -836,7 +846,27 @@ class ranked_tensor final
           std::initializer_list<size_type>{rows, cols});
    }
 
-   // TODO CooMatrix
+   // COO Tensor
+   /*
+   explicit ranked_tensor(std::initializer_list<size_type>&& dims,
+   std::initializer_list<std::initializer_list<size_type>>&& indices,
+   std::initializer_list<T>&& values, ten::storage_format format =
+   ten::storage_format::coo ) noexcept requires(Shape::is_dynamic()) :
+   _shape(std::move(dims)), _stride(typename
+   base_type::stride_type(_shape.value())), _format(format) { if (format !=
+   ::ten::storage_format::coo && format != ::ten::storage_format::csc && format
+   != ::ten::storage_format::csr) { std::cerr << "Storage format must be sparse
+   coo, csc or csr.\n";
+      }
+      _format = format;
+      if (indices.size() != values.size()) {
+         std::cerr << "Indices and values must have the same size.\n";
+      }
+      auto value = values.begin();
+      for (auto idx = indices.begin(); idx != indices.end(); idx++, value++) {
+         (*this)(*idx) = *value;
+      }
+   }*/
 
    // TODO CscMatrix
 
@@ -1169,6 +1199,48 @@ template <class T, size_type... Dims>
 using stensor = ranked_tensor<
     T, shape<Dims...>, default_order, default_storage<T, shape<Dims...>>,
     typename details::allocator_type<default_storage<T, shape<Dims...>>>::type>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Sparse tensors and matrices
+
+/// \typedef sparse_tensor
+/// sparse_tensor<T, Rank>
+template <class T, size_type Rank, storage_order Order = default_order,
+          class Storage = sparse_storage<T>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+using sparse_tensor =
+    ranked_tensor<T, dynamic_shape<Rank>, Order, Storage, Allocator>;
+
+/// \typedef sparse_matrix
+/// sparse_matrix<T>
+template <class T, storage_order Order = default_order,
+          class Storage = sparse_storage<T>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+using sparse_matrix =
+    ranked_tensor<T, dynamic_shape<2>, Order, Storage, Allocator>;
+
+// Sparse COO Matrix
+template <typename T>
+auto coo_matrix(
+    std::initializer_list<size_type> &&dims,
+    std::initializer_list<std::initializer_list<size_type>> &&indices,
+    std::initializer_list<T> &&values) -> decltype(auto) {
+   if (dims.size() != 2) {
+      std::cerr << "Dimensions size must be equal to 2 for sparse coo matrix\n";
+   }
+   sparse_tensor<T, 2> x(std::move(dims), storage_format::coo);
+
+   if (indices.size() != values.size()) {
+      std::cerr << "Indices and values must have the same size.\n";
+   }
+   auto value = values.begin();
+   for (auto idx = indices.begin(); idx != indices.end(); idx++, value++) {
+      auto i = *(idx->begin());
+      auto j = *(idx->begin() + 1);
+      x(i, j) = *value;
+   }
+   return x;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Special matrices
@@ -2340,7 +2412,8 @@ static void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
 
    if constexpr (::ten::is_tensor<x_expr_type>::value &&
                  ::ten::is_tensor<y_expr_type>::value) {
-      ::ten::kernels::mul_add<T>(alpha, std::forward<X>(x), std::forward<Y>(y), beta, c);
+      ::ten::kernels::mul_add<T>(alpha, std::forward<X>(x), std::forward<Y>(y),
+                                 beta, c);
    }
 
    if constexpr (::ten::is_tensor<x_expr_type>::value &&
@@ -2348,7 +2421,7 @@ static void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
       auto ytensor = y.eval();
       using YTensor = decltype(ytensor);
       ::ten::kernels::mul_add<T>(alpha, std::forward<X>(x),
-                              std::forward<YTensor>(ytensor), beta, c);
+                                 std::forward<YTensor>(ytensor), beta, c);
    }
 
    if constexpr (!::ten::is_tensor<x_expr_type>::value &&
@@ -2356,7 +2429,7 @@ static void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
       auto xtensor = x.eval();
       using XTensor = decltype(xtensor);
       ::ten::kernels::mul_add<T>(alpha, std::forward<XTensor>(xtensor),
-                              std::forward<Y>(y), beta, c);
+                                 std::forward<Y>(y), beta, c);
    }
 
    if constexpr (!::ten::is_tensor<x_expr_type>::value &&
@@ -2366,7 +2439,7 @@ static void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
       auto ytensor = y.eval();
       using YTensor = decltype(ytensor);
       ::ten::kernels::mul_add<T>(alpha, std::forward<XTensor>(x),
-                              std::forward<YTensor>(y), beta, c);
+                                 std::forward<YTensor>(y), beta, c);
    }
 }
 
