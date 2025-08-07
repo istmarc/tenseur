@@ -2073,16 +2073,16 @@ template <
    return zeros<tensor_type>(shape_type(std::move(dims)));
 }
 
-// zeros<T, __rank>(shape)
-template <class T, size_type __rank, storage_order order = default_order>
-[[nodiscard]] auto zeros(const dynamic_shape<__rank> &dims) {
-   using shape_type = ::ten::dynamic_shape<__rank>;
+// zeros<T, Rank>(shape)
+template <class T, size_type Rank, storage_order order = default_order>
+[[nodiscard]] auto zeros(const dynamic_shape<Rank> &dims) {
+   using shape_type = ::ten::dynamic_shape<Rank>;
    return zeros<T, shape_type, order>(std::forward<shape_type>(dims));
 }
 
-template <class T, size_type __rank, storage_order order = default_order>
+template <class T, size_type Rank, storage_order order = default_order>
 [[nodiscard]] auto zeros(std::initializer_list<size_type> &&dims) {
-   using shape_type = ::ten::dynamic_shape<__rank>;
+   using shape_type = ::ten::dynamic_shape<Rank>;
    return zeros<T, shape_type, order>(shape_type(std::move(dims)));
 }
 
@@ -2150,16 +2150,16 @@ template <
    return ones<tensor_type>(shape_type(std::move(dims)));
 }
 
-// ones<T, __rank>(shape)
-template <class T, size_type __rank, storage_order order = default_order>
-[[nodiscard]] auto ones(const dynamic_shape<__rank> &shape) {
-   using shape_type = ::ten::dynamic_shape<__rank>;
+// ones<T, Rank>(shape)
+template <class T, size_type Rank, storage_order order = default_order>
+[[nodiscard]] auto ones(const dynamic_shape<Rank> &shape) {
+   using shape_type = ::ten::dynamic_shape<Rank>;
    return ones<T, shape_type, order>(std::forward<shape_type>(shape));
 }
 
-template <class T, size_type __rank, storage_order order = default_order>
+template <class T, size_type Rank, storage_order order = default_order>
 [[nodiscard]] auto ones(std::initializer_list<size_type> &&dims) {
-   using shape_type = ::ten::dynamic_shape<__rank>;
+   using shape_type = ::ten::dynamic_shape<Rank>;
    return ones<T, shape_type, order>(shape_type(std::move(dims)));
 }
 
@@ -2256,18 +2256,18 @@ template <
 }
 
 // range<T, rank>(Shape, value)
-template <class T, size_type __rank = 1, storage_order order = default_order>
+template <class T, size_type Rank = 1, storage_order order = default_order>
    requires(std::is_floating_point_v<T>)
-[[nodiscard]] auto range(const dynamic_shape<__rank> &shape, T value = T(0)) {
-   using shape_type = ::ten::dynamic_shape<__rank>;
+[[nodiscard]] auto range(const dynamic_shape<Rank> &shape, T value = T(0)) {
+   using shape_type = ::ten::dynamic_shape<Rank>;
    return range<T, shape_type, order>(std::forward<shape_type>(shape), value);
 }
 
-template <class T, size_type __rank = 1, storage_order order = default_order>
+template <class T, size_type Rank = 1, storage_order order = default_order>
    requires(std::is_floating_point_v<T>)
 [[nodiscard]] auto range(std::initializer_list<size_type> &&dims,
                          T value = T(0)) {
-   using shape_type = ::ten::dynamic_shape<__rank>;
+   using shape_type = ::ten::dynamic_shape<Rank>;
    return range<T, shape_type, order>(shape_type(std::move(dims)), value);
 }
 
@@ -2369,22 +2369,60 @@ template <
    return linear<tensor_type>(start, stop, shape_type(std::move(dims)));
 }
 
-// linear<T, __rank>(start, stop, Shape)
-template <class T, size_type __rank = 1, storage_order order = default_order>
+// linear<T, Rank>(start, stop, Shape)
+template <class T, size_type Rank = 1, storage_order order = default_order>
    requires(std::is_floating_point_v<T>)
-[[nodiscard]] auto linear(T start, T stop, const dynamic_shape<__rank> &dims) {
-   using shape_type = ::ten::dynamic_shape<__rank>;
+[[nodiscard]] auto linear(T start, T stop, const dynamic_shape<Rank> &dims) {
+   using shape_type = ::ten::dynamic_shape<Rank>;
    return linear<T, shape_type, order>(start, stop,
                                        std::forward<shape_type>(dims));
 }
 
-template <class T, size_type __rank = 1, storage_order order = default_order>
+template <class T, size_type Rank = 1, storage_order order = default_order>
    requires(std::is_floating_point_v<T>)
 [[nodiscard]] auto linear(T start, T stop,
                           std::initializer_list<size_type> &&dims) {
-   using shape_type = ::ten::dynamic_shape<__rank>;
+   using shape_type = ::ten::dynamic_shape<Rank>;
    return linear<T, shape_type, order>(start, stop,
                                        shape_type(std::move(dims)));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Identity
+
+// identity<smatrix<...>>()
+template <StaticMatrix T> [[nodiscard]] auto identity() {
+   using value_type = typename T::value_type;
+   T x;
+   using shape_type = typename T::shape_type;
+   constexpr size_type rows = shape_type::template static_dim<0>();
+   constexpr size_type cols = shape_type::template static_dim<1>();
+   size_type m = std::min(rows, cols);
+   for (size_type i = 0; i < m; i++) {
+      x(i, i) = value_type(1);
+   }
+   return x;
+}
+
+// identity<matrix<...>>(shape)
+template <Matrix T>
+[[nodiscard]] auto identity(typename T::shape_type &&shape) {
+   using value_type = typename T::value_type;
+   using shape_type = typename T::shape_type;
+
+   size_type m = std::min(shape.dim(0), shape.dim(1));
+   size_type n = shape.size();
+   T x(std::forward<shape_type>(shape));
+   for (size_type i = 0; i < m; i++) {
+      x(i, i) = value_type(1);
+   }
+   return x;
+}
+
+template <Matrix T>
+[[nodiscard]] auto identity(std::initializer_list<size_type> &&dims) {
+   using shape_type = typename T::shape_type;
+   return identity<T>(shape_type(std::move(dims)));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
