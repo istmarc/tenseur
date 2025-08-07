@@ -355,19 +355,7 @@ struct tensor_operations {
 /// \class tensor_node
 /// Tensor node
 template <class T, class Storage, class Allocator> class tensor_node {
-   //: public tensor_operations<T, Shape, order, Storage, Allocator> {
  public:
-   /// \typedef base_type
-   /// Base type
-   // using base_type =
-   //     tensor_operations<T, Shape, order, Allocator, Storage>;
-
-   /// Tensor type
-   // using tensor_type =
-   //     ranked_tensor<T, Shape, order, Storage, Allocator>;
-
-   // using scalarnode_type = scalar_node<T>;
-
    using storage_type = Storage;
 
    using value_type = T;
@@ -1285,17 +1273,25 @@ T transposed(const T &t) {
        t.format() | ::ten::storage_format::transposed);
    return T(node, format);
 }
-/*
+
 /// Symmetric tensor
 template <class T>
    requires(T::is_dynamic())
 T symmetric(const T &t) {
+   ::ten::storage_format format = static_cast<storage_format>(
+       t.format() | ::ten::storage_format::symmetric);
+   auto node = t.node();
+   auto shape = t.shape();
+   return T(node, shape, format);
 }
 /// Symmetric static tensor
 template <class T>
    requires(T::is_static())
 T symmetric(const T &t) {
-
+   ::ten::storage_format format = static_cast<storage_format>(
+       t.format() | ::ten::storage_format::symmetric);
+   auto node = t.node();
+   return T(node, format);
 }
 
 // TODO Extend hermitian to tensor
@@ -1304,34 +1300,64 @@ T symmetric(const T &t) {
 template <class T>
    requires(T::is_dynamic() && ::ten::is_matrix<T>::value)
 T hermitian(const T &t) {
+   ::ten::storage_format format = static_cast<storage_format>(
+       t.format() | ::ten::storage_format::hermitian);
+   auto node = t.node();
+   auto shape = t.shape();
+   return T(node, shape, format);
 }
 /// Hermitian static matrix
 template <class T>
    requires(T::is_static() && ::ten::is_smatrix<T>::value)
 T hermitian(const T &t) {
+   using node_type = T::node_type;
+   auto node = t.node();
+   ::ten::storage_format format = static_cast<storage_format>(
+       t.format() | ::ten::storage_format::hermitian);
+   return T(node, format);
 }
 
 /// Lower triangular matrix
 template <class T>
    requires(T::is_dynamic() && ::ten::is_matrix<T>::value)
 T lower_tr(const T &t) {
+   ::ten::storage_format format = static_cast<storage_format>(
+       t.format() | ::ten::storage_format::lower_tr);
+   auto node = t.node();
+   auto shape = t.shape();
+   return T(node, shape, format);
 }
 /// Lower triangular static matrix
 template <class T>
    requires(T::is_static() && ::ten::is_smatrix<T>::value)
 T lower_tr(const T &t) {
+   using node_type = T::node_type;
+   auto node = t.node();
+   ::ten::storage_format format = static_cast<storage_format>(
+       t.format() | ::ten::storage_format::lower_tr);
+   return T(node, format);
 }
 
 /// Upper triangular matrix
 template <class T>
    requires(T::is_dynamic() && ::ten::is_matrix<T>::value)
 T upper_tr(const T &t) {
+   ::ten::storage_format format = static_cast<storage_format>(
+       t.format() | ::ten::storage_format::upper_tr);
+   auto node = t.node();
+   auto shape = t.shape();
+   return T(node, shape, format);
 }
 /// Upper triangular static matrix
 template <class T>
    requires(T::is_static() && ::ten::is_smatrix<T>::value)
 T upper_tr(const T &t) {
-}*/
+   using node_type = T::node_type;
+   auto node = t.node();
+   ::ten::storage_format format = static_cast<storage_format>(
+       t.format() | ::ten::storage_format::upper_tr);
+   return T(node, format);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Columns
@@ -1373,24 +1399,17 @@ class ranked_column final
    std::shared_ptr<node_type> _node = nullptr;
 
  public:
-   /// Constructors
+   /// Constructors for dynamic ranked_column
    ranked_column(const size_t index, const Shape &shape,
                  const std::shared_ptr<node_type> &node) noexcept
       requires(Shape::is_dynamic())
        : _node(node), _shape(shape), _index(index) {}
 
-   /*
-   ranked_column(std::shared_ptr<node_type> &&node, const Shape& shape, const
-   size_t index) noexcept : _index(index), _shape(shape),
-   _node(std::move(node)),{}*/
-
-   /// TODO Constructor for static ranked_column
+   /// Constructor for static ranked_column
    ranked_column(const size_t index,
                  const std::shared_ptr<node_type> &node) noexcept
       requires(Shape::is_static())
        : _index(index), _node(node) {}
-
-   // TODO Assignment from expression
 
    /// Copy constructor
    ranked_column(const ranked_column &t) { _node = t._node; }
@@ -1496,7 +1515,7 @@ class ranked_column final
       // FIXME maybe static_assert(Shape::template  ==
       // evaluated_type::static_size(),
       //               "Expected equal shape size.");
-      size_t rows = _node.get()->shape().dim(0);
+      size_t rows = _shape.value().dim(0);
       for (size_t idx = 0; idx < rows; idx++) {
          (*_node.get())[idx + _index * rows] = value[idx];
       }
@@ -1516,7 +1535,7 @@ class ranked_column final
                     "Evaluated type must be a tensor.");
       auto value = expr.eval();
       // Copy the data
-      size_t rows = _node.get()->shape().dim(0);
+      size_t rows = _shape.value().dim(0);
       for (size_t idx = 0; idx < rows; idx++) {
          (*_node.get())[idx + _index * rows] = value[idx];
       }
@@ -1525,7 +1544,7 @@ class ranked_column final
 
    // Asignement from a static vector
    template <StaticVector V> ranked_column &operator=(V &&value) {
-      size_t rows = _node.get()->shape().dim(0);
+      size_t rows = _shape.value().dim(0);
       for (size_t idx = 0; idx < rows; idx++) {
          (*_node.get())[idx + _index * rows] = value[idx];
       }
@@ -1534,7 +1553,7 @@ class ranked_column final
 
    // Asgnement from a dynamic vector
    template <DynamicVector V> ranked_column &operator=(V &&value) {
-      size_t rows = _node.get()->shape().dim(0);
+      size_t rows = _shape.value().dim(0);
       for (size_t idx = 0; idx < rows; idx++) {
          (*_node.get())[idx + _index * rows] = value[idx];
       }
@@ -1583,21 +1602,17 @@ class ranked_row final
    std::shared_ptr<node_type> _node = nullptr;
 
  public:
-   /// Constructors
+   /// Constructors for dynmaic ranked_row
    ranked_row(const size_t index, const Shape &shape,
               const std::shared_ptr<node_type> &node) noexcept
       requires(Shape::is_dynamic())
        : _index(index), _shape(shape), _node(node) {}
 
-   /*ranked_row(std::shared_ptr<node_type> &&node, const size_t index) noexcept
-       : _node(std::move(node)), _index(index) {}*/
-
+   /// Constructor for static ranked_row
    ranked_row(const size_t index,
               const std::shared_ptr<node_type> &node) noexcept
       requires(Shape::is_static())
        : _index(index), _shape(std::nullopt), _node(node) {}
-
-   // TODO Assignment from expression
 
    /// Copy constructor
    // ranked_row(const ranked_row &t) { _node = t._node; }
@@ -1698,8 +1713,8 @@ class ranked_row final
       // FIXME maybe static_assert(Shape::template  ==
       // evaluated_type::static_size(),
       //               "Expected equal shape size.");
-      size_t rows = _node.get()->shape().dim(0);
-      size_t cols = _node.get()->shape().dim(1);
+      size_t rows = _shape.value().dim(0);
+      size_t cols = _shape.value().dim(1);
       for (size_t idx = 0; idx < cols; idx++) {
          (*_node.get())[_index + idx * rows] = value[idx];
       }
@@ -1719,8 +1734,8 @@ class ranked_row final
                     "Evaluated type must be a tensor.");
       auto value = expr.eval();
       // Copy the data
-      size_t rows = _node.get()->shape().dim(0);
-      size_t cols = _node.get()->shape().dim(1);
+      size_t rows = _shape.value().dim(0);
+      size_t cols = _shape.value().dim(1);
       for (size_t idx = 0; idx < cols; idx++) {
          (*_node.get())[_index + idx * rows] = value[idx];
       }
@@ -1729,8 +1744,8 @@ class ranked_row final
 
    // Asignement from a static vector
    template <StaticVector V> ranked_row &operator=(V &&value) {
-      size_t rows = _node.get()->shape().dim(0);
-      size_t cols = _node.get()->shape().dim(1);
+      size_t rows = _shape.value().dim(0);
+      size_t cols = _shape.value().dim(1);
       for (size_t idx = 0; idx < cols; idx++) {
          (*_node.get())[_index + idx * rows] = value[idx];
       }
@@ -1739,8 +1754,8 @@ class ranked_row final
 
    // Asgnement from a dynamic vector
    template <DynamicVector V> ranked_row &operator=(V &&value) {
-      size_t rows = _node.get()->shape().dim(0);
-      size_t cols = _node.get()->shape().dim(1);
+      size_t rows = _shape.value().dim(0);
+      size_t cols = _shape.value().dim(1);
       for (size_t idx = 0; idx < cols; idx++) {
          (*_node.get())[_index + idx * rows] = value[idx];
       }
@@ -1748,7 +1763,14 @@ class ranked_row final
    }
 };
 
-// TODO row
+// row<T> or row<T, Shape>
+template <class T, class Shape = dynamic_shape<2>,
+          storage_order Order = default_order,
+          class Storage = default_storage<T, Shape>,
+          class Allocator = typename details::allocator_type<Storage>::type>
+   requires(Shape::rank() == 2)
+using row = ranked_row<T, Shape, Order, Storage, Allocator>;
+
 // TODO static rows srow
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2445,7 +2467,7 @@ static void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
 
 // axpy
 // y <- a*x + y
-template <Expr X, Tensor Y, typename T>
+template <typename T, Expr X, Tensor Y>
    requires(std::is_same_v<T, typename Y::value_type>)
 static void axpy(const T a, X &&x, Y &y) {
    using x_expr_type = std::remove_cvref_t<X>;
@@ -2467,7 +2489,6 @@ static void axpy(const T a, X &&x, Y &y) {
 /// Returns the maximum of an expression
 template <Expr ExprType> auto min(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
-   // using output_type = typename ::ten::details::output_type<expr_type>::type;
    using value_type = typename expr_type::value_type;
    using output_type = ten::scalar<value_type>;
    return unary_expr<expr_type, output_type, functional::min>(expr);
