@@ -22,5 +22,6 @@ Tenseur
    advanced
    examples
    benchmarks
+   torch_numpy
    api_reference
 
