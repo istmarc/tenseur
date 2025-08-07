@@ -12,9 +12,9 @@ template <class> std::string to_string();
 
 template <> std::string to_string<bool>() { return "bool"; }
 
-template <> std::string to_string<float>() { return "float"; }
+template <> std::string to_string<float>() { return "float32"; }
 
-template <> std::string to_string<double>() { return "double"; }
+template <> std::string to_string<double>() { return "float64"; }
 
 template <> std::string to_string<int32_t>() { return "int32"; }
 

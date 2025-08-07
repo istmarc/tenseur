@@ -15,12 +15,15 @@ namespace ten {
 /// \enum data_type
 enum class data_type : uint16_t {
    none = 1,
-   float32 = 2,
-   float64 = 4,
-   int32 = 8,
-   int64 = 16,
-   complexfloat = 32,
-   complexdouble = 64,
+   boolean = 2,
+   float32 = 4,
+   float64 = 8,
+   int32 = 16,
+   int64 = 32,
+   uint32 = 64,
+   uint64 = 128,
+   complexfloat32 = 256,
+   complexfloat64 =512,
 };
 
 /// \enum format
