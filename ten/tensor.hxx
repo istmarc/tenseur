@@ -2466,10 +2466,10 @@ template <SDiagonal T> auto dense(T x) -> decltype(auto) {
 
 /// asum
 /// Sum of the absolute values of the elements of a vector
-template<Expr X>
-static auto asum(X&& x) -> decltype(auto) {
+template <Expr X> static auto asum(X &&x) -> decltype(auto) {
    using expr_type = std::remove_cvref_t<X>;
-   if constexpr(::ten::is_tensor_v<expr_type> || ::ten::is_column_v<expr_type> || ::ten::is_row_v<expr_type>) {
+   if constexpr (::ten::is_tensor_v<expr_type> ||
+                 ::ten::is_column_v<expr_type> || ::ten::is_row_v<expr_type>) {
       return ::ten::kernels::asum(std::forward<X>(x));
    } else {
       auto value = x.eval();
@@ -2478,6 +2478,27 @@ static auto asum(X&& x) -> decltype(auto) {
    }
 }
 
+// axpy
+// y <- a*x + y
+template <typename T, Expr X, class Y>
+   requires(::ten::is_tensor_v<Y> || ::ten::is_column_v<Y> ||
+            ::ten::is_row_v<Y>)
+static void axpy(const T a, X &&x, Y &y) {
+   using x_expr_type = std::remove_cvref_t<X>;
+
+   if constexpr (::ten::is_tensor_v<x_expr_type> ||
+                 ::ten::is_column_v<x_expr_type> ||
+                 ::ten::is_row_v<x_expr_type>) {
+      ::ten::kernels::axpy(a, std::forward<X>(x), y);
+   }
+   if constexpr (!::ten::is_tensor_v<x_expr_type> &&
+                 !::ten::is_column_v<x_expr_type> &&
+                 !::ten::is_row_v<x_expr_type>) {
+      auto xtensor = x.eval();
+      using tensor_type = decltype(xtensor);
+      ::ten::kernels::axpy(a, std::forward<tensor_type>(xtensor), y);
+   }
+}
 
 /// gemm
 /// C <- alpha * X * Y + beta * C
@@ -2517,23 +2538,6 @@ static void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
       using YTensor = decltype(ytensor);
       ::ten::kernels::mul_add<T>(alpha, std::forward<XTensor>(x),
                                  std::forward<YTensor>(y), beta, c);
-   }
-}
-
-// axpy
-// y <- a*x + y
-template <typename T, Expr X, Tensor Y>
-   requires(std::is_same_v<T, typename Y::value_type>)
-static void axpy(const T a, X &&x, Y &y) {
-   using x_expr_type = std::remove_cvref_t<X>;
-
-   if constexpr (::ten::is_tensor<x_expr_type>::value) {
-      ::ten::kernels::axpy(a, std::forward<X>(x), y);
-   }
-   if constexpr (!::ten::is_tensor<x_expr_type>::value) {
-      auto xtensor = x.eval();
-      using XTensor = decltype(xtensor);
-      ::ten::kernels::axpy(a, std::forward<XTensor>(xtensor), y);
    }
 }
 

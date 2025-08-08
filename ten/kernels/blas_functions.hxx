@@ -1,37 +1,92 @@
 #ifndef TENSEUR_KERNELS_BLAS_FUNCTIONS
 #define TENSEUR_KERNELS_BLAS_FUNCTIONS
 
-#include <ten/types.hxx>
 #include <ten/kernels/blas_api.hxx>
+#include <ten/types.hxx>
 
 // Level 1 blas funcions
-namespace ten::kernels{
-
-template<Tensor T>
-static auto asum(T&& x) -> decltype(auto) {
+namespace ten::kernels {
+/// asum
+template <Tensor T> static auto asum(T &&x) -> decltype(auto) {
    int32_t n = x.size();
    int32_t incx = 1;
    return ::ten::kernels::blas::asum(n, x.data(), incx);
 }
 
-template<Column T>
-static auto asum(T&& x) -> decltype(auto) {
+template <Column T> static auto asum(T &&x) -> decltype(auto) {
    auto shape = x.shape();
    int32_t n = shape.dim(0);
    int32_t incx = 1;
    return ::ten::kernels::blas::asum(n, x.data(), incx);
 }
 
-template<Row T>
-static auto asum(T&& x) -> decltype(auto) {
+template <Row T> static auto asum(T &&x) -> decltype(auto) {
    auto shape = x.shape();
    int32_t n = shape.dim(1);
    int32_t incx = shape.dim(0);
    return ::ten::kernels::blas::asum(n, x.data(), incx);
 }
 
-
+/// axpy
+template <typename T, Vector X, Vector Y>
+static void axpy(const T a, X &&x, Y &y) {
+   int32_t n = x.size();
+   ::ten::kernels::blas::axpy(n, a, x.data(), 1, y.data(), 1);
 }
 
+template <typename T, Vector X, Column Y>
+static void axpy(const T a, X &&x, Y &y) {
+   int32_t n = x.size();
+   ::ten::kernels::blas::axpy(n, a, x.data(), 1, y.data(), 1);
+}
+
+template <typename T, Vector X, Row Y>
+static void axpy(const T a, X &&x, Y &y) {
+   int32_t n = x.size();
+   int32_t incy = y.shape().dim(0);
+   ::ten::kernels::blas::axpy(n, a, x.data(), 1, y.data(), incy);
+}
+
+template <typename T, Column X, Vector Y>
+static void axpy(const T a, X &&x, Y &y) {
+   int32_t n = x.size();
+   ::ten::kernels::blas::axpy(n, a, x.data(), 1, y.data(), 1);
+}
+
+template <typename T, Column X, Row Y>
+static void axpy(const T a, X &&x, Y &y) {
+   int32_t n = x.size();
+   int32_t incy = y.shape().dim(0);
+   ::ten::kernels::blas::axpy(n, a, x.data(), 1, y.data(), incy);
+}
+
+template <typename T, Column X, Column Y>
+static void axpy(const T a, X &&x, Y &y) {
+   int32_t n = x.size();
+   ::ten::kernels::blas::axpy(n, a, x.data(), 1, y.data(), 1);
+}
+
+template <typename T, Row X, Vector Y>
+static void axpy(const T a, X &&x, Y &y) {
+   int32_t n = x.size();
+   int32_t incx = x.shape().dim(0);
+   ::ten::kernels::blas::axpy(n, a, x.data(), incx, y.data(), 1);
+}
+
+template <typename T, Row X, Column Y>
+static void axpy(const T a, X &&x, Y &y) {
+   int32_t n = x.size();
+   int32_t incx = x.shape().dim(0);
+   ::ten::kernels::blas::axpy(n, a, x.data(), incx, y.data(), 1);
+}
+
+template <typename T, Row X, Row Y> static void axpy(const T a, X &&x, Y &y) {
+   int32_t n = x.size();
+   int32_t incx = x.shape().dim(0);
+   int32_t incy = y.shape().dim(0);
+   ::ten::kernels::blas::axpy(n, a, x.data(), incx, y.data(), incy);
+}
+
+} // namespace ten::kernels
 
 #endif
