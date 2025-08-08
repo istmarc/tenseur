@@ -21,6 +21,20 @@ static CBLAS_TRANSPOSE cast(const transop op) {
    }
 }
 
+// asum
+template<typename T>
+static T asum(const int32_t n, const T* x, const int32_t incx);
+
+template<>
+float asum(const int32_t n, const float* x, const int32_t incx) {
+   return cblas_sasum(n, x, incx);
+}
+
+template<>
+double asum(const int32_t n, const double* x, const int32_t incx) {
+   return cblas_dasum(n, x, incx);
+}
+
 // Axpy
 // y = a*x + y
 template <typename T>

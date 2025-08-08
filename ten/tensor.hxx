@@ -1579,7 +1579,7 @@ template <class T, class Shape, storage_order Order = default_order,
           class Storage = default_storage<T, Shape>,
           class Allocator = typename details::allocator_type<Storage>::type>
 class ranked_row final
-    : public ten::expr<ranked_column<T, Shape, Order, Storage, Allocator>>,
+    : public ten::expr<ranked_row<T, Shape, Order, Storage, Allocator>>,
       public ::ten::tensor_operations<T, Shape, Order, Storage, Allocator>,
       public ::ten::tensor_base {
    static_assert(Shape::rank() == 2,
@@ -2462,8 +2462,25 @@ template <SDiagonal T> auto dense(T x) -> decltype(auto) {
 ////////////////////////////////////////////////////////////////////////////////
 // Expressions
 
-// Gemm
-// C <- alpha * X * Y + beta * C
+// Blas level 1 functions
+
+/// asum
+/// Sum of the absolute values of the elements of a vector
+template<Expr X>
+static auto asum(X&& x) -> decltype(auto) {
+   using expr_type = std::remove_cvref_t<X>;
+   if constexpr(::ten::is_tensor_v<expr_type> || ::ten::is_column_v<expr_type> || ::ten::is_row_v<expr_type>) {
+      return ::ten::kernels::asum(std::forward<X>(x));
+   } else {
+      auto value = x.eval();
+      using tensor_type = decltype(value);
+      return ::ten::kernels::asum(std::forward<tensor_type>(value));
+   }
+}
+
+
+/// gemm
+/// C <- alpha * X * Y + beta * C
 template <class T, Expr X, Expr Y, Tensor C>
    requires(std::is_same_v<T, typename C::value_type>)
 static void gemm(const T alpha, X &&x, Y &&y, const T beta, C &c) {
