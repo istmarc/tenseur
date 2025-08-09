@@ -53,6 +53,20 @@ void axpy(const int n, const double a, const double *x, const int incx, double *
    cblas_daxpy(n, a, x, incx, y, incy);
 }
 
+// Copy
+template<typename T>
+static void copy(const int32_t n, const T* x, const int32_t incx, T* y, const int32_t incy);
+
+template<>
+void copy(const int32_t n, const float* x, const int32_t incx, float* y, const int32_t incy) {
+   cblas_scopy(n, x, incx, y, incy);
+}
+
+template<>
+void copy(const int32_t n, const double* x, const int32_t incx, double* y, const int32_t incy) {
+   cblas_dcopy(n, x, incx, y, incy);
+}
+
 // Dot product of two vectors
 // x * y
 template <typename T>

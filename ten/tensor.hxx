@@ -2478,20 +2478,20 @@ template <Expr X> static auto asum(X &&x) -> decltype(auto) {
    }
 }
 
-// axpy
-// y <- a*x + y
+/// axpy
+/// y <- a*x + y
 template <typename T, Expr X, class Y>
-   requires(::ten::is_tensor_v<Y> || ::ten::is_column_v<Y> ||
+   requires(::ten::is_vector_v<Y> || ::ten::is_column_v<Y> ||
             ::ten::is_row_v<Y>)
 static void axpy(const T a, X &&x, Y &y) {
    using x_expr_type = std::remove_cvref_t<X>;
 
-   if constexpr (::ten::is_tensor_v<x_expr_type> ||
+   if constexpr (::ten::is_vector_v<x_expr_type> ||
                  ::ten::is_column_v<x_expr_type> ||
                  ::ten::is_row_v<x_expr_type>) {
       ::ten::kernels::axpy(a, std::forward<X>(x), y);
    }
-   if constexpr (!::ten::is_tensor_v<x_expr_type> &&
+   if constexpr (!::ten::is_vector_v<x_expr_type> &&
                  !::ten::is_column_v<x_expr_type> &&
                  !::ten::is_row_v<x_expr_type>) {
       auto xtensor = x.eval();
@@ -2499,6 +2499,17 @@ static void axpy(const T a, X &&x, Y &y) {
       ::ten::kernels::axpy(a, std::forward<tensor_type>(xtensor), y);
    }
 }
+
+/// copy
+/// Copy a vector to another vector
+template<class X, class Y>
+requires((::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
+   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static void copy(const X& x, Y& y) {
+   ::ten::kernels::copy(x, y);
+}
+
+// BLAS Level 3 functions
 
 /// gemm
 /// C <- alpha * X * Y + beta * C

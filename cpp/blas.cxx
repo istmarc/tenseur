@@ -56,4 +56,18 @@ int main() {
       std::cout << a << std::endl;
    }
 
+   {
+      std::cout << "ten::copy vectors\n";
+      auto a = ten::range<ten::matrix<float>>({3, 3});
+      auto row_0 = a.row(0);
+      auto row_1 = a.row(1);
+      ten::copy(row_0, row_1);
+      std::cout << a << std::endl;
+      auto col_0 = a.column(0);
+      auto col_1 = a.column(1);
+      ten::copy(col_0, col_1);
+      std::cout << a << std::endl;
+   }
+
+
 }
