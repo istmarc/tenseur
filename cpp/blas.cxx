@@ -69,5 +69,12 @@ int main() {
       std::cout << a << std::endl;
    }
 
+   {
+      std::cout << "iamax\n";
+      auto a = ten::rand_norm<ten::matrix<float>>({3, 3});
+      std::cout << a << std::endl;
+      std::cout << ten::iamax(a.row(0)) << std::endl;
+      std::cout << ten::iamax(a.column(0)) << std::endl;
+   }
 
 }

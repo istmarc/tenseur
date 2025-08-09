@@ -2509,6 +2509,16 @@ static void copy(const X& x, Y& y) {
    ::ten::kernels::copy(x, y);
 }
 
+/// iamax
+/// Position of the element with maximum absolute value
+template<class X>
+requires(::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
+static auto iamax(const X& x) -> decltype(auto) {
+   return ::ten::kernels::iamax(x);
+}
+
+// Blas level 2 functions
+
 // BLAS Level 3 functions
 
 /// gemm

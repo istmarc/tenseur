@@ -148,6 +148,26 @@ static void copy(const X& x, Y& y) {
    ::ten::kernels::blas::copy(n, x.data(), incx, y.data(), incy);
 }
 
+// iamax
+template<Vector X>
+static size_t iamax(const X& x) {
+   int32_t n = x.size();
+   return ::ten::kernels::blas::iamax(n, x.data(), 1);
+}
+
+template<Column X>
+static size_t iamax(const X& x) {
+   int32_t n = x.size();
+   return ::ten::kernels::blas::iamax(n, x.data(), 1);
+}
+
+template<Row X>
+static size_t iamax(const X& x) {
+   int32_t n = x.size();
+   int32_t incx = x.shape().dim(0);
+   return ::ten::kernels::blas::iamax(n, x.data(), incx);
+}
+
 } // namespace ten::kernels
 
 #endif

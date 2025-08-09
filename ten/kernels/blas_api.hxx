@@ -85,6 +85,20 @@ double dot(const int n, const double *x, const int incx, const double *y,
    return cblas_ddot(n, x, incx, y, incy);
 }
 
+// iamax
+template<typename T>
+static size_t iamax(const int32_t n, const T* x, const int32_t incx);
+
+template<>
+size_t iamax(const int32_t n, const float* x, const int32_t incx) {
+   return cblas_isamax(n, x, incx);
+}
+
+template<>
+size_t iamax(const int32_t n, const double* x, const int32_t incx) {
+   return cblas_idamax(n, x, incx);
+}
+
 // Vector matrix multiplication
 // y = alpha * a * x + beta * y
 template <typename T>
