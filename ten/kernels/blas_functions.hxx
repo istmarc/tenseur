@@ -168,6 +168,67 @@ static size_t iamax(const X& x) {
    return ::ten::kernels::blas::iamax(n, x.data(), incx);
 }
 
+// dot
+template<Vector X, Vector Y>
+static auto dot(const X& x, const Y& y) -> decltype(auto) {
+   int32_t n = x.size();
+   return ::ten::kernels::blas::dot(n, x.data(), 1, y.data(), 1);
+}
+
+template<Vector X, Column Y>
+static auto dot(const X& x, const Y& y) -> decltype(auto) {
+   int32_t n = x.size();
+   return ::ten::kernels::blas::dot(n, x.data(), 1, y.data(), 1);
+}
+
+template<Vector X, Row Y>
+static auto dot(const X& x, const Y& y) -> decltype(auto) {
+   int32_t n = x.size();
+   int32_t incy = y.shape().dim(0);
+   return ::ten::kernels::blas::dot(n, x.data(), 1, y.data(), incy);
+}
+
+template<Column X, Vector Y>
+static auto dot(const X& x, const Y& y) -> decltype(auto) {
+   int32_t n = x.size();
+   return ::ten::kernels::blas::dot(n, x.data(), 1, y.data(), 1);
+}
+
+template<Column X, Column Y>
+static auto dot(const X& x, const Y& y) -> decltype(auto) {
+   int32_t n = x.size();
+   return ::ten::kernels::blas::dot(n, x.data(), 1, y.data(), 1);
+}
+
+template<Column X, Row Y>
+static auto dot(const X& x, const Y& y) -> decltype(auto) {
+   int32_t n = x.size();
+   int32_t incy = y.shape().dim(0);
+   return ::ten::kernels::blas::dot(n, x.data(), 1, y.data(), incy);
+}
+
+template<Row X, Vector Y>
+static auto dot(const X& x, const Y& y) -> decltype(auto) {
+   int32_t n = x.size();
+   int32_t incx = x.shape().dim(0);
+   return ::ten::kernels::blas::dot(n, x.data(), incx, y.data(), 1);
+}
+
+template<Row X, Column Y>
+static auto dot(const X& x, const Y& y) -> decltype(auto) {
+   int32_t n = x.size();
+   int32_t incx = x.shape().dim(0);
+   return ::ten::kernels::blas::dot(n, x.data(), incx, y.data(), 1);
+}
+
+template<Row X, Row Y>
+static auto dot(const X& x, const Y& y) -> decltype(auto) {
+   int32_t n = x.size();
+   int32_t incx = x.shape().dim(0);
+   int32_t incy = y.shape().dim(0);
+   return ::ten::kernels::blas::dot(n, x.data(), incx, y.data(), incy);
+}
+
 } // namespace ten::kernels
 
 #endif

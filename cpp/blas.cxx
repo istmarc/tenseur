@@ -13,6 +13,16 @@ auto absolute_sum(const T& x) -> decltype(auto) {
    return s;
 }
 
+template<class X, class Y>
+auto dot(const X& x, const Y& y) {
+   using value_type = typename X::value_type;
+   value_type d = 0.;
+   for (size_t i = 0;i < x.size(); i++) {
+      d += x[i] * y[i];
+   }
+   return d;
+}
+
 int main() {
 
    {
@@ -75,6 +85,16 @@ int main() {
       std::cout << a << std::endl;
       std::cout << ten::iamax(a.row(0)) << std::endl;
       std::cout << ten::iamax(a.column(0)) << std::endl;
+   }
+
+   {
+      std::cout << "dot product\n";
+      auto a = ten::rand_norm<ten::vector<float>>({3});
+      auto b = ten::rand_norm<ten::vector<float>>({3});
+      std::cout << a << std::endl;
+      std::cout << b << std::endl;
+      std::cout << ten::dot(a, b) << std::endl;
+      std::cout << dot(a, b) << std::endl;
    }
 
 }

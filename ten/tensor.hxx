@@ -2509,6 +2509,15 @@ static void copy(const X& x, Y& y) {
    ::ten::kernels::copy(x, y);
 }
 
+/// dot
+/// Dot product of two vectors
+template<class X, class Y>
+requires((::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
+   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static auto dot(const X& x, const Y& y) -> decltype(auto) {
+   return ::ten::kernels::dot(x, y);
+}
+
 /// iamax
 /// Position of the element with maximum absolute value
 template<class X>
