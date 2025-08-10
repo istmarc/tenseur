@@ -2556,6 +2556,15 @@ static void scal(const T alpha, X& x) {
    ::ten::kernels::scal(alpha, x);
 }
 
+/// swap
+/// Swap the contents of two vectors
+template<class X, class Y>
+requires((::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
+   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static void swap(X& x, Y& y) {
+   ::ten::kernels::swap(x, y);
+}
+
 // Blas level 2 functions
 
 // BLAS Level 3 functions

@@ -120,4 +120,13 @@ int main() {
       std::cout << a << std::endl;
    }
 
+   {
+      std::cout << "swap\n";
+      auto a = ten::range<ten::matrix<float>>({3, 3});
+      // this or ten::swap(a.column(0), a.column(1));
+      auto col_0 = a.column(0);
+      auto col_1 = a.column(1);
+      ten::swap(col_0, col_1);
+      std::cout << a << std::endl;
+   }
 }
