@@ -2540,6 +2540,14 @@ static auto iamax(const X& x) -> decltype(auto) {
    return ::ten::kernels::iamax(x);
 }
 
+/// nrm2
+/// Euclidian norm of a vector
+template<class X>
+requires(::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
+static auto nrm2(const X& x) -> decltype(auto) {
+   return ::ten::kernels::nrm2(x);
+}
+
 // Blas level 2 functions
 
 // BLAS Level 3 functions

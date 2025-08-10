@@ -290,6 +290,26 @@ static auto dotc(const X& x, const Y& y) {
    return ::ten::kernels::blas::dotc(n, x.data(), incx, y.data(), incy);
 }
 
+// nrm2
+template<Vector X>
+static auto nrm2(const X& x) {
+   int32_t n = x.size();
+   return ::ten::kernels::blas::nrm2(n, x.data(), 1);
+}
+
+template<Column X>
+static auto nrm2(const X& x) {
+   int32_t n = x.size();
+   return ::ten::kernels::blas::nrm2(n, x.data(), 1);
+}
+
+template<Row X>
+static auto nrm2(const X& x) {
+   int32_t n = x.size();
+   int32_t incx = x.shape().dim(0);
+   return ::ten::kernels::blas::nrm2(n, x.data(), incx);
+}
+
 } // namespace ten::kernels
 
 #endif

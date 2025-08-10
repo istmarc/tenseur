@@ -121,6 +121,20 @@ size_t iamax(const int32_t n, const double* x, const int32_t incx) {
    return cblas_idamax(n, x, incx);
 }
 
+// nrm2
+template<typename T>
+static T nrm2(const int32_t n, const T* x, const int32_t incx);
+
+template<>
+float nrm2(const int32_t n, const float* x, const int32_t incx) {
+   return cblas_snrm2(n, x, incx);
+}
+
+template<>
+double nrm2(const int32_t n, const double* x, const int32_t incx) {
+   return cblas_dnrm2(n, x, incx);
+}
+
 // Vector matrix multiplication
 // y = alpha * a * x + beta * y
 template <typename T>

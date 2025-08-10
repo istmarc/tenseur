@@ -106,4 +106,11 @@ int main() {
       std::cout << "a*.b = " << ten::dotc(a, b) << std::endl;
    }
 
+   {
+      std::cout << "nrm2\n";
+      auto a = ten::range<ten::vector<float>>({3}, 1.);
+      std::cout << a << std::endl;
+      std::cout << "nrm2(a) = " << ten::nrm2(a) << std::endl;
+   }
+
 }
