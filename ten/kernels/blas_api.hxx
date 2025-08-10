@@ -135,6 +135,40 @@ double nrm2(const int32_t n, const double* x, const int32_t incx) {
    return cblas_dnrm2(n, x, incx);
 }
 
+// scal
+template<typename ScalarType, typename T>
+static void scal(const int32_t n, const ScalarType alpha, T* x, const int32_t incx);
+
+template<>
+void scal(const int32_t n, const float alpha, float* x, const int32_t incx) {
+   cblas_sscal(n, alpha, x, incx);
+}
+
+template<>
+void scal(const int32_t n, const double alpha, double* x, const int32_t incx) {
+   cblas_dscal(n, alpha, x, incx);
+}
+
+template<>
+void scal(const int32_t n, const std::complex<float> alpha, std::complex<float>* x, const int32_t incx) {
+   cblas_cscal(n, &alpha, x, incx);
+}
+
+template<>
+void scal(const int32_t n, const std::complex<double> alpha, std::complex<double>* x, const int32_t incx) {
+   cblas_zscal(n, &alpha, x, incx);
+}
+
+template<>
+void scal(const int32_t n, const float alpha, std::complex<float>* x, const int32_t incx) {
+   cblas_csscal(n, alpha, x, incx);
+}
+
+template<>
+void scal(const int32_t n, const double alpha, std::complex<double>* x, const int32_t incx) {
+   cblas_zdscal(n, alpha, x, incx);
+}
+
 // Vector matrix multiplication
 // y = alpha * a * x + beta * y
 template <typename T>

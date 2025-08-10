@@ -2548,6 +2548,14 @@ static auto nrm2(const X& x) -> decltype(auto) {
    return ::ten::kernels::nrm2(x);
 }
 
+/// scal
+/// Compute the scaled vector alpha*x and reset the result to x
+template<typename T, class X>
+requires(::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
+static void scal(const T alpha, X& x) {
+   ::ten::kernels::scal(alpha, x);
+}
+
 // Blas level 2 functions
 
 // BLAS Level 3 functions

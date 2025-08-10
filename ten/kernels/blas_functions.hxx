@@ -310,6 +310,26 @@ static auto nrm2(const X& x) {
    return ::ten::kernels::blas::nrm2(n, x.data(), incx);
 }
 
+// scal
+template<typename T, Vector X>
+static void scal(const T alpha, X& x) {
+   int32_t n = x.size();
+   ::ten::kernels::blas::scal(n, alpha, x.data(), 1);
+}
+
+template<typename T, Column X>
+static void scal(const T alpha, X& x) {
+   int32_t n = x.size();
+   ::ten::kernels::blas::scal(n, alpha, x.data(), 1);
+}
+
+template<typename T, Row X>
+static void scal(const T alpha, X& x) {
+   int32_t n = x.size();
+   int32_t incx = x.shape().dim(0);
+   ::ten::kernels::blas::scal(n, alpha, x.data(), incx);
+}
+
 } // namespace ten::kernels
 
 #endif

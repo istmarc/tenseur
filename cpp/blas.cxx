@@ -113,4 +113,11 @@ int main() {
       std::cout << "nrm2(a) = " << ten::nrm2(a) << std::endl;
    }
 
+   {
+      std::cout << "scale\n";
+      ten::vector<float> a({3}, {1.0f, 2.0f, 3.0f});
+      ten::scal(0.5f, a);
+      std::cout << a << std::endl;
+   }
+
 }
