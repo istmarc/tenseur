@@ -97,4 +97,13 @@ int main() {
       std::cout << dot(a, b) << std::endl;
    }
 
+   {
+      std::cout << "conjugated dot product\n";
+      ten::vector<std::complex<float>> a({2}, {1.0f+2.0fi, 3.0f-1.0fi});
+      ten::vector<std::complex<float>> b({2}, {2.0f+1.0fi, 3.0f-2.0fi});
+      std::cout << a << std::endl;
+      std::cout << b << std::endl;
+      std::cout << "a*.b = " << ten::dotc(a, b) << std::endl;
+   }
+
 }

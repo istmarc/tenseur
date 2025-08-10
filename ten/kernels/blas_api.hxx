@@ -2,6 +2,7 @@
 #define TEN_KERNELS_BLAS_API_HXX
 
 #include <cstddef>
+#include <complex>
 
 #ifdef __APPLE__
 #include <Accelerate/Accelerate.h>
@@ -83,6 +84,27 @@ template <>
 double dot(const int n, const double *x, const int incx, const double *y,
           const int incy) {
    return cblas_ddot(n, x, incx, y, incy);
+}
+
+// Conjugate dot product
+template<typename T>
+static std::complex<T> dotc(const int32_t n, const std::complex<T>* x, const int32_t incx,
+      const std::complex<T>* y, const int32_t incy);
+
+template<>
+std::complex<float> dotc(const int32_t n, const std::complex<float>* x, const int32_t incx,
+   const std::complex<float>* y, const int32_t incy) {
+   std::complex<float> c;
+   cblas_cdotc_sub(n, x, incx, y, incy, &c);
+   return c;
+}
+
+template<>
+std::complex<double> dotc(const int32_t n, const std::complex<double>* x, const int32_t incx,
+   const std::complex<double>* y, const int32_t incy) {
+   std::complex<double> c;
+   cblas_cdotc_sub(n, x, incx, y, incy, &c);
+   return c;
 }
 
 // iamax

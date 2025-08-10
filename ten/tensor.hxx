@@ -2518,6 +2518,20 @@ static auto dot(const X& x, const Y& y) -> decltype(auto) {
    return ::ten::kernels::dot(x, y);
 }
 
+/// dotc
+/// Dot product of a conjugated vector with another vector
+template<class X, class Y>
+requires((::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
+   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static auto dotc(const X& x, const Y& y) -> decltype(auto) {
+   using x_value_type = typename X::value_type;
+   static_assert(::ten::is_complex<x_value_type>::value);
+   using y_value_type = typename Y::value_type;
+   static_assert(::ten::is_complex<y_value_type>::value);
+
+   return ::ten::kernels::dotc(x, y);
+}
+
 /// iamax
 /// Position of the element with maximum absolute value
 template<class X>
