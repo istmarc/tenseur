@@ -129,4 +129,14 @@ int main() {
       ten::swap(col_0, col_1);
       std::cout << a << std::endl;
    }
+
+   {
+      std::cout << "gemv\n";
+      ten::vector<float> y({2}, {-2.0f, 1.0f});
+      ten::matrix<float> a({2, 2}, {1.0f, 2.0f, 3.0f, 4.0f});
+      ten::vector<float> x({2}, {1.0f, 2.0f});
+      ten::gemv(1.0f, a, x, 2.0f, y);
+      std::cout << y << std::endl;
+   }
+
 }

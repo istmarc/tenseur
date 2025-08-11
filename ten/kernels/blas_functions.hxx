@@ -391,6 +391,120 @@ static void swap(X& x, Y& y) {
    ::ten::kernels::blas::swap(n, x.data(), incx, y.data(), incy);
 }
 
+// gemv
+// Matrix vector multiplication
+template <typename T, Matrix A, Vector B, Vector C>
+static void gemv(const T alpha, const A& a, const B &b, const T beta, C &c)
+{
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incb = 1;
+   const size_t incc = 1;
+   ::ten::kernels::blas::gemv(transa, m, n, alpha, a.data(), lda, b.data(), incb, beta,
+              c.data(), incc);
+}
+
+template <typename T, Matrix A, Vector B, Column C>
+static void gemv(const T alpha, const A& a, const B &b, const T beta, C &c)
+{
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incb = 1;
+   const size_t incc = 1;
+   ::ten::kernels::blas::gemv(transa, m, n, alpha, a.data(), lda, b.data(), incb, beta,
+              c.data(), incc);
+}
+
+template <typename T, Matrix A, Vector B, Row C>
+static void gemv(const T alpha, const A& a, const B &b, const T beta, C &c)
+{
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incb = 1;
+   const size_t incc = c.shape().dim(0);
+   ::ten::kernels::blas::gemv(transa, m, n, alpha, a.data(), lda, b.data(), incb, beta,
+              c.data(), incc);
+}
+
+template <typename T, Matrix A, Column B, Vector C>
+static void gemv(const T alpha, const A& a, const B &b,const T beta, C &c)
+{
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incb = 1;
+   const size_t incc = 1;
+   ::ten::kernels::blas::gemv(transa, m, n, alpha, a.data(), lda, b.data(), incb, beta,
+              c.data(), incc);
+}
+
+template <typename T, Matrix A, Column B, Row C>
+static void gemv(const T alpha, const A& a, const B &b, const T beta, C &c)
+{
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incb = 1;
+   const size_t incc = c.shape().dim(0);
+   ::ten::kernels::blas::gemv(transa, m, n, alpha, a.data(), lda, b.data(), incb, beta,
+              c.data(), incc);
+}
+
+template <typename T, Matrix A, Row B, Vector C>
+static void gemv(const T alpha, const A& a, const B &b, const T beta, C &c)
+{
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incb = b.shape().dim(0);
+   const size_t incc = 1;
+   ::ten::kernels::blas::gemv(transa, m, n, alpha, a.data(), lda, b.data(), incb, beta,
+              c.data(), incc);
+}
+
+template <typename T, Matrix A, Row B, Column C>
+static void gemv(const T alpha, const A& a, const B &b, const T beta, C &c)
+{
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incb = b.shape().dim(0);
+   const size_t incc = 1;
+   ::ten::kernels::blas::gemv(transa, m, n, alpha, a.data(), lda, b.data(), incb, beta,
+              c.data(), incc);
+}
+
+template <typename T, Matrix A, Row B, Row C>
+static void gemv(const T alpha, const A& a, const B &b, const T beta, C &c)
+{
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incb = b.shape().dim(0);
+   const size_t incc = c.shape().dim(0);
+   ::ten::kernels::blas::gemv(transa, m, n, alpha, a.data(), lda, b.data(), incb, beta,
+              c.data(), incc);
+}
+
 } // namespace ten::kernels
 
 #endif

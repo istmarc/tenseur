@@ -2567,6 +2567,13 @@ static void swap(X& x, Y& y) {
 
 // Blas level 2 functions
 
+template<typename T, class A, class B, class C>
+requires(::ten::is_matrix_v<A> && (::ten::is_vector_v<B> || ::ten::is_column_v<B> || ::ten::is_row_v<B>)
+   && (::ten::is_vector_v<C> || ::ten::is_column_v<C> || ::ten::is_row_v<C>))
+static void gemv(const T alpha, const A& a, const B& b, const T beta, C& c) {
+   ::ten::kernels::gemv(alpha, a, b, beta, c);
+}
+
 // BLAS Level 3 functions
 
 /// gemm
