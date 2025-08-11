@@ -233,6 +233,18 @@ void ger(const int32_t m, const int32_t n, const double alpha, const double* x, 
    cblas_dger(CBLAS_ORDER::CblasColMajor, m, n, alpha, x, incx, y, incy, a, lda);
 }
 
+template<>
+void ger(const int32_t m, const int32_t n, const std::complex<float> alpha, const std::complex<float>* x, const int32_t incx, const std::complex<float>* y,
+   const int32_t incy, std::complex<float>* a, const int32_t lda) {
+   cblas_cgerc(CBLAS_ORDER::CblasColMajor, m, n, &alpha, x, incx, y, incy, a, lda);
+}
+
+template<>
+void ger(const int32_t m, const int32_t n, const std::complex<double> alpha, const std::complex<double>* x, const int32_t incx, const std::complex<double>* y,
+   const int32_t incy, std::complex<double>* a, const int32_t lda) {
+   cblas_zgerc(CBLAS_ORDER::CblasColMajor, m, n, &alpha, x, incx, y, incy, a, lda);
+}
+
 // General matrix multiplication
 // c = alpha * a * b + beta * c
 template <typename T>

@@ -147,4 +147,15 @@ int main() {
       ten::ger(0.5f, x, y, a);
       std::cout << a << std::endl;
    }
+
+   {
+      std::cout << "Rank one update for complex valued matrix\n";
+      ten::matrix<std::complex<float>> a({2, 2}, {1.0f, 3.0f-1.0fi, 2.0fi, 4.0f});
+      ten::vector<std::complex<float>> x({2}, {1.0f, 1.0f});
+      ten::vector<std::complex<float>> y({2}, {-2.0fi, 1.0f+1.0fi});
+      std::complex<float> alpha = 0.5f;
+      ten::ger(alpha, x, y, a);
+      std::cout << a << std::endl;
+   }
+
 }
