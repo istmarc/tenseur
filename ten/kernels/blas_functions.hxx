@@ -519,6 +519,102 @@ static void ger(const T alpha, const X& x, const Y& y, A& a) {
    ::ten::kernels::blas::ger(m, n, alpha, x.data(), incx, y.data(), incy, a.data(), lda);
 }
 
+template<typename T, Vector X, Column Y, Matrix A>
+static void ger(const T alpha, const X& x, const Y& y, A& a) {
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incx = 1;
+   const size_t incy = 1;
+   ::ten::kernels::blas::ger(m, n, alpha, x.data(), incx, y.data(), incy, a.data(), lda);
+}
+
+template<typename T, Vector X, Row Y, Matrix A>
+static void ger(const T alpha, const X& x, const Y& y, A& a) {
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incx = 1;
+   const size_t incy = y.shape().dim(0);
+   ::ten::kernels::blas::ger(m, n, alpha, x.data(), incx, y.data(), incy, a.data(), lda);
+}
+
+template<typename T, Column X, Vector Y, Matrix A>
+static void ger(const T alpha, const X& x, const Y& y, A& a) {
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incx = 1;
+   const size_t incy = 1;
+   ::ten::kernels::blas::ger(m, n, alpha, x.data(), incx, y.data(), incy, a.data(), lda);
+}
+
+template<typename T, Column X, Column Y, Matrix A>
+static void ger(const T alpha, const X& x, const Y& y, A& a) {
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incx = 1;
+   const size_t incy = 1;
+   ::ten::kernels::blas::ger(m, n, alpha, x.data(), incx, y.data(), incy, a.data(), lda);
+}
+
+template<typename T, Column X, Row Y, Matrix A>
+static void ger(const T alpha, const X& x, const Y& y, A& a) {
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incx = 1;
+   const size_t incy = y.shape().dim(0);
+   ::ten::kernels::blas::ger(m, n, alpha, x.data(), incx, y.data(), incy, a.data(), lda);
+}
+
+template<typename T, Row X, Vector Y, Matrix A>
+static void ger(const T alpha, const X& x, const Y& y, A& a) {
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incx = x.shape().dim(0);
+   const size_t incy = 1;
+   ::ten::kernels::blas::ger(m, n, alpha, x.data(), incx, y.data(), incy, a.data(), lda);
+}
+
+template<typename T, Row X, Column Y, Matrix A>
+static void ger(const T alpha, const X& x, const Y& y, A& a) {
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incx = x.shape().dim(0);
+   const size_t incy = 1;
+   ::ten::kernels::blas::ger(m, n, alpha, x.data(), incx, y.data(), incy, a.data(), lda);
+}
+
+template<typename T, Row X, Row Y, Matrix A>
+static void ger(const T alpha, const X& x, const Y& y, A& a) {
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incx = x.shape().dim(0);
+   const size_t incy = y.shape().dim(0);
+   ::ten::kernels::blas::ger(m, n, alpha, x.data(), incx, y.data(), incy, a.data(), lda);
+}
+
 } // namespace ten::kernels
 
 #endif
