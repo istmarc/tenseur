@@ -13,6 +13,8 @@ A header only C++20 tensor library [WIP]
 - Compile to a shared library
 - Tests for shared library
 - Generate automatic python bindings
+- Match and fuse operations
+- Inplace operations
 
 ### Todo
 - Pythonizations
@@ -22,7 +24,6 @@ A header only C++20 tensor library [WIP]
 - Automatic differentiation
 - Python documentation
 - C++ API documentation
-- Inplace operations
 
 ### Requirements
 - Clang compiler with C++20 support
