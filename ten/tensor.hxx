@@ -2567,12 +2567,24 @@ static void swap(X& x, Y& y) {
 
 // Blas level 2 functions
 
+/// gemv
+/// Generalized matrix vector multiplication
 template<typename T, class A, class B, class C>
 requires(::ten::is_matrix_v<A> && (::ten::is_vector_v<B> || ::ten::is_column_v<B> || ::ten::is_row_v<B>)
    && (::ten::is_vector_v<C> || ::ten::is_column_v<C> || ::ten::is_row_v<C>))
 static void gemv(const T alpha, const A& a, const B& b, const T beta, C& c) {
    ::ten::kernels::gemv(alpha, a, b, beta, c);
 }
+
+/// ger
+/// Rank one update a <- a + alpha * x outer y
+template<typename T, class X, class Y, class A>
+requires(::ten::is_matrix_v<A> && (::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
+   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static void ger(const T alpha, const X& x, const Y& y, A& a) {
+   ::ten::kernels::ger(alpha, x, y, a);
+}
+
 
 // BLAS Level 3 functions
 

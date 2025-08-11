@@ -505,6 +505,20 @@ static void gemv(const T alpha, const A& a, const B &b, const T beta, C &c)
               c.data(), incc);
 }
 
+// ger
+// Rank one update of a matrix
+template<typename T, Vector X, Vector Y, Matrix A>
+static void ger(const T alpha, const X& x, const Y& y, A& a) {
+   size_t m = a.dim(0);
+   size_t n = a.dim(1);
+   using blas::transop;
+   const transop transa = (a.is_transposed() ? transop::trans : transop::no);
+   const size_t lda = (transa == transop::no ? m : n);
+   const size_t incx = 1;
+   const size_t incy = 1;
+   ::ten::kernels::blas::ger(m, n, alpha, x.data(), incx, y.data(), incy, a.data(), lda);
+}
+
 } // namespace ten::kernels
 
 #endif

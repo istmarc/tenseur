@@ -139,4 +139,12 @@ int main() {
       std::cout << y << std::endl;
    }
 
+   {
+      std::cout << "Rank one update\n";
+      ten::matrix<float> a({2, 2}, {1.0f, 3.0f, 2.0f, 4.0f});
+      ten::vector<float> x({2}, {1.0f, 2.0f});
+      ten::vector<float> y({2}, {-2.0f, 1.0f});
+      ten::ger(0.5f, x, y, a);
+      std::cout << a << std::endl;
+   }
 }
