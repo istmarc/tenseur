@@ -192,6 +192,17 @@ template <class T, class shape, storage_order order, class storage,
           class allocator>
 class ranked_tensor;
 
+// Forward declaration of tensor view type
+template <class T, class shape, storage_order order, class storage,
+          class allocator>
+class ranked_tensor_view;
+
+// Forward declaration of seq and mdseq
+struct seq;
+
+template<size_t Rank>
+struct mdseq;
+
 template <typename> struct is_tensor : std::false_type {};
 template <class Scalar, class Shape, storage_order order, class Storage,
           class Allocator>

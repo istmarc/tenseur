@@ -35,6 +35,31 @@
 
 namespace ten {
 
+// Sequence
+struct seq {
+   size_t _start;
+   size_t _end;
+
+   explicit seq(size_t start, size_t end) : _start(start), _end(end) {}
+};
+
+/// Multidimentional sequence
+template <size_t Rank> struct mdseq {
+   std::array<size_t, Rank> _start;
+   std::array<size_t, Rank> _end;
+
+   mdseq(auto... sequences)
+      requires(std::is_same_v<decltype(sequences...[0]), seq> &&
+               sizeof...(sequences) == Rank)
+   {
+      std::array<seq, Rank> arr{sequences...};
+      for (size_t i = 0; i < Rank; i++) {
+         _start[i] = arr[i]._start;
+         _end[i] = arr[i]._end;
+      }
+   }
+};
+
 /// \class Expr
 /// Represent an expression
 template <typename Derived> class expr {
@@ -537,6 +562,9 @@ class ranked_tensor final
    /// Storage type
    using storage_type = Storage;
 
+   using ranked_tensor_view_type =
+       ranked_tensor_view<T, Shape, order, Storage, Allocator>;
+
  private:
    /// Storage format
    ::ten::storage_format _format = ::ten::storage_format::dense;
@@ -993,13 +1021,38 @@ class ranked_tensor final
    /// Overloading the () operator
    [[nodiscard]] inline const typename base_type::value_type &
    operator()(auto... index) const noexcept {
+      static_assert(sizeof...(index) == Shape::rank());
       return at(index...);
    }
 
    /// Overloading the () operator
    [[nodiscard]] inline typename base_type::value_type &
    operator()(auto... index) noexcept {
+      static_assert(sizeof...(index) == Shape::rank());
       return at(index...);
+   }
+
+   // Overload the [] operator for mdseq
+   [[nodiscard]] inline ranked_tensor_view_type
+   operator[](mdseq<Shape::rank()> sequences) const noexcept {
+      return ranked_tensor_view_type(*this, sequences._start, sequences._end);
+   }
+
+   // Overload the ()  operator for seq
+   [[nodiscard]] inline ranked_tensor_view_type
+   operator()(auto... index) noexcept
+      requires(std::is_same_v<decltype(index...[0]), seq>)
+   {
+      static_assert(sizeof...(index) == Shape::rank());
+      // TODO Check if its a valid sequence
+      std::array<size_t, Shape::rank()> starts;
+      std::array<size_t, Shape::rank()> ends;
+      std::array<seq, Shape::rank()> sequences{index...};
+      for (size_t i = 0; i < Shape::rank(); i++) {
+         starts[i] = sequences[i]._start;
+         ends[i] = sequences[i]._end;
+      }
+      return ranked_tensor_view_type(*this, starts, ends);
    }
 
    // Get the column
@@ -1187,6 +1240,73 @@ template <class T, size_type... Dims>
 using stensor = ranked_tensor<
     T, shape<Dims...>, default_order, default_storage<T, shape<Dims...>>,
     typename details::allocator_type<default_storage<T, shape<Dims...>>>::type>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Ranked tensor view
+
+template <class T, class Shape, storage_order order, class Storage,
+          class Allocator>
+class ranked_tensor_view final {
+ public:
+   using shape_type = Shape;
+   using tensor_type = ranked_tensor<T, Shape, order, Storage, Allocator>;
+
+ private:
+   static constexpr size_t _rank = Shape::rank();
+   tensor_type _data;
+   std::array<size_t, _rank> _start;
+   std::array<size_t, _rank> _end;
+
+ public:
+   explicit ranked_tensor_view(const tensor_type &data,
+                               const std::array<size_t, _rank> &start,
+                               const std::array<size_t, _rank> &end)
+       : _data(data), _start(start), _end(end) {}
+
+   explicit ranked_tensor_view(const tensor_type &data,
+                               std::array<size_t, _rank> &&start,
+                               std::array<size_t, _rank> &&end)
+       : _data(data), _start(std::move(start)), _end(std::move(end)) {}
+
+   // Assign a value
+   // TODO Extend for up to 5d tensors
+   ranked_tensor_view &operator=(T value) noexcept {
+      static_assert(_rank == 1 || _rank == 2 || _rank == 3,
+                    "Assignemnt is supported only for slices or vector, "
+                    "matrices and 3d tensors.");
+
+      if (_rank == 1) {
+         for (size_t i = _start[0]; i < _end[0]; i++) {
+            _data[i] = value;
+         }
+      } else if (__rank == 2) {
+         for (size_t i = _start[0]; i < _end[0]; i++) {
+            for (size_t j = _start[1]; j < _end[1]; j++) {
+               _data(i, j) = value;
+            }
+         }
+      } else if (__rank == 3) {
+         for (size_t i = _start[0]; i < _end[0]; i++) {
+            for (size_t j = _start[1]; j < _end[1]; j++) {
+               for (size_t k = _start[2]; j < _end[2]; k++) {
+                  _data(i, j, k) = value;
+               }
+            }
+         }
+      }
+      return *this;
+   }
+
+   // TODO Assign a dynamic vector
+   /*template <storage_order order, class StorageType, class AllocatorType>
+   ranked_tensor_view& operator=(ten::vector<T, ten::dynamic_shape<0>, order,
+   StorageType, AllocatorType> values) noexcept { for (size_t i = _start[0]; i <
+   _end[0]; i++) {
+      }
+   }*/
+
+   // TODO Assign a dynamic matrix
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Sparse tensors and matrices
@@ -2502,28 +2622,31 @@ static void axpy(const T a, X &&x, Y &y) {
 
 /// copy
 /// Copy a vector to another vector
-template<class X, class Y>
-requires((::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
-   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
-static void copy(const X& x, Y& y) {
+template <class X, class Y>
+   requires(
+       (::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>) &&
+       (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static void copy(const X &x, Y &y) {
    ::ten::kernels::copy(x, y);
 }
 
 /// dot
 /// Dot product of two vectors
-template<class X, class Y>
-requires((::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
-   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
-static auto dot(const X& x, const Y& y) -> decltype(auto) {
+template <class X, class Y>
+   requires(
+       (::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>) &&
+       (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static auto dot(const X &x, const Y &y) -> decltype(auto) {
    return ::ten::kernels::dot(x, y);
 }
 
 /// dotc
 /// Dot product of a conjugated vector with another vector
-template<class X, class Y>
-requires((::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
-   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
-static auto dotc(const X& x, const Y& y) -> decltype(auto) {
+template <class X, class Y>
+   requires(
+       (::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>) &&
+       (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static auto dotc(const X &x, const Y &y) -> decltype(auto) {
    using x_value_type = typename X::value_type;
    static_assert(::ten::is_complex<x_value_type>::value);
    using y_value_type = typename Y::value_type;
@@ -2534,57 +2657,77 @@ static auto dotc(const X& x, const Y& y) -> decltype(auto) {
 
 /// iamax
 /// Position of the element with maximum absolute value
-template<class X>
-requires(::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
-static auto iamax(const X& x) -> decltype(auto) {
+template <class X>
+   requires(::ten::is_vector_v<X> || ::ten::is_column_v<X> ||
+            ::ten::is_row_v<X>)
+static auto iamax(const X &x) -> decltype(auto) {
    return ::ten::kernels::iamax(x);
 }
 
 /// nrm2
 /// Euclidian norm of a vector
-template<class X>
-requires(::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
-static auto nrm2(const X& x) -> decltype(auto) {
+template <class X>
+   requires(::ten::is_vector_v<X> || ::ten::is_column_v<X> ||
+            ::ten::is_row_v<X>)
+static auto nrm2(const X &x) -> decltype(auto) {
    return ::ten::kernels::nrm2(x);
 }
 
 /// scal
 /// Compute the scaled vector alpha*x and reset the result to x
-template<typename T, class X>
-requires(::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
-static void scal(const T alpha, X& x) {
+template <typename T, class X>
+   requires(::ten::is_vector_v<X> || ::ten::is_column_v<X> ||
+            ::ten::is_row_v<X>)
+static void scal(const T alpha, X &x) {
    ::ten::kernels::scal(alpha, x);
 }
 
 /// swap
 /// Swap the contents of two vectors
-template<class X, class Y>
-requires((::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
-   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
-static void swap(X& x, Y& y) {
-   ::ten::kernels::swap(x, y);
+template <class X, class Y>
+   requires(
+       (::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>) &&
+       (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static void swap(X &x, Y &y) {
+   // FIXME This requires BLAS
+   // ::ten::kernels::swap(x, y);
 }
 
 // Blas level 2 functions
 
 /// gemv
 /// Generalized matrix vector multiplication
-template<typename T, class A, class B, class C>
-requires(::ten::is_matrix_v<A> && (::ten::is_vector_v<B> || ::ten::is_column_v<B> || ::ten::is_row_v<B>)
-   && (::ten::is_vector_v<C> || ::ten::is_column_v<C> || ::ten::is_row_v<C>))
-static void gemv(const T alpha, const A& a, const B& b, const T beta, C& c) {
+template <typename T, class A, class B, class C>
+   requires(
+       ::ten::is_matrix_v<A> &&
+       (::ten::is_vector_v<B> || ::ten::is_column_v<B> || ::ten::is_row_v<B>) &&
+       (::ten::is_vector_v<C> || ::ten::is_column_v<C> || ::ten::is_row_v<C>))
+static void gemv(const T alpha, const A &a, const B &b, const T beta, C &c) {
    ::ten::kernels::gemv(alpha, a, b, beta, c);
 }
 
 /// ger
 /// Rank one update a <- a + alpha * x outer y
-template<typename T, class X, class Y, class A>
-requires(::ten::is_matrix_v<A> && (::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>)
-   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
-static void ger(const T alpha, const X& x, const Y& y, A& a) {
+template <typename T, class X, class Y, class A>
+   requires(
+       ::ten::is_matrix_v<A> &&
+       (::ten::is_vector_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>) &&
+       (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static void ger(const T alpha, const X &x, const Y &y, A &a) {
    ::ten::kernels::ger(alpha, x, y, a);
 }
 
+/*
+/// symv
+/// Symmetric matrix vector multiplication
+/// y <- alpha * A * x + beta * y
+template<typename T, class A, class X, class Y>
+requires(::ten::is_matrix_v<A> && (::ten::is_vector_v<X> ||
+::ten::is_column_v<X> || ::ten::is_row_v<X>)
+   && (::ten::is_vector_v<Y> || ::ten::is_column_v<Y> || ::ten::is_row_v<Y>))
+static void symv(const T alpha, const A& a, const X& x, const T beta, Y& y) {
+   ::ten::kernels::symv(alpha, a, x, beta, y);
+}*/
 
 // BLAS Level 3 functions
 

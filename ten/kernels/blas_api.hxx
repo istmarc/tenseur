@@ -173,6 +173,7 @@ void scal(const int32_t n, const double alpha, std::complex<double>* x, const in
 template<typename T>
 void swap(const int32_t n, T* x, const int32_t incx, T* y, const int32_t incy);
 
+/* FIXME why specialization requires BLAS
 template<>
 void swap(const int32_t n, float* x, const int32_t incx, float* y, const int32_t incy) {
    cblas_sswap(n, x, incx, y, incy);
@@ -191,7 +192,7 @@ void swap(const int32_t n, std::complex<float>* x, const int32_t incx, std::comp
 template<>
 void swap(const int32_t n, std::complex<double>* x, const int32_t incx, std::complex<double>* y, const int32_t incy) {
    cblas_zswap(n, x, incx, y, incy);
-}
+}*/
 
 // Vector matrix multiplication
 // y = alpha * a * x + beta * y
