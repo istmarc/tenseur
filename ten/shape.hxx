@@ -204,6 +204,11 @@ template <size_type __first, size_type... __rest> class shape {
       return _dims[index];
    }
 
+   // Return th static dimentsion at index
+   [[nodiscard]] static inline size_type static_dim(size_type index) {
+      return _static_dims[index];
+   }
+
    /// Set the dynamic shape at index to value
    inline void set_dim(size_type index, size_type value)
       requires(_is_dynamic)

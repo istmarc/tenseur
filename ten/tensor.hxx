@@ -35,6 +35,9 @@
 
 namespace ten {
 
+// Last element of a sequence
+size_t last = 0;
+
 // Sequence
 struct seq {
    size_t _start;
@@ -1035,6 +1038,19 @@ class ranked_tensor final
    // Overload the [] operator for mdseq
    [[nodiscard]] inline ranked_tensor_view_type
    operator[](mdseq<Shape::rank()> sequences) const noexcept {
+      if constexpr (Shape::is_dynamic()) {
+         for (size_t i = 0; i < Shape::rank(); i++) {
+            if (sequences._end[i] == 0) {
+               sequences._end[i] = _shape.value().dim(i);
+            }
+         }
+      } else {
+         for (size_t i = 0; i < Shape::rank(); i++) {
+            if (sequences._end[i] == 0) {
+               sequences._end[i] = Shape::static_dim(i);
+            }
+         }
+      }
       return ranked_tensor_view_type(*this, sequences._start, sequences._end);
    }
 
@@ -1043,14 +1059,29 @@ class ranked_tensor final
    operator()(auto... index) noexcept
       requires(std::is_same_v<decltype(index...[0]), seq>)
    {
-      static_assert(sizeof...(index) == Shape::rank());
+      static_assert(sizeof...(index) == Shape::rank(),
+                    "operator () must be called with " +
+                        std::to_string(Shape::rank()) + " arguments.");
       // TODO Check if its a valid sequence
       std::array<size_t, Shape::rank()> starts;
       std::array<size_t, Shape::rank()> ends;
       std::array<seq, Shape::rank()> sequences{index...};
       for (size_t i = 0; i < Shape::rank(); i++) {
          starts[i] = sequences[i]._start;
-         ends[i] = sequences[i]._end;
+         if constexpr (Shape::is_dynamic()) {
+            if (sequences[i]._end == 0) {
+               ends[i] = _shape.value().dim(i);
+            } else {
+               ends[i] = sequences[i]._end;
+            }
+         } else {
+            // Shape::is_static()
+            if (sequences[i]._end == 0) {
+               ends[i] = Shape::static_dim(i);
+            } else {
+               ends[i] = sequences[i]._end;
+            }
+         }
       }
       return ranked_tensor_view_type(*this, starts, ends);
    }
@@ -1275,17 +1306,17 @@ class ranked_tensor_view final {
                     "Assignemnt is supported only for slices or vector, "
                     "matrices and 3d tensors.");
 
-      if (_rank == 1) {
+      if constexpr (_rank == 1) {
          for (size_t i = _start[0]; i < _end[0]; i++) {
             _data[i] = value;
          }
-      } else if (__rank == 2) {
+      } else if constexpr (_rank == 2) {
          for (size_t i = _start[0]; i < _end[0]; i++) {
             for (size_t j = _start[1]; j < _end[1]; j++) {
                _data(i, j) = value;
             }
          }
-      } else if (__rank == 3) {
+      } else if constexpr (_rank == 3) {
          for (size_t i = _start[0]; i < _end[0]; i++) {
             for (size_t j = _start[1]; j < _end[1]; j++) {
                for (size_t k = _start[2]; j < _end[2]; k++) {
@@ -1297,13 +1328,52 @@ class ranked_tensor_view final {
       return *this;
    }
 
-   // TODO Assign a dynamic vector
-   /*template <storage_order order, class StorageType, class AllocatorType>
-   ranked_tensor_view& operator=(ten::vector<T, ten::dynamic_shape<0>, order,
-   StorageType, AllocatorType> values) noexcept { for (size_t i = _start[0]; i <
-   _end[0]; i++) {
+   // Assign a dynamic vector
+   template <storage_order storageOrder, class StorageType, class AllocatorType>
+   ranked_tensor_view &
+   operator=(ten::vector<T, storageOrder, StorageType, AllocatorType>
+                 values) noexcept {
+      static_assert(_rank == 1 || _rank == 2 || _rank == 3,
+                    "Vector assignemnt is supported only for slices or vector, "
+                    "matrices and 3d tensors.");
+      if constexpr (_rank == 1) {
+         if (values.size() != (_end[0] - _start[0])) {
+            std::cerr << "Error Assigning a vector to a vector slice, "
+                         "incompatible sizes.\n";
+         }
+         for (size_t i = _start[0]; i < _end[0]; i++) {
+            _data[i] = values[i - _start[0]];
+         }
+      } else if constexpr (_rank == 2) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1])) {
+            std::cerr << "Error Assigning a vector to a matrix slice, "
+                         "incompatible sizes.\n";
+         }
+         size_t k = 0;
+         for (size_t i = _start[0]; i < _end[0]; i++) {
+            for (size_t j = _start[1]; j < _end[1]; j++) {
+               _data(i, j) = values[k];
+               k++;
+            }
+         }
+      } else if constexpr (_rank == 3) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])) {
+            std::cerr << "Error Assigning a vector to a tensor slice, "
+                         "incompatible sizes.\n";
+         }
+         size_t l = 0;
+         for (size_t i = _start[0]; i < _end[0]; i++) {
+            for (size_t j = _start[1]; j < _end[1]; j++) {
+               for (size_t k = _start[2]; k < _end[2]; k++) {
+                  _data(i, j, k) = values[l];
+                  l++;
+               }
+            }
+         }
       }
-   }*/
+      return *this;
+   }
 
    // TODO Assign a dynamic matrix
 };
