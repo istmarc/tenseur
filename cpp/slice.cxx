@@ -14,6 +14,14 @@ int main() {
 
    {
       matrix<float> x({3, 3});
+      x = 1.0f;
+      x.row(0) = 2.0f;
+      x.col(0) = 3.0f;
+      std::cout << x << std::endl;
+   }
+
+   {
+      matrix<float> x({3, 3});
       auto slice = x(seq(0, 3), seq(0, 1));
       slice = 99.0f;
       std::cout << x << std::endl;

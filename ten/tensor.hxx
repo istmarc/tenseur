@@ -849,6 +849,14 @@ class ranked_tensor final
       return *this;
    }
 
+   // Assign a value of type T
+   ranked_tensor &operator=(T value) noexcept {
+      for (size_t i = 0; i < _node.get()->size(); i++) {
+         (*_node.get())[i] = value;
+      }
+      return *this;
+   }
+
    /// Constructor for vector
    explicit ranked_tensor(size_type size) noexcept
       requires(Shape::is_dynamic() && Shape::rank() == 1)
@@ -1087,7 +1095,7 @@ class ranked_tensor final
    }
 
    // Get the column
-   [[nodiscard]] auto column(const size_t index) const -> decltype(auto)
+   [[nodiscard]] auto col(const size_t index) const -> decltype(auto)
       requires(Shape::rank() == 2 && Shape::is_dynamic())
    {
       return ranked_column<T, Shape, order, Storage, Allocator>(
@@ -1103,7 +1111,7 @@ class ranked_tensor final
    }
 
    // Get the static column
-   [[nodiscard]] auto column(const size_t index) const -> decltype(auto)
+   [[nodiscard]] auto col(const size_t index) const -> decltype(auto)
       requires(Shape::rank() == 2 && Shape::is_static())
    {
       return ranked_column<T, Shape, order, Storage, Allocator>(index, _node);
@@ -1733,7 +1741,7 @@ class ranked_column final
    }
 
    // Asignement from a static vector
-   template <StaticVector V> ranked_column &operator=(V &&value) {
+   template <StaticVector V> ranked_column &operator=(V &&value) noexcept {
       size_t rows = _shape.value().dim(0);
       for (size_t idx = 0; idx < rows; idx++) {
          (*_node.get())[idx + _index * rows] = value[idx];
@@ -1742,10 +1750,19 @@ class ranked_column final
    }
 
    // Asgnement from a dynamic vector
-   template <DynamicVector V> ranked_column &operator=(V &&value) {
+   template <DynamicVector V> ranked_column &operator=(V &&value) noexcept {
       size_t rows = _shape.value().dim(0);
       for (size_t idx = 0; idx < rows; idx++) {
          (*_node.get())[idx + _index * rows] = value[idx];
+      }
+      return *this;
+   }
+
+   // Assign from a value of type T
+   ranked_column& operator=(T value) noexcept {
+      size_t rows = _shape.value().dim(0);
+      for (size_t idx = 0; idx < rows; idx++) {
+         (*_node.get())[idx + _index * rows] = value;
       }
       return *this;
    }
@@ -1933,7 +1950,7 @@ class ranked_row final
    }
 
    // Asignement from a static vector
-   template <StaticVector V> ranked_row &operator=(V &&value) {
+   template <StaticVector V> ranked_row &operator=(V &&value) noexcept {
       size_t rows = _shape.value().dim(0);
       size_t cols = _shape.value().dim(1);
       for (size_t idx = 0; idx < cols; idx++) {
@@ -1942,12 +1959,22 @@ class ranked_row final
       return *this;
    }
 
-   // Asgnement from a dynamic vector
-   template <DynamicVector V> ranked_row &operator=(V &&value) {
+   // Assignement from a dynamic vector
+   template <DynamicVector V> ranked_row &operator=(V &&value) noexcept {
       size_t rows = _shape.value().dim(0);
       size_t cols = _shape.value().dim(1);
       for (size_t idx = 0; idx < cols; idx++) {
          (*_node.get())[_index + idx * rows] = value[idx];
+      }
+      return *this;
+   }
+
+   // Assign a value of type T
+   ranked_row& operator=(T value) noexcept {
+      size_t rows = _shape.value().dim(0);
+      size_t cols = _shape.value().dim(1);
+      for (size_t idx = 0; idx < cols; idx++) {
+         (*_node.get())[_index + idx * rows] = value;
       }
       return *this;
    }
