@@ -30,8 +30,33 @@ A header only C++20 tensor library [WIP]
 - CMake
 - BLAS library (OpenBlas or BLIS)
 
-## Examples
+# Examples
+
+- Assignment
+
+```c++
+   ten::matrix<float> x({3, 3});
+   // Assign a single value
+   x = 1.0f;
+   // Row and columns can be accessed using col and row
+   x.row(0) = 2.0f;
+   x.col(0) = 3.0f;
+   std::cout << x << std::endl;
+```
+
+- Slicing
+
+```c++
+   using ten::seq;
+   using ten::last;
+   ten::smatrix<float, 3, 3> x;
+   auto slice = x(seq(1, last), seq(0, 1));
+   slice = 99.0f;
+   std::cout << x << std::endl;
+```
+
 - Gemm
+
 ```c++
 #include <ten/tensor>
 #include <ten/io>
@@ -44,21 +69,6 @@ int main() {
    // Match and fuse to a single call to gemm
    c = a * b + c;
    std::cout << c << std::endl;
-}
-```
-
-
-- Multiply and add
-
-```c++
-#include <ten/tensor>
-
-int main() {
-   auto a = ten::range<ten::matrix<float>>({3, 3});
-   auto b = ten::range<ten::matrix<float>>({3, 3});
-   auto c = ten::ones<ten::vector<float>>(3);
-
-   ten::vector<float> x = a * b + c;
 }
 ```
 
@@ -92,6 +102,8 @@ int main() {
    std::cout << "data = \n" << y << std::endl;
 }
 ```
+
+# Building tenseur
 
 ## Build the examples
 
