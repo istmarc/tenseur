@@ -1163,7 +1163,7 @@ class ranked_tensor final
              class StorageType, class AllocatorType>
    bool
    operator==(const ranked_tensor<Type, ShapeType, StorageOrder, StorageType,
-                                  AllocatorType> &right) const {
+                                  AllocatorType> &right) const noexcept {
       // Template parameters must be the same
       if (!std::is_same_v<T, Type>) {
          return false;
@@ -1204,6 +1204,230 @@ class ranked_tensor final
    operator!=(const ranked_tensor<Type, ShapeType, StorageOrder, StorageType,
                                   AllocatorType> &right) const {
       return !operator==(right);
+   }
+
+   // Overload the > operator for static tensors
+   ranked_tensor<
+       bool, Shape, order, default_storage<bool, Shape>,
+       typename details::allocator_type<default_storage<bool, Shape>>::type>
+   operator>(const ranked_tensor &right) const noexcept
+      requires(Shape::is_static())
+   {
+      ranked_tensor<
+          bool, Shape, order, default_storage<bool, Shape>,
+          typename details::allocator_type<default_storage<bool, Shape>>::type>
+          res;
+      for (size_t i = 0; i < size(); i++) {
+         res[i] = (*this)[i] > right[i];
+      }
+      return res;
+   }
+
+   // Overload the > operator for dynamic tensors
+   ranked_tensor<bool, Shape, order>
+   operator>(const ranked_tensor &right) const noexcept
+      requires(Shape::is_dynamic())
+   {
+      if (_shape.value() != right.shape()) {
+         std::cerr << "Error, > operator, inputs must have the same shape.\n";
+      }
+      ranked_tensor<bool, Shape, order> res(_shape.value());
+      for (size_t i = 0; i < size(); i++) {
+         res[i] = (*this)[i] > right[i];
+      }
+      return res;
+   }
+
+   ranked_tensor<bool, Shape, order>
+   gt(const ranked_tensor &right) const noexcept
+      requires(Shape::is_dynamic())
+   {
+      return operator>(right);
+   }
+
+   ranked_tensor<
+       bool, Shape, order, default_storage<bool, Shape>,
+       typename details::allocator_type<default_storage<bool, Shape>>::type>
+   gt(const ranked_tensor &right) const noexcept
+      requires(Shape::is_static())
+   {
+      return operator>(right);
+   }
+
+   // Overload the < operator for static tensors
+   ranked_tensor<
+       bool, Shape, order, default_storage<bool, Shape>,
+       typename details::allocator_type<default_storage<bool, Shape>>::type>
+   operator<(const ranked_tensor &right) const noexcept
+      requires(Shape::is_static())
+   {
+      ranked_tensor<
+          bool, Shape, order, default_storage<bool, Shape>,
+          typename details::allocator_type<default_storage<bool, Shape>>::type>
+          res;
+      for (size_t i = 0; i < size(); i++) {
+         res[i] = (*this)[i] < right[i];
+      }
+      return res;
+   }
+
+   // Overload the < operator for dynamic tensors
+   ranked_tensor<bool, Shape, order>
+   operator<(const ranked_tensor &right) const noexcept
+      requires(Shape::is_dynamic())
+   {
+      if (_shape.value() != right.shape()) {
+         std::cerr << "Error, > operator, inputs must have the same shape.\n";
+      }
+      ranked_tensor<bool, Shape, order> res(_shape.value());
+      for (size_t i = 0; i < size(); i++) {
+         res[i] = (*this)[i] < right[i];
+      }
+      return res;
+   }
+
+   ranked_tensor<bool, Shape, order>
+   lt(const ranked_tensor &right) const noexcept
+      requires(Shape::is_dynamic())
+   {
+      return operator<(right);
+   }
+
+   ranked_tensor<
+       bool, Shape, order, default_storage<bool, Shape>,
+       typename details::allocator_type<default_storage<bool, Shape>>::type>
+   lt(const ranked_tensor &right) const noexcept
+      requires(Shape::is_static())
+   {
+      return operator<(right);
+   }
+
+   // Overload the >= operator for static tensors
+   ranked_tensor<
+       bool, Shape, order, default_storage<bool, Shape>,
+       typename details::allocator_type<default_storage<bool, Shape>>::type>
+   operator>=(const ranked_tensor &right) const noexcept
+      requires(Shape::is_static())
+   {
+      ranked_tensor<
+          bool, Shape, order, default_storage<bool, Shape>,
+          typename details::allocator_type<default_storage<bool, Shape>>::type>
+          res;
+      for (size_t i = 0; i < size(); i++) {
+         res[i] = (*this)[i] >= right[i];
+      }
+      return res;
+   }
+
+   // Overload the >= operator for dynamic tensors
+   ranked_tensor<bool, Shape, order>
+   operator>=(const ranked_tensor &right) const noexcept
+      requires(Shape::is_dynamic())
+   {
+      if (_shape.value() != right.shape()) {
+         std::cerr << "Error, > operator, inputs must have the same shape.\n";
+      }
+      ranked_tensor<bool, Shape, order> res(_shape.value());
+      for (size_t i = 0; i < size(); i++) {
+         res[i] = (*this)[i] >= right[i];
+      }
+      return res;
+   }
+
+   ranked_tensor<bool, Shape, order>
+   ge(const ranked_tensor &right) const noexcept
+      requires(Shape::is_dynamic())
+   {
+      return operator>=(right);
+   }
+
+   ranked_tensor<
+       bool, Shape, order, default_storage<bool, Shape>,
+       typename details::allocator_type<default_storage<bool, Shape>>::type>
+   ge(const ranked_tensor &right) const noexcept
+      requires(Shape::is_static())
+   {
+      return operator>=(right);
+   }
+
+   // Overload the <= operator for static tensors
+   ranked_tensor<
+       bool, Shape, order, default_storage<bool, Shape>,
+       typename details::allocator_type<default_storage<bool, Shape>>::type>
+   operator<=(const ranked_tensor &right) const noexcept
+      requires(Shape::is_static())
+   {
+      ranked_tensor<
+          bool, Shape, order, default_storage<bool, Shape>,
+          typename details::allocator_type<default_storage<bool, Shape>>::type>
+          res;
+      for (size_t i = 0; i < size(); i++) {
+         res[i] = (*this)[i] <= right[i];
+      }
+      return res;
+   }
+
+   // Overload the >= operator for dynamic tensors
+   ranked_tensor<bool, Shape, order>
+   operator<=(const ranked_tensor &right) const noexcept
+      requires(Shape::is_dynamic())
+   {
+      if (_shape.value() != right.shape()) {
+         std::cerr << "Error, > operator, inputs must have the same shape.\n";
+      }
+      ranked_tensor<bool, Shape, order> res(_shape.value());
+      for (size_t i = 0; i < size(); i++) {
+         res[i] = (*this)[i] <= right[i];
+      }
+      return res;
+   }
+
+   ranked_tensor<bool, Shape, order>
+   le(const ranked_tensor &right) const noexcept
+      requires(Shape::is_dynamic())
+   {
+      return operator<=(right);
+   }
+
+   ranked_tensor<
+       bool, Shape, order, default_storage<bool, Shape>,
+       typename details::allocator_type<default_storage<bool, Shape>>::type>
+   le(const ranked_tensor &right) const noexcept
+      requires(Shape::is_static())
+   {
+      return operator<=(right);
+   }
+
+   // Overload the elementwise == or eq operator for static tensors
+   ranked_tensor<
+       bool, Shape, order, default_storage<bool, Shape>,
+       typename details::allocator_type<default_storage<bool, Shape>>::type>
+   eq(const ranked_tensor &right) const noexcept
+      requires(Shape::is_static())
+   {
+      ranked_tensor<
+          bool, Shape, order, default_storage<bool, Shape>,
+          typename details::allocator_type<default_storage<bool, Shape>>::type>
+          res;
+      for (size_t i = 0; i < size(); i++) {
+         res[i] = (*this)[i] == right[i];
+      }
+      return res;
+   }
+
+   // Overload the >= operator for dynamic tensors
+   ranked_tensor<bool, Shape, order>
+   eq(const ranked_tensor &right) const noexcept
+      requires(Shape::is_dynamic())
+   {
+      if (_shape.value() != right.shape()) {
+         std::cerr << "Error, > operator, inputs must have the same shape.\n";
+      }
+      ranked_tensor<bool, Shape, order> res(_shape.value());
+      for (size_t i = 0; i < size(); i++) {
+         res[i] = (*this)[i] == right[i];
+      }
+      return res;
    }
 
    // Serialize friend function
@@ -1759,7 +1983,7 @@ class ranked_column final
    }
 
    // Assign from a value of type T
-   ranked_column& operator=(T value) noexcept {
+   ranked_column &operator=(T value) noexcept {
       size_t rows = _shape.value().dim(0);
       for (size_t idx = 0; idx < rows; idx++) {
          (*_node.get())[idx + _index * rows] = value;
@@ -1970,7 +2194,7 @@ class ranked_row final
    }
 
    // Assign a value of type T
-   ranked_row& operator=(T value) noexcept {
+   ranked_row &operator=(T value) noexcept {
       size_t rows = _shape.value().dim(0);
       size_t cols = _shape.value().dim(1);
       for (size_t idx = 0; idx < cols; idx++) {
