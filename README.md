@@ -1,7 +1,18 @@
 [![docs](https://readthedocs.org/projects/tenseur/badge/?version=latest)](https://tenseur.readthedocs.io/en/latest/index.html)
 
-## Tenseur
+# Tenseur
+
 A header only C++20 tensor library [WIP]
+
+Tenseur is a header only C++20 tensor library designed for high performance numerical computations, priotizing speed above all else. It assume that the user will ensure the correctness of their program. Execptions handling and bounds checking are disabled to minimize overhead. This makes it ideal for applications where computational efficiency is goal such as deep learning and scientific computing. An extension with automatic differentiation is planned.
+
+## Tensor classes
+
+The library is build around a core tensor class `ranked_tensor<T, class Shape, storge_order order, class Storage, class Allocator>` that provide efficient storage (column major and row major) and manipulation of multidimentional arrays through operator overloading. Operations are implemented using techniques such as SIMD instructions and cache friendly memory access. Error handling is minimized, instead of throwing exceptions, the library relies on the user to validate inputs and manage potential issues. Some check are done at compile time for static tensors (tensors with static shape).
+
+## Expressions API
+
+An expression API class for representing unary and binary operations between tensors is implemented. Its inspired by compiler optimization techniques and passes. It makes it possible to do expression matching at compile time and fuse some opeations, for examples a basic call to gemm can be written as `c = a * b + c`, it will be lowered to `gemm(1.0, a, b, 1.0, c);` instead of writing `c.noalis() = a * b + c` as in most numerical libraries. Also unary operation will be lowered to inplace operations whenever that's possible. For example `c = ten::sqrt(c)` will be lowered to an inplace operation `inplace_sqrt(c)`.
 
 ### Features
 - Multi dimensional arrays
@@ -15,11 +26,11 @@ A header only C++20 tensor library [WIP]
 - Generate automatic python bindings
 - Match and fuse operations
 - Inplace operations
+- Sparse tensors
 
 ### Todo
 - Pythonizations
 - CI/CD with tests
-- Sparse tensors
 - More special matrices
 - Automatic differentiation
 - Python documentation
@@ -35,24 +46,24 @@ A header only C++20 tensor library [WIP]
 - Assignment
 
 ```c++
-   ten::matrix<float> x({3, 3});
-   // Assign a single value
-   x = 1.0f;
-   // Row and columns can be accessed using col and row
-   x.row(0) = 2.0f;
-   x.col(0) = 3.0f;
-   std::cout << x << std::endl;
+ten::matrix<float> x({3, 3});
+// Assign a single value
+x = 1.0f;
+// Row and columns can be accessed using col and row
+x.row(0) = 2.0f;
+x.col(0) = 3.0f;
+std::cout << x << std::endl;
 ```
 
 - Slicing
 
 ```c++
-   using ten::seq;
-   using ten::last;
-   ten::smatrix<float, 3, 3> x;
-   auto slice = x(seq(1, last), seq(0, 1));
-   slice = 99.0f;
-   std::cout << x << std::endl;
+using ten::seq;
+using ten::last;
+ten::smatrix<float, 3, 3> x;
+auto slice = x(seq(1, last), seq(0, 1));
+slice = 99.0f;
+std::cout << x << std::endl;
 ```
 
 - Gemm
