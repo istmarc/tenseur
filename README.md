@@ -4,17 +4,17 @@
 
 A header only C++20 tensor library [WIP]
 
-Tenseur is a header only C++20 tensor library designed for high performance numerical computations, priotizing speed above all else. It assume that the user will ensure the correctness of their program. Execptions handling and bounds checking are disabled to minimize overhead. This makes it ideal for applications where computational efficiency is goal such as deep learning and scientific computing. An extension with automatic differentiation is planned.
+Tenseur is a header only C++20 tensor library designed for high performance numerical computations, prioritizing speed above all else. It assume that the user will ensure the correctness of their program. Execptions handling and bounds checking are disabled to minimize overhead. This makes it ideal for applications where computational efficiency is the goal such as deep learning and scientific computing. An extension with automatic differentiation is planned.
 
 ## Tensor classes
 
-The library is build around a core tensor class `ranked_tensor<T, class Shape, storge_order order, class Storage, class Allocator>` that provide efficient storage (column major and row major) and manipulation of multidimentional arrays through operator overloading. Operations are implemented using techniques such as SIMD instructions and cache friendly memory access. Error handling is minimized, instead of throwing exceptions, the library relies on the user to validate inputs and manage potential issues. Some check are done at compile time for static tensors (tensors with static shape).
+The library is build around a core tensor class `ranked_tensor<T, class Shape, storge_order order, class Storage, class Allocator>` that provide efficient storage (column major and row major) and manipulation of multidimentional arrays through operator overloading. Operations are implemented using techniques such as SIMD instructions and cache friendly memory access. Error handling is minimized, instead of throwing exceptions, the library relies on the user to validate inputs and manage potential issues. Some check are done at compile time for static tensors (tensors with static shape). Aliases such as `tensor<T, Shape>`, `matrix<T, Shape>`, `vector<T>`, `stensor<T, Dims...>`, `smatrix<T, Rows, Cols>`, and `svector<T, Size>` are defined.
 
 ## Expressions API
 
 An expression API class for representing unary and binary operations between tensors is implemented. Its inspired by compiler optimization techniques and passes. It makes it possible to do expression matching at compile time and fuse some opeations, for examples a basic call to gemm can be written as `c = a * b + c`, it will be lowered to `gemm(1.0, a, b, 1.0, c);` instead of writing `c.noalis() = a * b + c` as in most numerical libraries. Also unary operation will be lowered to inplace operations whenever that's possible. For example `c = ten::sqrt(c)` will be lowered to an inplace operation `inplace_sqrt(c)`.
 
-### Features
+## Features
 - Multi dimensional arrays
 - Support static, dynamic and mixed shape tensors
 - Lazy evaluation of expressions
@@ -28,7 +28,7 @@ An expression API class for representing unary and binary operations between ten
 - Inplace operations
 - Sparse tensors
 
-### Todo
+## Todo
 - Pythonizations
 - CI/CD with tests
 - More special matrices
@@ -36,7 +36,7 @@ An expression API class for representing unary and binary operations between ten
 - Python documentation
 - C++ API documentation
 
-### Requirements
+## Requirements
 - Clang compiler with C++20 support
 - CMake
 - BLAS library (OpenBlas or BLIS)
