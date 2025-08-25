@@ -77,7 +77,6 @@ int main() {
    auto b = ten::range<ten::matrix<float>>({3, 3});
    auto c = ten::range<ten::matrix<float>>({3, 3});
 
-   // Match and fuse to a single call to gemm
    c = a * b + c;
    std::cout << c << std::endl;
 }
