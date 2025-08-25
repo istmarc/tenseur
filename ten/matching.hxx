@@ -34,7 +34,6 @@ bool match_gemm(ExprType &&expr, const C &x) {
          }
          // Right type must be a matrix or static matrix, equal to c
          using right_type = expr_type::right_ty;
-         std::cout << ::ten::is_matrix<right_type>::value << std::endl;
          if (!::ten::is_matrix<right_type>::value &&
              !::ten::is_smatrix<right_type>::value) {
             return false;
@@ -60,11 +59,15 @@ template <Expr ExprType, Matrix C>
    requires(::ten::is_float<typename C::value_type>::value ||
             ::ten::is_double<typename C::value_type>::value)
 void fuse_gemm(ExprType &&expr, C &x) {
-   auto left = expr.left();
-   auto A = left.left();
-   auto B = left.right();
-   using T = C::value_type;
-   ten::gemm(T(1), A, B, T(1), x);
+   if constexpr(ten::is_expr<ExprType>::value) {
+      auto left = expr.left();
+      if constexpr (ten::is_expr<decltype(left)>::value) {
+         auto A = left.left();
+         auto B = left.right();
+         using T = C::value_type;
+         ten::gemm(T(1), A, B, T(1), x);
+      }
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,6 +81,35 @@ void fuse_gemm(ExprType &&expr, C &x) {
 ////////////////////////////////////////////////////////////////////////////////
 // TODO Match GEMM C <- alpha * A * B + beta * C
 
+////////////////////////////////////////////////////////////////////////////////
+// Match GEMM C <- A * B
+// or C = binary_expr(A, B, func: mul)
+
+template <Expr ExprType, Matrix C>
+bool match_gemm_noalpha_nobeta(ExprType &&expr, const C &x) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   if constexpr (!::ten::is_binary_expr_v<expr_type>) {
+      return false;
+   } else {
+      using func_type = expr_type::func_type;
+      // func_type must be mul
+      return ::ten::is_mul<func_type>::value;
+   }
+}
+
+template <Expr ExprType, Matrix C>
+// FIXME Currently GEMM support only float and double types
+   requires(::ten::is_float<typename C::value_type>::value ||
+            ::ten::is_double<typename C::value_type>::value)
+void fuse_gemm_noalpha_nobeta(ExprType &&expr, C &x) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   if constexpr(ten::is_expr<expr_type>::value) {
+      auto A = expr.left();
+      auto B = expr.right();
+      using T = C::value_type;
+      ten::gemm(T(1), A, B, T(0), x);
+   }
+}
 ////////////////////////////////////////////////////////////////////////////////
 /// Match sqrt
 template <Expr ExprType, class T>
@@ -197,45 +229,59 @@ void fuse_abs(ExprType &&expr, T &x) {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Macth and fuse
-template <Expr ExprType, class T>
-   requires(::ten::is_tensor_v<T> || ::ten::is_column_v<T> ||
-            ::ten::is_row_v<T>)
-bool match_fuse(ExprType &&expr, T &x) {
+template <Expr ExprType, class X>
+   requires(::ten::is_tensor_v<X> || ::ten::is_column_v<X> ||
+            ::ten::is_row_v<X>)
+bool match_fuse(ExprType &&expr, X &x) {
 
-   if (match_gemm(expr, x)) {
-      if (::ten::is_verbose) {
-         std::cout << "Matched gemm\n";
+   if constexpr (::ten::is_matrix_v<X> || ::ten::is_smatrix<X>::value) {
+      if (match_gemm_noalpha_nobeta(expr, x)) {
+         if (::ten::is_verbose) {
+            std::cout << "Matched gemm with no alpha, no beta\n";
+         }
+         fuse_gemm_noalpha_nobeta(expr, x);
+         return true;
       }
-      fuse_gemm(expr, x);
-      return true;
-   }
-   // TODO Match gemv
 
-   if (match_sqrt(expr, x)) {
-      if (::ten::is_verbose) {
-         std::cout << "Matched inplace sqrt\n";
+      if (match_gemm(expr, x)) {
+         if (::ten::is_verbose) {
+            std::cout << "Matched gemm\n";
+         }
+         fuse_gemm(expr, x);
+         return true;
       }
-      fuse_sqrt(expr, x);
-      return true;
-   }
-
-   if (match_sqr(expr, x)) {
-      if (::ten::is_verbose) {
-         std::cout << "Matched inplace sqr\n";
-      }
-      fuse_sqr(expr, x);
-      return true;
+      // TODO Match gemv
    }
 
-   if (match_abs(expr, x)) {
-      if (::ten::is_verbose) {
-         std::cout << "Matched inplace abs\n";
+   if constexpr (::ten::is_vector_v<X> || ten::is_column_v<X> || ten::is_row_v<X>) {
+      if (match_sqrt(expr, x)) {
+         if (::ten::is_verbose) {
+            std::cout << "Matched inplace sqrt\n";
+         }
+         fuse_sqrt(expr, x);
+         return true;
       }
-      fuse_abs(expr, x);
-      return true;
+
+      if (match_sqr(expr, x)) {
+         if (::ten::is_verbose) {
+            std::cout << "Matched inplace sqr\n";
+         }
+         fuse_sqr(expr, x);
+         return true;
+      }
+
+      if (match_abs(expr, x)) {
+         if (::ten::is_verbose) {
+            std::cout << "Matched inplace abs\n";
+         }
+         fuse_abs(expr, x);
+         return true;
+      }
    }
 
-   // The expression wasn't matched and fused
+   if (::ten::is_verbose) {
+      std::cout << "The expression wasn't matched and fused\n";
+   }
    return false;
 }
 
