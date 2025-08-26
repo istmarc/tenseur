@@ -771,8 +771,8 @@ class ranked_tensor final
       auto value = expr.eval();
       auto format = value.format();
       _format = format;
-      auto shape = value.shape();
-      _shape = shape;
+      //auto shape = value.shape();
+      //_shape = shape;
       auto stride = value.strides();
       _stride = stride;
       auto node = value.node();
@@ -1532,11 +1532,10 @@ class ranked_tensor_view final {
        : _data(data), _start(std::move(start)), _end(std::move(end)) {}
 
    // Assign a value
-   // TODO Extend for up to 5d tensors
    ranked_tensor_view &operator=(T value) noexcept {
-      static_assert(_rank == 1 || _rank == 2 || _rank == 3,
-                    "Assignemnt is supported only for slices or vector, "
-                    "matrices and 3d tensors.");
+      static_assert(_rank >= 1 && _rank <= 5,
+                    "Assignemnt is supported only for slices of vector, "
+                    "matrices and up to 5d tensors.");
 
       if constexpr (_rank == 1) {
          for (size_t i = _start[0]; i < _end[0]; i++) {
@@ -1556,6 +1555,28 @@ class ranked_tensor_view final {
                }
             }
          }
+      } else if constexpr (_rank == 4) {
+         for (size_t i = _start[0]; i < _end[0]; i++) {
+            for (size_t j = _start[1]; j < _end[1]; j++) {
+               for (size_t k = _start[2]; j < _end[2]; k++) {
+                  for (size_t l = _start[3]; l < _end[3]; l++) {
+                     _data(i, j, k, l) = value;
+                  }
+               }
+            }
+         }
+      } else if constexpr (_rank == 5) {
+         for (size_t i = _start[0]; i < _end[0]; i++) {
+            for (size_t j = _start[1]; j < _end[1]; j++) {
+               for (size_t k = _start[2]; j < _end[2]; k++) {
+                  for (size_t l = _start[3]; l < _end[3]; l++) {
+                     for (size_t m = _start[4]; m < _end[4]; m++) {
+                        _data(i, j, k, l, m) = value;
+                     }
+                  }
+               }
+            }
+         }
       }
       return *this;
    }
@@ -1565,27 +1586,29 @@ class ranked_tensor_view final {
    ranked_tensor_view &
    operator=(ten::vector<T, storageOrder, StorageType, AllocatorType>
                  values) noexcept {
-      static_assert(_rank == 1 || _rank == 2 || _rank == 3,
+      static_assert(_rank >= 1 && _rank <= 5,
                     "Vector assignemnt is supported only for slices or vector, "
                     "matrices and 3d tensors.");
       if constexpr (_rank == 1) {
          if (values.size() != (_end[0] - _start[0])) {
             std::cerr << "Error Assigning a vector to a vector slice, "
                          "incompatible sizes.\n";
-         }
-         for (size_t i = _start[0]; i < _end[0]; i++) {
-            _data[i] = values[i - _start[0]];
+         } else {
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               _data[i] = values[i - _start[0]];
+            }
          }
       } else if constexpr (_rank == 2) {
          if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1])) {
             std::cerr << "Error Assigning a vector to a matrix slice, "
                          "incompatible sizes.\n";
-         }
-         size_t k = 0;
-         for (size_t i = _start[0]; i < _end[0]; i++) {
-            for (size_t j = _start[1]; j < _end[1]; j++) {
-               _data(i, j) = values[k];
-               k++;
+         } else {
+            size_t k = 0;
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  _data(i, j) = values[k];
+                  k++;
+               }
             }
          }
       } else if constexpr (_rank == 3) {
@@ -1593,13 +1616,231 @@ class ranked_tensor_view final {
                                   (_end[2] - _start[2])) {
             std::cerr << "Error Assigning a vector to a tensor slice, "
                          "incompatible sizes.\n";
+         } else {
+            size_t l = 0;
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     _data(i, j, k) = values[l];
+                     l++;
+                  }
+               }
+            }
          }
-         size_t l = 0;
-         for (size_t i = _start[0]; i < _end[0]; i++) {
-            for (size_t j = _start[1]; j < _end[1]; j++) {
-               for (size_t k = _start[2]; k < _end[2]; k++) {
-                  _data(i, j, k) = values[l];
-                  l++;
+      } else if constexpr (_rank == 4) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])*(_end[3] - _start[3]) ){
+            std::cerr << "Error Assigning a vector to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            size_t m = 0;
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     for (size_t l = _start[3]; l < _end[3]; l++) {
+                        _data(i, j, k, l) = values[m];
+                        m++;
+                     }
+                  }
+               }
+            }
+         }
+      } else if constexpr (_rank == 5) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])*(_end[3] - _start[3])* (_end[4] - _start[4]) ){
+            std::cerr << "Error Assigning a vector to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            size_t n = 0;
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     for (size_t l = _start[3]; l < _end[3]; l++) {
+                        for (size_t m = _start[4]; m < _end[4]; m++) {
+                           _data(i, j, k, l, m) = values[n];
+                           n++;
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      return *this;
+   }
+
+   // Assign a static vector
+   template <size_t Size, storage_order storageOrder>
+   ranked_tensor_view &
+   operator=(ten::svector<T, Size, storageOrder> values) noexcept {
+      static_assert(_rank >= 1 && _rank <= 5,
+                    "Static vector assignemnt is supported only for slices or vector, "
+                    "matrices and 3d tensors.");
+      if constexpr (_rank == 1) {
+         if (Size != (_end[0] - _start[0])) {
+            std::cerr << "Error Assigning a vector to a vector slice, "
+                         "incompatible sizes.\n";
+         } else {
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               _data[i] = values[i - _start[0]];
+            }
+         }
+      } else if constexpr (_rank == 2) {
+         if (Size != (_end[0] - _start[0]) * (_end[1] - _start[1])) {
+            std::cerr << "Error Assigning a vector to a matrix slice, "
+                         "incompatible sizes.\n";
+         } else {
+            size_t k = 0;
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  _data(i, j) = values[k];
+                  k++;
+               }
+            }
+         }
+      } else if constexpr (_rank == 3) {
+         if (Size != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])) {
+            std::cerr << "Error Assigning a vector to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            size_t l = 0;
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     _data(i, j, k) = values[l];
+                     l++;
+                  }
+               }
+            }
+         }
+      } else if constexpr (_rank == 4) {
+         if (Size != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])*(_end[3] - _start[3]) ){
+            std::cerr << "Error Assigning a vector to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            size_t m = 0;
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     for (size_t l = _start[3]; l < _end[3]; l++) {
+                        _data(i, j, k, l) = values[m];
+                        m++;
+                     }
+                  }
+               }
+            }
+         }
+      } else if constexpr (_rank == 5) {
+         if (Size != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])*(_end[3] - _start[3])* (_end[4] - _start[4]) ){
+            std::cerr << "Error Assigning a vector to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            size_t n = 0;
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     for (size_t l = _start[3]; l < _end[3]; l++) {
+                        for (size_t m = _start[4]; m < _end[4]; m++) {
+                           _data(i, j, k, l, m) = values[n];
+                           n++;
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      return *this;
+   }
+
+
+   // Assign a dynamic matrix
+   template <class ShapeType, storage_order storageOrder, class StorageType, class AllocatorType>
+   ranked_tensor_view &
+   operator=(ten::matrix<T, ShapeType, storageOrder, StorageType, AllocatorType>
+                 values) noexcept {
+      static_assert(_rank >= 2 && _rank <= 5,
+                    "Vector assignemnt is supported only for slices of "
+                    "matrices and up to 5d tensors.");
+      if constexpr (_rank == 2) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1])) {
+            std::cerr << "Error Assigning a matrix to a matrix slice, "
+                         "incompatible sizes.\n";
+         } else {
+            // FIXME Different data access for row major matrices
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = 0; k < values.shape().dim(0); k++) {
+                     for(size_t l = 0; l < values.shape().dim(1); l++) {
+                        _data(i, j) = values(k, l);
+                     }
+                  }
+               }
+            }
+         }
+      } else if constexpr (_rank == 3) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])) {
+            std::cerr << "Error Assigning a matrix to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            size_t l = 0;
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     for (size_t l = 0; l < values.shape().dim(0); l++) {
+                        for (size_t m = 0; m < values.shape().dim(1); m++) {
+                           _data(i, j, k) = values(l, m);
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      } else if constexpr (_rank == 4) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])*(_end[3] - _start[3]) ){
+            std::cerr << "Error Assigning a matrix to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     for (size_t l = _start[3]; l < _end[3]; l++) {
+                        for (size_t m = 0; m < values.shape().dim(0); m++) {
+                           for (size_t n = 0; n < values.shape().dim(1); n++) {
+                              _data(i, j, k, l) = values(m, n);
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      } else if constexpr (_rank == 5) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])*(_end[3] - _start[3])* (_end[4] - _start[4]) ){
+            std::cerr << "Error Assigning a matrix to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     for (size_t l = _start[3]; l < _end[3]; l++) {
+                        for (size_t m = _start[4]; m < _end[4]; m++) {
+                            for (size_t n = 0; n < values.shape().dim(0); n++) {
+                              for (size_t p = 0; p < values.shape().dim(1); p++) {
+                                 _data(i, j, k, l, m) = values(n, p);
+                              }
+                           }
+                        }
+                     }
+                  }
                }
             }
          }
@@ -1607,7 +1848,95 @@ class ranked_tensor_view final {
       return *this;
    }
 
-   // TODO Assign a dynamic matrix
+    // Assign a static matrix
+   template <size_t Rows, size_t Cols, storage_order storageOrder>
+   ranked_tensor_view &
+   operator=(ten::smatrix<T, Rows, Cols, storageOrder> values) noexcept {
+      static_assert(_rank >= 2 && _rank <= 5,
+                    "Vector assignemnt is supported only for slices of "
+                    "matrices and up to 5d tensors.");
+      if constexpr (_rank == 2) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1])) {
+            std::cerr << "Error Assigning a matrix to a matrix slice, "
+                         "incompatible sizes.\n";
+         } else {
+            // FIXME Different data access for row major matrices
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = 0; k < Rows; k++) {
+                     for(size_t l = 0; l < Cols; l++) {
+                        _data(i, j) = values(k, l);
+                     }
+                  }
+               }
+            }
+         }
+      } else if constexpr (_rank == 3) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])) {
+            std::cerr << "Error Assigning a matrix to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            size_t l = 0;
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     for (size_t l = 0; l < Rows; l++) {
+                        for (size_t m = 0; m < Cols; m++) {
+                           _data(i, j, k) = values(l, m);
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      } else if constexpr (_rank == 4) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])*(_end[3] - _start[3]) ){
+            std::cerr << "Error Assigning a matrix to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     for (size_t l = _start[3]; l < _end[3]; l++) {
+                        for (size_t m = 0; m < Rows; m++) {
+                           for (size_t n = 0; n < Cols; n++) {
+                              _data(i, j, k, l) = values(m, n);
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      } else if constexpr (_rank == 5) {
+         if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
+                                  (_end[2] - _start[2])*(_end[3] - _start[3])* (_end[4] - _start[4]) ){
+            std::cerr << "Error Assigning a matrix to a tensor slice, "
+                         "incompatible sizes.\n";
+         } else {
+            for (size_t i = _start[0]; i < _end[0]; i++) {
+               for (size_t j = _start[1]; j < _end[1]; j++) {
+                  for (size_t k = _start[2]; k < _end[2]; k++) {
+                     for (size_t l = _start[3]; l < _end[3]; l++) {
+                        for (size_t m = _start[4]; m < _end[4]; m++) {
+                            for (size_t n = 0; n < Rows; n++) {
+                              for (size_t p = 0; p < Cols; p++) {
+                                 _data(i, j, k, l, m) = values(n, p);
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      return *this;
+   }
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////
