@@ -51,6 +51,8 @@ enum class storage_format : uint16_t {
    transposed = 512,
    /// Hermitian
    hermitian = 1024,
+   /// Conjugated
+   conj = 2048
 };
 
 bool operator&(storage_format a, storage_format b) {

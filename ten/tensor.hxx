@@ -970,6 +970,11 @@ class ranked_tensor final
       return _format & ::ten::storage_format::symmetric;
    }
 
+   // Returns whether the tensor is conjugated
+   [[nodiscard]] bool is_conj() const {
+      return _format & ::ten::storage_format::conj;
+   }
+
    /// Return whether the tensor is hermitian
    [[nodiscard]] bool is_hermitian() const {
       return _format & ::ten::storage_format::hermitian;
@@ -1067,9 +1072,9 @@ class ranked_tensor final
    operator()(auto... index) noexcept
       requires(std::is_same_v<decltype(index...[0]), seq>)
    {
-      static_assert(sizeof...(index) == Shape::rank(),
-                    "operator () must be called with " +
-                        std::to_string(Shape::rank()) + " arguments.");
+      static_assert( sizeof...(index) == Shape::rank(),
+                    "operator () must be called with different number of arguments.");
+      // FIXME + std::to_string(Shape::rank()) + " arguments.");
       // TODO Check if its a valid sequence
       std::array<size_t, Shape::rank()> starts;
       std::array<size_t, Shape::rank()> ends;
@@ -2065,6 +2070,27 @@ T hermitian(const T &t) {
    auto node = t.node();
    ::ten::storage_format format = static_cast<storage_format>(
        t.format() | ::ten::storage_format::hermitian);
+   return T(node, format);
+}
+
+/// Conjugated tensor
+template <class T>
+   requires(T::is_dynamic())
+T conj(const T &t) {
+   ::ten::storage_format format = static_cast<storage_format>(
+       t.format() | ::ten::storage_format::conj);
+   auto node = t.node();
+   auto shape = t.shape();
+   return T(node, shape, format);
+}
+
+/// Conjugated static tensor
+template <class T>
+   requires(T::is_static())
+T conj(const T &t) {
+   ::ten::storage_format format = static_cast<storage_format>(
+       t.format() | ::ten::storage_format::conj);
+   auto node = t.node();
    return T(node, format);
 }
 
