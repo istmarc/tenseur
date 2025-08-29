@@ -5,8 +5,8 @@
 
 #include <array>
 #include <complex>
-#include <type_traits>
 #include <cstdint>
+#include <type_traits>
 
 namespace ten {
 template <class> std::string to_string();
@@ -33,75 +33,92 @@ template <> std::string to_string<std::complex<double>>() {
    return "complex<float64>";
 }
 
-template<class> ten::data_type to_data_type();
+template <class> ten::data_type to_data_type();
 
-template<> ten::data_type to_data_type<bool>() { return ten::data_type::boolean;}
-template<> ten::data_type to_data_type<float>() { return ten::data_type::float32;}
-template<> ten::data_type to_data_type<double>() { return ten::data_type::float64;}
-template<> ten::data_type to_data_type<int32_t>() { return ten::data_type::int32;}
-template<> ten::data_type to_data_type<int64_t>() { return ten::data_type::int64;}
-template<> ten::data_type to_data_type<uint32_t>() { return ten::data_type::uint32;}
-template<> ten::data_type to_data_type<uint64_t>() { return ten::data_type::uint64;}
-template<> ten::data_type to_data_type<std::complex<float>>() { return ten::data_type::complexfloat32;}
-template<> ten::data_type to_data_type<std::complex<double>>() { return ten::data_type::complexfloat64;}
+template <> ten::data_type to_data_type<bool>() {
+   return ten::data_type::boolean;
+}
+template <> ten::data_type to_data_type<float>() {
+   return ten::data_type::float32;
+}
+template <> ten::data_type to_data_type<double>() {
+   return ten::data_type::float64;
+}
+template <> ten::data_type to_data_type<int32_t>() {
+   return ten::data_type::int32;
+}
+template <> ten::data_type to_data_type<int64_t>() {
+   return ten::data_type::int64;
+}
+template <> ten::data_type to_data_type<uint32_t>() {
+   return ten::data_type::uint32;
+}
+template <> ten::data_type to_data_type<uint64_t>() {
+   return ten::data_type::uint64;
+}
+template <> ten::data_type to_data_type<std::complex<float>>() {
+   return ten::data_type::complexfloat32;
+}
+template <> ten::data_type to_data_type<std::complex<double>>() {
+   return ten::data_type::complexfloat64;
+}
 
-inline std::ostream& operator<<(std::ostream& os, const data_type d) {
-   switch(d) {
-      case data_type::none:
-         os << "none";
-         break;
-      case data_type::boolean:
-         os << "bool";
-         break;
-      case data_type::float32:
-         os << "float32";
-         break;
-      case data_type::float64:
-         os << "float64";
-         break;
-      case data_type::int32:
-         os << "int32";
-         break;
-      case data_type::int64:
-         os << "int64";
-         break;
-      case data_type::uint32:
-         os << "uint32";
-         break;
-      case data_type::uint64:
-         os << "uint64";
-         break;
-      case data_type::complexfloat32:
-         os << "std::complex<float32>";
-         break;
-      case data_type::complexfloat64:
-         os << "std::complex<float64>";
-         break;
+inline std::ostream &operator<<(std::ostream &os, const data_type d) {
+   switch (d) {
+   case data_type::none:
+      os << "none";
+      break;
+   case data_type::boolean:
+      os << "bool";
+      break;
+   case data_type::float32:
+      os << "float32";
+      break;
+   case data_type::float64:
+      os << "float64";
+      break;
+   case data_type::int32:
+      os << "int32";
+      break;
+   case data_type::int64:
+      os << "int64";
+      break;
+   case data_type::uint32:
+      os << "uint32";
+      break;
+   case data_type::uint64:
+      os << "uint64";
+      break;
+   case data_type::complexfloat32:
+      os << "std::complex<float32>";
+      break;
+   case data_type::complexfloat64:
+      os << "std::complex<float64>";
+      break;
    }
    return os;
 }
 
-inline std::ostream& operator<<(std::ostream& os, const storage_format format) {
-   switch(format) {
-      case storage_format::dense:
-         os << "dense";
-         break;
-      case storage_format::coo:
-         os << "coo";
-         break;
-      case storage_format::csc:
-         os << "csc";
-         break;
-      case storage_format::csr:
-         os << "csr";
-         break;
-      default:
-         os << "none";
-         break;
+inline std::ostream &operator<<(std::ostream &os, const storage_format format) {
+   switch (format) {
+   case storage_format::dense:
+      os << "dense";
+      break;
+   case storage_format::coo:
+      os << "coo";
+      break;
+   case storage_format::csc:
+      os << "csc";
+      break;
+   case storage_format::csr:
+      os << "csr";
+      break;
+   default:
+      os << "other format";
+      break;
    }
    return os;
 }
-
 
 } // namespace ten
 

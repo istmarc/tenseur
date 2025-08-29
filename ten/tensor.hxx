@@ -1,4 +1,4 @@
-/// \file Ten/Tensor.hxx
+// \file ten/tensor.hxx
 
 #ifndef TENSEUR_TENSOR_HXX
 #define TENSEUR_TENSOR_HXX
@@ -771,7 +771,7 @@ class ranked_tensor final
       auto value = expr.eval();
       auto format = value.format();
       _format = format;
-      //auto shape = value.shape();
+      // auto shape = value.shape();
       //_shape = shape;
       auto stride = value.strides();
       _stride = stride;
@@ -1072,8 +1072,9 @@ class ranked_tensor final
    operator()(auto... index) noexcept
       requires(std::is_same_v<decltype(index...[0]), seq>)
    {
-      static_assert( sizeof...(index) == Shape::rank(),
-                    "operator () must be called with different number of arguments.");
+      static_assert(
+          sizeof...(index) == Shape::rank(),
+          "operator () must be called with different number of arguments.");
       // FIXME + std::to_string(Shape::rank()) + " arguments.");
       // TODO Check if its a valid sequence
       std::array<size_t, Shape::rank()> starts;
@@ -1510,6 +1511,228 @@ using stensor = ranked_tensor<
     typename details::allocator_type<default_storage<T, shape<Dims...>>>::type>;
 
 ////////////////////////////////////////////////////////////////////////////////
+// Sparse tensors
+
+template <class T, class Shape, ::ten::storage_order order = default_order,
+          class Storage = sparse_storage<T>, class Allocator = void>
+class ranked_sparse_tensor final
+    : ::ten::expr<ranked_sparse_tensor<T, Shape, order, Storage, Allocator>>,
+      ::ten::tensor_operations<T, Shape, order, Storage, Allocator>,
+      tensor_base {
+ public:
+   using value_type = T;
+   using node_type = ::ten::tensor_node<T, Storage, Allocator>;
+   using storage_type = Storage;
+   using base_type = tensor_operations<T, Shape, order, Storage, Allocator>;
+   /// stride type
+   using stride_type = typename base_type::stride_type;
+
+ private:
+   /// Storage format (must be coo, csc or csr)
+   ::ten::storage_format _format = ::ten::storage_format::coo;
+   /// Optional shape (only for dynamic tensors)
+   std::optional<Shape> _shape = std::nullopt;
+   /// Optional stride (only for dynamic tensors)
+   std::optional<stride_type> _stride = std::nullopt;
+   /// Shared pointer to the node
+   std::shared_ptr<node_type> _node = nullptr;
+
+ private:
+   /// Returns the value at the indices
+   [[nodiscard]] inline typename base_type::value_type &
+   at(size_type index, auto... tail) noexcept {
+      static constexpr size_type rank = Shape::rank();
+      constexpr size_type tail_size = sizeof...(tail);
+      static_assert(tail_size == 0 || tail_size == (rank - 1),
+                    "Invalid number of indices.");
+      if constexpr (tail_size == 0) {
+         return (*_node.get())[index];
+      }
+      std::array<size_type, Shape::rank()> indices{
+          index, static_cast<size_type>(tail)...};
+      if constexpr (Shape::is_dynamic()) {
+         size_type idx = details::linear_index(_stride.value(), indices);
+         return (*_node.get())[idx];
+      } else {
+         size_type idx = details::static_linear_index<stride_type>(indices);
+         return (*_node.get())[idx];
+      }
+   }
+
+   /// Returns the value at the indices
+   [[nodiscard]] inline const typename base_type::value_type &
+   at(size_type index, auto... tail) const noexcept {
+      static constexpr size_type rank = Shape::rank();
+      constexpr size_type tail_size = sizeof...(tail);
+      static_assert(tail_size == 0 || tail_size == (rank - 1),
+                    "Invalid number of indices.");
+      if constexpr (tail_size == 0) {
+         return (*_node.get())[index];
+      }
+      std::array<size_type, Shape::rank()> indices{
+          index, static_cast<size_type>(tail)...};
+      if constexpr (Shape::is_dynamic()) {
+         size_type idx = details::linear_index(_stride.value(), indices);
+         return (*_node.get())[idx];
+      } else {
+         size_type idx = details::static_linear_index<stride_type>(indices);
+         return (*_node.get())[idx];
+      }
+   }
+
+ public:
+   /// Constructor for static sparse tensor
+   ranked_sparse_tensor(ten::storage_format format = storage_format::coo)
+      requires(Shape::is_static())
+       : _format(format), _stride(typename base_type::stride_type()) {
+      auto storage = std::make_unique<storage_type>();
+      _node = std::make_shared<node_type>(storage);
+   }
+
+   // Sparse COO Tensor
+   explicit ranked_sparse_tensor(
+       std::initializer_list<size_t> &&dims,
+       ten::storage_format format = storage_format::coo) noexcept
+      requires(Shape::is_dynamic())
+       : _format(format), _shape(std::move(dims)),
+         _stride(typename base_type::stride_type(_shape.value())) {
+      auto storage = std::make_unique<storage_type>(_shape.value());
+      _node = std::make_shared<node_type>(std::move(storage));
+   }
+
+   /// Copy constructor
+   ranked_sparse_tensor(const ranked_sparse_tensor &t) {
+      _format = t._format;
+      _shape = t._shape;
+      _stride = t._stride;
+      _node = t._node;
+   }
+
+   /// Move constructor
+   ranked_sparse_tensor(ranked_sparse_tensor &&t) {
+      _format = std::move(t._format);
+      _shape = std::move(t._shape);
+      _stride = std::move(t._stride);
+      _node = std::move(t._node);
+   }
+
+   /// Assignment operator
+   ranked_sparse_tensor &operator=(const ranked_sparse_tensor &t) {
+      _format = t._format;
+      _shape = t._shape;
+      _stride = t._stride;
+      _node = t._node;
+      return *this;
+   }
+
+   /// Assignment operator
+   ranked_sparse_tensor &operator=(ranked_sparse_tensor &&t) {
+      _format = std::move(t._format);
+      _shape = std::move(t._shape);
+      _stride = std::move(t._stride);
+      _node = std::move(t._node);
+      return *this;
+   }
+
+   /// Get the dimension at index
+   /// FIXME Requires only for dynamic dim
+   [[nodiscard]] size_type dim(size_type index) const {
+      return _shape.value().dim(index);
+   }
+
+   /// Returns the shape
+   [[nodiscard]] inline const Shape &shape() const
+      requires(Shape::is_dynamic())
+   {
+      return _shape.value();
+   }
+
+   /// Returns the strides
+   [[nodiscard]] inline const typename base_type::stride_type &strides() const {
+      return _stride.value();
+   }
+
+   /// Returns the dynamic size
+   /// TODO For static size
+   [[nodiscard]] inline size_type size() const { return _node.get()->size(); }
+
+   /// Get the storage format
+   [[nodiscard]] storage_format format() const { return _format; }
+
+   /// Return whether the tensor is sparse coo
+   [[nodiscard]] bool is_sparse_coo() const {
+      return _format == ::ten::storage_format::coo;
+   }
+
+   /// Return whether the tensor is sparse csc
+   [[nodiscard]] bool is_sparse_csc() const {
+      return _format == ::ten::storage_format::csc;
+   }
+
+   /// Return whether the tensor is sparse csr
+   [[nodiscard]] bool is_sparse_csr() const {
+      return _format == ::ten::storage_format::csr;
+   }
+
+   // Returns the shared ptr to the node
+   [[nodiscard]] std::shared_ptr<node_type> node() const { return _node; }
+
+   /// Returns the storage
+   [[nodiscard]] Storage &storage() const { return _node.get()->storage(); }
+
+   /// Overloading the [] operator
+   [[nodiscard]] inline const typename base_type::value_type &
+   operator[](size_type index) const noexcept {
+      return (*_node.get())[index];
+   }
+
+   /// Overloading the [] operator
+   [[nodiscard]] inline typename base_type::value_type &
+   operator[](size_type index) noexcept {
+      return (*_node.get())[index];
+   }
+
+   /// Overloading the () operator
+   [[nodiscard]] inline const typename base_type::value_type &
+   operator()(auto... index) const noexcept {
+      static_assert(sizeof...(index) == Shape::rank());
+      return at(index...);
+   }
+
+   /// Overloading the () operator
+   [[nodiscard]] inline typename base_type::value_type &
+   operator()(auto... index) noexcept {
+      static_assert(sizeof...(index) == Shape::rank());
+      return at(index...);
+   }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Typedefs for sparse tensors
+
+template <class T, size_t Rank, storage_order order = default_order,
+          class Storage = sparse_storage<T>, class Allocator = void>
+using sparse_tensor = ranked_sparse_tensor<T, ten::dynamic_shape<Rank>, order,
+                                           Storage, Allocator>;
+
+template <class T, class Shape = ten::shape<ten::dynamic, ten::dynamic>,
+          storage_order order = default_order,
+          class Storage = sparse_storage<T>, class Allocator = void>
+   requires(Shape::rank() == 2)
+using sparse_matrix = ranked_sparse_tensor<T, Shape, order, Storage, Allocator>;
+
+template <class T, size_t Rank, storage_order order = default_order,
+          class Storage = sparse_storage<T>, class Allocator = void>
+using coo_tensor = ranked_sparse_tensor<T, ten::dynamic_shape<Rank>, order,
+                                        Storage, Allocator>;
+
+template <class T, class Shape = ten::shape<ten::dynamic, ten::dynamic>,
+          storage_order order = default_order,
+          class Storage = sparse_storage<T>, class Allocator = void>
+   requires(Shape::rank() == 2)
+using coo_matrix = ranked_sparse_tensor<T, Shape, order, Storage, Allocator>;
+
+////////////////////////////////////////////////////////////////////////////////
 // Ranked tensor view
 
 template <class T, class Shape, storage_order order, class Storage,
@@ -1634,7 +1857,8 @@ class ranked_tensor_view final {
          }
       } else if constexpr (_rank == 4) {
          if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
-                                  (_end[2] - _start[2])*(_end[3] - _start[3]) ){
+                                  (_end[2] - _start[2]) *
+                                  (_end[3] - _start[3])) {
             std::cerr << "Error Assigning a vector to a tensor slice, "
                          "incompatible sizes.\n";
          } else {
@@ -1652,7 +1876,9 @@ class ranked_tensor_view final {
          }
       } else if constexpr (_rank == 5) {
          if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
-                                  (_end[2] - _start[2])*(_end[3] - _start[3])* (_end[4] - _start[4]) ){
+                                  (_end[2] - _start[2]) *
+                                  (_end[3] - _start[3]) *
+                                  (_end[4] - _start[4])) {
             std::cerr << "Error Assigning a vector to a tensor slice, "
                          "incompatible sizes.\n";
          } else {
@@ -1679,9 +1905,10 @@ class ranked_tensor_view final {
    template <size_t Size, storage_order storageOrder>
    ranked_tensor_view &
    operator=(ten::svector<T, Size, storageOrder> values) noexcept {
-      static_assert(_rank >= 1 && _rank <= 5,
-                    "Static vector assignemnt is supported only for slices or vector, "
-                    "matrices and 3d tensors.");
+      static_assert(
+          _rank >= 1 && _rank <= 5,
+          "Static vector assignemnt is supported only for slices or vector, "
+          "matrices and 3d tensors.");
       if constexpr (_rank == 1) {
          if (Size != (_end[0] - _start[0])) {
             std::cerr << "Error Assigning a vector to a vector slice, "
@@ -1706,7 +1933,7 @@ class ranked_tensor_view final {
          }
       } else if constexpr (_rank == 3) {
          if (Size != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
-                                  (_end[2] - _start[2])) {
+                         (_end[2] - _start[2])) {
             std::cerr << "Error Assigning a vector to a tensor slice, "
                          "incompatible sizes.\n";
          } else {
@@ -1722,7 +1949,7 @@ class ranked_tensor_view final {
          }
       } else if constexpr (_rank == 4) {
          if (Size != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
-                                  (_end[2] - _start[2])*(_end[3] - _start[3]) ){
+                         (_end[2] - _start[2]) * (_end[3] - _start[3])) {
             std::cerr << "Error Assigning a vector to a tensor slice, "
                          "incompatible sizes.\n";
          } else {
@@ -1740,7 +1967,8 @@ class ranked_tensor_view final {
          }
       } else if constexpr (_rank == 5) {
          if (Size != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
-                                  (_end[2] - _start[2])*(_end[3] - _start[3])* (_end[4] - _start[4]) ){
+                         (_end[2] - _start[2]) * (_end[3] - _start[3]) *
+                         (_end[4] - _start[4])) {
             std::cerr << "Error Assigning a vector to a tensor slice, "
                          "incompatible sizes.\n";
          } else {
@@ -1763,9 +1991,9 @@ class ranked_tensor_view final {
       return *this;
    }
 
-
    // Assign a dynamic matrix
-   template <class ShapeType, storage_order storageOrder, class StorageType, class AllocatorType>
+   template <class ShapeType, storage_order storageOrder, class StorageType,
+             class AllocatorType>
    ranked_tensor_view &
    operator=(ten::matrix<T, ShapeType, storageOrder, StorageType, AllocatorType>
                  values) noexcept {
@@ -1781,7 +2009,7 @@ class ranked_tensor_view final {
             for (size_t i = _start[0]; i < _end[0]; i++) {
                for (size_t j = _start[1]; j < _end[1]; j++) {
                   for (size_t k = 0; k < values.shape().dim(0); k++) {
-                     for(size_t l = 0; l < values.shape().dim(1); l++) {
+                     for (size_t l = 0; l < values.shape().dim(1); l++) {
                         _data(i, j) = values(k, l);
                      }
                   }
@@ -1809,7 +2037,8 @@ class ranked_tensor_view final {
          }
       } else if constexpr (_rank == 4) {
          if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
-                                  (_end[2] - _start[2])*(_end[3] - _start[3]) ){
+                                  (_end[2] - _start[2]) *
+                                  (_end[3] - _start[3])) {
             std::cerr << "Error Assigning a matrix to a tensor slice, "
                          "incompatible sizes.\n";
          } else {
@@ -1829,7 +2058,9 @@ class ranked_tensor_view final {
          }
       } else if constexpr (_rank == 5) {
          if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
-                                  (_end[2] - _start[2])*(_end[3] - _start[3])* (_end[4] - _start[4]) ){
+                                  (_end[2] - _start[2]) *
+                                  (_end[3] - _start[3]) *
+                                  (_end[4] - _start[4])) {
             std::cerr << "Error Assigning a matrix to a tensor slice, "
                          "incompatible sizes.\n";
          } else {
@@ -1838,8 +2069,9 @@ class ranked_tensor_view final {
                   for (size_t k = _start[2]; k < _end[2]; k++) {
                      for (size_t l = _start[3]; l < _end[3]; l++) {
                         for (size_t m = _start[4]; m < _end[4]; m++) {
-                            for (size_t n = 0; n < values.shape().dim(0); n++) {
-                              for (size_t p = 0; p < values.shape().dim(1); p++) {
+                           for (size_t n = 0; n < values.shape().dim(0); n++) {
+                              for (size_t p = 0; p < values.shape().dim(1);
+                                   p++) {
                                  _data(i, j, k, l, m) = values(n, p);
                               }
                            }
@@ -1853,7 +2085,7 @@ class ranked_tensor_view final {
       return *this;
    }
 
-    // Assign a static matrix
+   // Assign a static matrix
    template <size_t Rows, size_t Cols, storage_order storageOrder>
    ranked_tensor_view &
    operator=(ten::smatrix<T, Rows, Cols, storageOrder> values) noexcept {
@@ -1869,7 +2101,7 @@ class ranked_tensor_view final {
             for (size_t i = _start[0]; i < _end[0]; i++) {
                for (size_t j = _start[1]; j < _end[1]; j++) {
                   for (size_t k = 0; k < Rows; k++) {
-                     for(size_t l = 0; l < Cols; l++) {
+                     for (size_t l = 0; l < Cols; l++) {
                         _data(i, j) = values(k, l);
                      }
                   }
@@ -1897,7 +2129,8 @@ class ranked_tensor_view final {
          }
       } else if constexpr (_rank == 4) {
          if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
-                                  (_end[2] - _start[2])*(_end[3] - _start[3]) ){
+                                  (_end[2] - _start[2]) *
+                                  (_end[3] - _start[3])) {
             std::cerr << "Error Assigning a matrix to a tensor slice, "
                          "incompatible sizes.\n";
          } else {
@@ -1917,7 +2150,9 @@ class ranked_tensor_view final {
          }
       } else if constexpr (_rank == 5) {
          if (values.size() != (_end[0] - _start[0]) * (_end[1] - _start[1]) *
-                                  (_end[2] - _start[2])*(_end[3] - _start[3])* (_end[4] - _start[4]) ){
+                                  (_end[2] - _start[2]) *
+                                  (_end[3] - _start[3]) *
+                                  (_end[4] - _start[4])) {
             std::cerr << "Error Assigning a matrix to a tensor slice, "
                          "incompatible sizes.\n";
          } else {
@@ -1926,7 +2161,7 @@ class ranked_tensor_view final {
                   for (size_t k = _start[2]; k < _end[2]; k++) {
                      for (size_t l = _start[3]; l < _end[3]; l++) {
                         for (size_t m = _start[4]; m < _end[4]; m++) {
-                            for (size_t n = 0; n < Rows; n++) {
+                           for (size_t n = 0; n < Rows; n++) {
                               for (size_t p = 0; p < Cols; p++) {
                                  _data(i, j, k, l, m) = values(n, p);
                               }
@@ -1941,50 +2176,7 @@ class ranked_tensor_view final {
 
       return *this;
    }
-
 };
-
-////////////////////////////////////////////////////////////////////////////////
-// Sparse tensors and matrices
-
-/// \typedef sparse_tensor
-/// sparse_tensor<T, Rank>
-template <class T, size_type Rank, storage_order Order = default_order,
-          class Storage = sparse_storage<T>,
-          class Allocator = typename details::allocator_type<Storage>::type>
-using sparse_tensor =
-    ranked_tensor<T, dynamic_shape<Rank>, Order, Storage, Allocator>;
-
-/// \typedef sparse_matrix
-/// sparse_matrix<T>
-template <class T, storage_order Order = default_order,
-          class Storage = sparse_storage<T>,
-          class Allocator = typename details::allocator_type<Storage>::type>
-using sparse_matrix =
-    ranked_tensor<T, dynamic_shape<2>, Order, Storage, Allocator>;
-
-// Sparse COO Matrix
-template <typename T>
-auto coo_matrix(
-    std::initializer_list<size_type> &&dims,
-    std::initializer_list<std::initializer_list<size_type>> &&indices,
-    std::initializer_list<T> &&values) -> decltype(auto) {
-   if (dims.size() != 2) {
-      std::cerr << "Dimensions size must be equal to 2 for sparse coo matrix\n";
-   }
-   sparse_tensor<T, 2> x(std::move(dims), storage_format::coo);
-
-   if (indices.size() != values.size()) {
-      std::cerr << "Indices and values must have the same size.\n";
-   }
-   auto value = values.begin();
-   for (auto idx = indices.begin(); idx != indices.end(); idx++, value++) {
-      auto i = *(idx->begin());
-      auto j = *(idx->begin() + 1);
-      x(i, j) = *value;
-   }
-   return x;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Special matrices
@@ -2077,8 +2269,8 @@ T hermitian(const T &t) {
 template <class T>
    requires(T::is_dynamic())
 T conj(const T &t) {
-   ::ten::storage_format format = static_cast<storage_format>(
-       t.format() | ::ten::storage_format::conj);
+   ::ten::storage_format format =
+       static_cast<storage_format>(t.format() | ::ten::storage_format::conj);
    auto node = t.node();
    auto shape = t.shape();
    return T(node, shape, format);
@@ -2088,8 +2280,8 @@ T conj(const T &t) {
 template <class T>
    requires(T::is_static())
 T conj(const T &t) {
-   ::ten::storage_format format = static_cast<storage_format>(
-       t.format() | ::ten::storage_format::conj);
+   ::ten::storage_format format =
+       static_cast<storage_format>(t.format() | ::ten::storage_format::conj);
    auto node = t.node();
    return T(node, format);
 }

@@ -23,7 +23,7 @@ enum class data_type : uint16_t {
    uint32 = 64,
    uint64 = 128,
    complexfloat32 = 256,
-   complexfloat64 =512,
+   complexfloat64 = 512,
 };
 
 /// \enum format
@@ -202,8 +202,7 @@ class ranked_tensor_view;
 // Forward declaration of seq and mdseq
 struct seq;
 
-template<size_t Rank>
-struct mdseq;
+template <size_t Rank> struct mdseq;
 
 template <typename> struct is_tensor : std::false_type {};
 template <class Scalar, class Shape, storage_order order, class Storage,
@@ -394,17 +393,6 @@ template <class T, size_type N> class sdiagonal_storage;
 template <class> struct is_diagonal_storage : std::false_type {};
 template <class T, class allocator>
 struct is_diagonal_storage<diagonal_storage<T, allocator>> : std::true_type {};
-/*template <class> struct is_LowerTrStorage : std::false_type {};
-template <class T, class allocator>
-struct is_LowerTrStorage<LowerTrStorage<T, allocator>> : std::true_type {};
-template <class> struct is_UpperTrStorage : std::false_type {};
-template <class T, class allocator>
-struct is_UpperTrStorage<UpperTrStorage<T, allocator>> : std::true_type {};*/
-
-// Storage of static shape
-// template <class> struct isStaticStorage : std::false_type {};
-// template <class T, size_t N>
-// struct isStaticStorage<StaticDenseStorage<T, N>> : std::true_type {};
 
 /// \typedef DefaultStorage
 /// Default storage type
@@ -464,25 +452,6 @@ struct is_sdiagonal<ranked_tensor<T, shape, order, storage, allocator>> {
        shape::rank() == 2 && is_sdiagonal_storage<storage>::value;
 };
 
-/*
-/// Lower triangular matrix
-template <class> struct isLowerTrMatrix : std::false_type {};
-template <class Scalar, class shape, storage_order order, class Storage,
-          class Allocator>
-struct isLowerTrMatrix<ranked_tensor<Scalar, shape, order, Storage, Allocator>>
-{ static constexpr bool value = isLowerTrStorage<Storage>::value &&
-shape::rank() == 2;
-};
-
-/// Upper triangular matrix
-template <class> struct isUpperTrMatrix : std::false_type {};
-template <class Scalar, class shape, storage_order order, class Storage,
-          class Allocator>
-struct isUpperTrMatrix<ranked_tensor<Scalar, shape, order, Storage, Allocator>>
-{ static constexpr bool value = isUpperTrStorage<Storage>::value &&
-shape::rank() == 2;
-};*/
-
 ////////////////////////////////////////////////////////////////////////////////
 // Storage types
 
@@ -517,7 +486,8 @@ template <class input, class output, template <typename...> class Func,
 struct is_unary_expr<unary_expr<input, output, Func, Args...>>
     : std::true_type {};
 
-template <typename T> static constexpr bool is_unary_expr_v = is_unary_expr<T>::value;
+template <typename T>
+static constexpr bool is_unary_expr_v = is_unary_expr<T>::value;
 
 // Binary expr
 template <class left, class right, class output,
@@ -530,7 +500,36 @@ template <class left, class right, class O, template <typename...> class Func,
 struct is_binary_expr<binary_expr<left, right, O, Func, Args...>>
     : std::true_type {};
 
-template <typename T> static constexpr bool is_binary_expr_v = is_binary_expr<T>::value;
+template <typename T>
+static constexpr bool is_binary_expr_v = is_binary_expr<T>::value;
+
+/////////////////////////////////////////////////////////////////////////////////
+// Sparse tensors
+
+template <class T> class sparse_storage;
+
+template <class> struct is_sparse_storage : std::false_type {};
+template <class T>
+struct is_sparse_storage<sparse_storage<T>> : std::true_type {};
+
+// Forward declaration of sparse tensor
+template <class T, class Shape, storage_order order, class Storage,
+          class Allocator>
+class ranked_sparse_tensor;
+
+template <class> struct is_sparse_tensor : std::false_type {};
+
+template <class T, class Shape, storage_order order, class Storage,
+          class Allocator>
+struct is_sparse_tensor<
+    ranked_sparse_tensor<T, Shape, order, Storage, Allocator>>
+    : std::true_type {};
+
+template <typename T>
+static constexpr bool is_sparse_tensor_v = is_sparse_tensor<T>::value;
+
+template <class T>
+concept SparseTensor = is_sparse_tensor<std::remove_cvref_t<T>>::value;
 
 /////////////////////////////////////////////////////////////////////////////////
 // Concepts
@@ -578,17 +577,8 @@ concept TensorNode = is_tensor_node<T>::value;
 ////////////////////////////////////////////////////////////////////////////////
 // Vector node
 
-/*template <class> struct is_vector_node : std::false_type {};
-template <class T, class storage, class allocator>
-struct is_vector_node<tensor_node<T, storage, allocator>> {
-   static constexpr bool value = shape::rank() == 1;
-};*/
-
 template <class T>
 concept VectorShape = T::shape_type::rank() == 1;
-
-// template <class T>
-// concept VectorNode = VectorShape<T> && TensorNode<T>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Matrix shape
@@ -597,53 +587,13 @@ template <class T>
 concept MatrixShape = T::shape_type::rank() == 2;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Matrix node
-/*template <class> struct is_matrix_node : std::false_type {};
-template <class T, class storage, class allocator>
-struct is_matrix_node<tensor_node<T, storage, allocator>> {
-   static constexpr bool value =
-       shape::rank() == 2 && ::ten::is_dense_storage<storage>::value;
-};
-
-template <class T>
-concept MatrixNode = MatrixShape<T> && TensorNode<T>;*/
-
-// Static matrix node
-/*
-template <class> struct is_smatrix_node : std::false_type {};
-template <class T, class storage, class allocator>
-struct is_smatrix_node<tensor_node<T, storage, allocator>> {
-   static constexpr bool value =
-       shape::rank() == 2 && ::ten::is_static_storage<storage>::value;
-};*/
-
-// template <class T>
-// concept SMatrixNode = MatrixShape<T> && StaticStorage<T> && TensorNode<T>;
-
-////////////////////////////////////////////////////////////////////////////////
-// Special matrices node
-/*template <class> struct is_diagonal_node : std::false_type {};
-template <class T, class storage, class allocator>
-struct is_diagonal_node<tensor_node<T, storage, allocator>> {
-   static constexpr bool value =
-       ::ten::is_diagonal_storage<storage>::value && shape::rank() == 2;
-};
-
-template <class T>
-concept diagonal_node = is_diagonal_node<T>::value;
-
-template <class T>
-concept DiagonalNode = is_diagonal_node<T>::value;*/
-
-////////////////////////////////////////////////////////////////////////////////
 // Concepts Same
 template <class A, class B>
 concept same_shape =
     std::is_same_v<typename A::shape_type, typename B::shape_type>;
 
 template <class A, class B>
-concept same_storage_order = A::storage_order() ==
-B::storage_order();
+concept same_storage_order = A::storage_order() == B::storage_order();
 
 template <class A, class B>
 concept same_storage =
