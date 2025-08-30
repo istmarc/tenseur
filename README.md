@@ -48,14 +48,20 @@ An expression API class for representing unary and binary operations between ten
 // Dynamic uninitialized tensors
 ten::tensor<float> x({2, 3, 4});
 // Static tensor with uninitialized memory (no allocations)
-ten::stensor<float, 2, 3, 4> x;
+ten::stensor<float, 2, 3, 4> y;
 // Access indices
 x(0, 1, 2) = 3.0f;
 std::cout << x(0, 1, 2) << std::endl;
-// Slicing
+// Slicing using seq
+using ten::seq;
 auto slice = x(seq(0, last), seq(0, last), seq(1, 2));
 // Assign to slice
 slice = 1.0f;
+// Slicing using mdseq
+using ten::mdseq;
+auto index = mdseq<3>(seq(0, last), seq(0, last), seq(0, 1));
+auto second_slice = x[index];
+second_slice = 2.0f;
 ```
 
 - Assignment
