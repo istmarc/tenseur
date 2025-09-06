@@ -46,7 +46,7 @@ An expression API class for representing unary and binary operations between ten
 - Tensors
 ```c++
 // Dynamic uninitialized tensors
-ten::tensor<float> x({2, 3, 4});
+ten::tensor<float, 3> x({2, 3, 4});
 // Static tensor with uninitialized memory (no allocations)
 ten::stensor<float, 2, 3, 4> y;
 // Access indices
