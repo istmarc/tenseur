@@ -6,9 +6,9 @@
 #include <ten/types.hxx>
 
 #include <iostream>
+#include <type_traits>
 
 namespace ten {
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Match gemm for dense matrix
@@ -59,7 +59,8 @@ template <Expr ExprType, Matrix C>
    requires(::ten::is_float<typename C::value_type>::value ||
             ::ten::is_double<typename C::value_type>::value)
 void fuse_gemm(ExprType &&expr, C &x) {
-   if constexpr(ten::is_expr<ExprType>::value) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   if constexpr (ten::is_expr<expr_type>::value) {
       auto left = expr.left();
       if constexpr (ten::is_expr<decltype(left)>::value) {
          auto A = left.left();
@@ -72,11 +73,94 @@ void fuse_gemm(ExprType &&expr, C &x) {
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO Match GEMM C <- alpha * A * B + C
+// C = binary_expr(binary_expr(binary_expr(alpha, A), B), func:mul), C,
+// func:add)
+template <Expr ExprType, Matrix C>
+bool match_gemm_alpha_nobeta(ExprType &&expr, const C &x) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   if constexpr (!::ten::is_binary_expr_v<expr_type>) {
+      return false;
+   } else {
+      using left_type = expr_type::left_ty;
+      // Left type must be binary expr (binary_expr(alpha, A), B, mul)
+      if constexpr (!::ten::is_binary_expr_v<left_type>) {
+         return false;
+      } else {
+         // Match scalar * matrix
+         using left_left_type = left_type::left_ty;
+         if constexpr (!::ten::is_binary_expr_v<left_left_type>) {
+            return false;
+         } else {
+            // Function must be mul
+            // left and right of left can be matrices or expressions
+            using left_left_func_type = left_left_type::func_type;
+            // left_func_type must be elementwise multiplication
+            if (!::ten::is_mul<left_left_func_type>::value) {
+               return false;
+            }
+            // left of left_left must be a scalar
+            using left_left_left = left_left_type::left_ty;
+            if (!::ten::is_scalar<left_left_left>::value) {
+               return false;
+            }
+            // Right of left_left must be a matrix
+            using right_left_left = left_left_type::right_ty;
+            if (!::ten::is_matrix_v<right_left_left> &&
+                !::ten::is_smatrix_v<right_left_left>) {
+               return false;
+            }
+         }
+      }
+      // Right of left must be a matrix
+      using right_left_type = left_type::right_ty;
+      if constexpr (!::ten::is_matrix_v<right_left_type> &&
+                    !::ten::is_smatrix_v<right_left_type>) {
+         return false;
+      }
+      // Right type must be a matrix or static matrix, equal to c
+      using right_type = expr_type::right_ty;
+      if (!::ten::is_matrix<right_type>::value &&
+          !::ten::is_smatrix<right_type>::value) {
+         return false;
+      }
+      // Right type and output (x) must be of the same type
+      if (!std::is_same_v<right_type, C>) {
+         return false;
+      }
+      // They must also be equal
+      auto right = expr.right();
+      if (right != x) {
+         return false;
+      }
+      // The function must be elementwise add
+      using func_type = expr_type::func_type;
+      return ::ten::is_add<func_type>::value;
+   }
+}
 
+template <Expr ExprType, Matrix C>
+// FIXME Currently GEMM support only float and double types
+   requires(::ten::is_float<typename C::value_type>::value ||
+            ::ten::is_double<typename C::value_type>::value)
+void fuse_gemm_alpha_nobeta(ExprType &&expr, C &x) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   if constexpr (ten::is_expr<expr_type>::value) {
+      auto left = expr.left();
+      if constexpr (ten::is_binary_expr<decltype(left)>::value) {
+         auto left_left = left.left();
+         if constexpr (ten::is_binary_expr<decltype(left_left)>::value) {
+            auto alpha = left_left.left().value();
+            auto A = left_left.right();
+            auto B = left.right();
+            using T = C::value_type;
+            ten::gemm(alpha, A, B, T(1), x);
+         }
+      }
+   }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO Match GEMM C <- A * B + beta * C
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO Match GEMM C <- alpha * A * B + beta * C
@@ -103,7 +187,7 @@ template <Expr ExprType, Matrix C>
             ::ten::is_double<typename C::value_type>::value)
 void fuse_gemm_noalpha_nobeta(ExprType &&expr, C &x) {
    using expr_type = std::remove_cvref_t<ExprType>;
-   if constexpr(ten::is_expr<expr_type>::value) {
+   if constexpr (ten::is_expr<expr_type>::value) {
       auto A = expr.left();
       auto B = expr.right();
       using T = C::value_type;
@@ -228,7 +312,7 @@ void fuse_abs(ExprType &&expr, T &x) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Macth and fuse
+/// Match and fuse
 template <Expr ExprType, class X>
    requires(::ten::is_tensor_v<X> || ::ten::is_column_v<X> ||
             ::ten::is_row_v<X>)
@@ -243,6 +327,14 @@ bool match_fuse(ExprType &&expr, X &x) {
          return true;
       }
 
+      if (match_gemm_alpha_nobeta(expr, x)) {
+         if (::ten::is_verbose) {
+            std::cout << "Matched gemm with alpha, no beta\n";
+         }
+         fuse_gemm_alpha_nobeta(expr, x);
+         return true;
+      }
+
       if (match_gemm(expr, x)) {
          if (::ten::is_verbose) {
             std::cout << "Matched gemm\n";
@@ -253,7 +345,8 @@ bool match_fuse(ExprType &&expr, X &x) {
       // TODO Match gemv
    }
 
-   if constexpr (::ten::is_vector_v<X> || ten::is_column_v<X> || ten::is_row_v<X>) {
+   if constexpr (::ten::is_vector_v<X> || ten::is_column_v<X> ||
+                 ten::is_row_v<X>) {
       if (match_sqrt(expr, x)) {
          if (::ten::is_verbose) {
             std::cout << "Matched inplace sqrt\n";

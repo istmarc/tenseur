@@ -12,6 +12,15 @@ namespace ten {
 template <class> struct is_mul : std::false_type {};
 template <class A, class B, class C>
 struct is_mul<::ten::functional::template mul<A, B, C>> : std::true_type {};
+template <class A, class B, class C>
+struct is_mul<::ten::functional::binary_func<
+    ten::binary_operation::mul>::template func<A, B, C>> : std::true_type {};
+template <class A, class B, class C>
+struct is_mul<::ten::functional::scalar_left_binary_func<
+    ten::binary_operation::mul>::template func<A, B, C>> : std::true_type {};
+template <class A, class B, class C>
+struct is_mul<::ten::functional::scalar_right_binary_func<
+    ten::binary_operation::mul>::template func<A, B, C>> : std::true_type {};
 
 template <class> struct is_add : std::false_type {};
 template <class A, class B, class C>

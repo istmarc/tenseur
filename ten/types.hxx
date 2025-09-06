@@ -345,6 +345,8 @@ struct is_smatrix<ranked_tensor<T, shape, order, storage, allocator>> {
        shape::rank() == 2 && ::ten::is_static_storage<storage>::value;
 };
 
+template <typename T> static constexpr bool is_smatrix_v = is_smatrix<T>::value;
+
 /// Concept StaticMatrix dense
 template <class T>
 concept StaticMatrix = is_smatrix<std::remove_cvref_t<T>>::value;

@@ -1589,7 +1589,7 @@ class ranked_sparse_tensor final
       _node = std::make_shared<node_type>(storage);
    }
 
-   // Sparse COO Tensor
+   // Constructor for sparse tensor
    explicit ranked_sparse_tensor(
        std::initializer_list<size_t> &&dims,
        ten::storage_format format = storage_format::coo) noexcept
@@ -1720,17 +1720,6 @@ template <class T, class Shape = ten::shape<ten::dynamic, ten::dynamic>,
           class Storage = sparse_storage<T>, class Allocator = void>
    requires(Shape::rank() == 2)
 using sparse_matrix = ranked_sparse_tensor<T, Shape, order, Storage, Allocator>;
-
-template <class T, size_t Rank, storage_order order = default_order,
-          class Storage = sparse_storage<T>, class Allocator = void>
-using coo_tensor = ranked_sparse_tensor<T, ten::dynamic_shape<Rank>, order,
-                                        Storage, Allocator>;
-
-template <class T, class Shape = ten::shape<ten::dynamic, ten::dynamic>,
-          storage_order order = default_order,
-          class Storage = sparse_storage<T>, class Allocator = void>
-   requires(Shape::rank() == 2)
-using coo_matrix = ranked_sparse_tensor<T, Shape, order, Storage, Allocator>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Ranked tensor view
