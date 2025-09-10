@@ -31,4 +31,16 @@ int main() {
       std::cout << c << std::endl;
    }
 
+   {
+      c = 2.0f * a * b + 2.0f * c;
+      std::cout << "After call to gemm\n";
+      std::cout << c << std::endl;
+   }
+
+   {
+      c = a * b + 2.0f * c;
+      std::cout << "After call to gemm\n";
+      std::cout << c << std::endl;
+   }
+
 }
