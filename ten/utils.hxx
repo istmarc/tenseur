@@ -33,6 +33,10 @@ template <> std::string to_string<std::complex<double>>() {
    return "complex<float64>";
 }
 
+template <> std::string to_string<std::string>() {
+   return "string";
+}
+
 template <class> ten::data_type to_data_type();
 
 template <> ten::data_type to_data_type<bool>() {
@@ -61,6 +65,9 @@ template <> ten::data_type to_data_type<std::complex<float>>() {
 }
 template <> ten::data_type to_data_type<std::complex<double>>() {
    return ten::data_type::complexfloat64;
+}
+template <> ten::data_type to_data_type<std::string>() {
+   return ten::data_type::string;
 }
 
 inline std::ostream &operator<<(std::ostream &os, const data_type d) {
@@ -94,6 +101,9 @@ inline std::ostream &operator<<(std::ostream &os, const data_type d) {
       break;
    case data_type::complexfloat64:
       os << "std::complex<float64>";
+      break;
+   case data_type::string:
+      os << "std::string";
       break;
    }
    return os;

@@ -24,6 +24,7 @@ enum class data_type : uint16_t {
    uint64 = 128,
    complexfloat32 = 256,
    complexfloat64 = 512,
+   string = 1024,
 };
 
 /// \enum format

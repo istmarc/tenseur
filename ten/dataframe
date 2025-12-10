@@ -1,0 +1,6 @@
+#ifndef TENSEUR_DATAFRAME
+#define TENSEUR_DATAFRAME
+
+#include <ten/dataframe.hxx>
+
+#endif
