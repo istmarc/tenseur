@@ -68,6 +68,19 @@ struct dataframe_node{
       return indices;
    }
 
+   // Get the column names from indices
+   std::vector<std::string> column_names(const std::vector<size_t>& indices) {
+      std::vector<std::string> names;
+      for (size_t i =0; i < indices.size(); i++) {
+         if (i < 0 || i >= _cols) {
+            continue;
+         } else {
+            names.push_back(_names[i]);
+         }
+      }
+      return names;
+   }
+
    void remove_column(const size_t index) {
       // Remove from the column names
       size_t size = _cols;
@@ -115,13 +128,175 @@ class dataframe_view {
 private:
    std::vector<size_t> _row_indices;
    std::vector<std::string> _col_names;
+   std::vector<data_type> _types;
    std::shared_ptr<dataframe_node> _node;
 
 public:
    dataframe_view(std::shared_ptr<dataframe_node> node, const std::vector<size_t>& row_indices, const std::vector<std::string>& col_names):
-      _row_indices(row_indices), _col_names(col_names), _node(node) {}
+      _row_indices(row_indices), _col_names(col_names), _node(node) {
+      // Get the column indices
+      std::vector<size_t> indices = node->column_indices(_col_names);
+      // Fill the types
+      for (auto i : indices) {
+         _types.push_back(node->_types[i]);
+      }
+   }
 
+   friend std::ostream& operator<<(std::ostream& os, const dataframe_view& df);
 };
+
+namespace{
+std::string center_string(const std::string& s, size_t size) {
+   if (size <= s.size()) {
+      return s;
+   }
+   size_t n = s.size();
+   size_t m = size - n;
+   size_t k = m / 2;
+   return std::string(k, ' ') + s + std::string(k + m%2, ' ');
+}
+}
+
+std::ostream& operator<<(std::ostream& os, const dataframe_view& df) {
+   size_t cols = df._col_names.size();
+   size_t rows = df._row_indices.size();
+   os << "dataframe_view[" << rows << "x" << cols << "]\n";
+   std::vector<size_t> max_len({cols});
+   for (size_t i = 0; i < cols; i++) {
+      std::string name = df._col_names[i];
+      max_len[i] = name.size();
+      data_type type = df._types[i];
+      for (size_t j = 0; j < rows; j++) {
+         if (type == data_type::boolean) {
+            bool x = std::get<bool>(df._node->at(name, j));
+            size_t len = std::to_string(x).size();
+            max_len[i] = std::max(max_len[i], len);
+         }
+         if (type == data_type::int32) {
+            int32_t x = std::get<int32_t>(df._node->at(name, j));
+            size_t len = std::to_string(x).size();
+            max_len[i] = std::max(max_len[i], len);
+         }
+         if (type == data_type::int64) {
+            int64_t x = std::get<int64_t>(df._node->at(name, j));
+            size_t len = std::to_string(x).size();
+            max_len[i] = std::max(max_len[i], len);
+         }
+         if (type == data_type::uint32) {
+            uint32_t x = std::get<uint32_t>(df._node->at(name, j));
+            size_t len = std::to_string(x).size();
+            max_len[i] = std::max(max_len[i], len);
+         }
+         if (type == data_type::uint64) {
+            uint64_t x = std::get<uint64_t>(df._node->at(name, j));
+            size_t len = std::to_string(x).size();
+            max_len[i] = std::max(max_len[i], len);
+         }
+         if (type == data_type::float32) {
+            float x = std::get<float>(df._node->at(name, j));
+            size_t len = std::to_string(x).size();
+            max_len[i] = std::max(max_len[i], len);
+         }
+         if (type == data_type::float64) {
+            double x = std::get<double>(df._node->at(name, j));
+            size_t len = std::to_string(x).size();
+            max_len[i] = std::max(max_len[i], len);
+         }
+         if (type == data_type::string) {
+            std::string x = std::get<std::string>(df._node->at(name, j));
+            size_t len = x.size();
+            max_len[i] = std::max(max_len[i], len);
+         }
+      }
+   }
+   // Print +----+
+   os << "+";
+   for (size_t i = 0; i < cols; i++) {
+      for (size_t j = 0; j < max_len[i]; j++) {
+         os << "-";
+      }
+      if (i + 1 < cols) {
+         os << "+";
+      }
+   }
+   os << "+\n";
+   os << "|";
+   for (size_t i = 0; i < cols; i++) {
+      std::string name = df._col_names[i];
+      os << center_string(name, max_len[i]);
+      os << "|";
+   }
+   os << "\n";
+   // Print +----+
+   os << "+";
+   for (size_t i = 0; i < cols; i++) {
+      for (size_t j = 0; j < max_len[i]; j++) {
+         os << "-";
+      }
+      if (i + 1 < cols) {
+         os << "+";
+      }
+   }
+   os << "+\n";
+   // Print the values
+   for (size_t j = 0; j < rows; j++) {
+      os << "|";
+      for (size_t i = 0; i < cols; i++) {
+         std::string name = df._col_names[i];
+         data_type type = df._types[i];
+         if (type == data_type::boolean) {
+            bool x = std::get<bool>(df._node->at(name, j));
+            os << center_string(std::to_string(x), max_len[i]);
+         }
+         if (type == data_type::int32) {
+            int32_t x = std::get<int32_t>(df._node->at(name, j));
+            os << center_string(std::to_string(x), max_len[i]);
+         }
+         if (type == data_type::int64) {
+            int64_t x = std::get<int64_t>(df._node->at(name, j));
+            os << center_string(std::to_string(x), max_len[i]);
+         }
+         if (type == data_type::uint32) {
+            uint32_t x = std::get<uint32_t>(df._node->at(name, j));
+            os << center_string(std::to_string(x), max_len[i]);
+         }
+         if (type == data_type::uint64) {
+            uint64_t x = std::get<uint64_t>(df._node->at(name, j));
+            os << center_string(std::to_string(x), max_len[i]);
+         }
+         if (type == data_type::float32) {
+            float x = std::get<float>(df._node->at(name, j));
+            os << center_string(std::to_string(x), max_len[i]);
+         }
+         if (type == data_type::float64) {
+            double x = std::get<double>(df._node->at(name, j));
+            os << center_string(std::to_string(x), max_len[i]);
+         }
+         if (type == data_type::string) {
+            std::string x = std::get<std::string>(df._node->at(name, j));
+            os << center_string(x, max_len[i]);
+         }
+         os << "|";
+      }
+      os << "\n";
+   }
+   // Print +----+
+   os << "+";
+   for (size_t i = 0; i < cols; i++) {
+      for (size_t j = 0; j < max_len[i]; j++) {
+         os << "-";
+      }
+      if (i + 1 < cols) {
+         os << "+";
+      }
+   }
+   os << "+\n";
+
+   return os;
+}
+
+
+
 
 // Data frame
 class dataframe{
@@ -343,32 +518,19 @@ public:
    }
 
    // Select columns by indices using [] operator
-   /*dataframe_view operator[](const std::vector<size_t>& indices) {
+   dataframe_view operator[](const std::vector<size_t>& indices) {
       std::vector<size_t> row_indices(_node->_rows);
       for(size_t i = 0; i < _node->_rows; i++) {
          row_indices[i] = i;
       }
       size_t size = indices.size();
-      std::vector<std::string> names({size});
-      for (auto [_, size]: _node->_col_indices) {
-         if ()
-      }
+      std::vector<std::string> names = _node->column_names(indices);
       return dataframe_view(_node, row_indices, names);
-   }*/
+   }
 
 
    friend std::ostream& operator<<(std::ostream& os, const dataframe& df);
 };
-
-std::string center_string(const std::string& s, size_t size) {
-   if (size <= s.size()) {
-      return s;
-   }
-   size_t n = s.size();
-   size_t m = size - n;
-   size_t k = m / 2;
-   return std::string(k, ' ') + s + std::string(k + m%2, ' ');
-}
 
 std::ostream& operator<<(std::ostream& os, const dataframe& df) {
    os << "dataframe[" << df._node->_rows << "x" << df._node->_cols << "]\n";
