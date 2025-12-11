@@ -14,8 +14,26 @@ int main() {
 
    std::cout << df << std::endl;
 
+   df.remove("z");
+
+   std::cout << df << std::endl;
+
    {
       auto s = df[{"x"}];
+      s = 99.0f;
+      std::cout << s << std::endl;
+   }
+
+   {
+      auto s = df[{"x"}];
+      std::vector<float> a({10.0f, 20.0f, 30.0f});
+      s = a;
+      std::cout << s << std::endl;
+   }
+
+   {
+      auto s = df[{0, 1, 4}];
+      std::cout << s << std::endl;
    }
 
 }
