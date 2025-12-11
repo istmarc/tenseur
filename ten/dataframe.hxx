@@ -2,19 +2,20 @@
 #define TENSEUR_DATAFRAME_HXX
 
 #include <cstdint>
-#include <variant>
-#include <string>
 #include <map>
 #include <set>
+#include <string>
+#include <variant>
 
 #include <ten/tensor>
 
-namespace ten{
+namespace ten {
 
-using cell_type = std::variant<bool, int32_t, uint32_t, int64_t, uint64_t, float, double, std::string>;
+using cell_type = std::variant<bool, int32_t, uint32_t, int64_t, uint64_t,
+                               float, double, std::string>;
 
 // Data frame node
-struct dataframe_node{
+struct dataframe_node {
    using vector_type = std::vector<cell_type>;
 
    // Number of rows
@@ -29,13 +30,13 @@ struct dataframe_node{
    // Data column name -> column data
    std::map<std::string, std::shared_ptr<vector_type>> _data;
 
-   cell_type& at(const std::string& name, size_t index) {
+   cell_type &at(const std::string &name, size_t index) {
       auto ptr = _data[name].get();
       return (*ptr)[index];
    }
 
    // Return whether the column name exist or not
-   bool has_column_name(const std::string& name) {
+   bool has_column_name(const std::string &name) {
       for (size_t i = 0; i < _names.size(); i++) {
          if (_names[i] == name) {
             return true;
@@ -45,7 +46,7 @@ struct dataframe_node{
    }
 
    // Return the index of the column name or -1
-   long index_from_name(const std::string& name) {
+   long index_from_name(const std::string &name) {
       for (size_t i = 0; i < _names.size(); i++) {
          if (name == _names[i]) {
             return i;
@@ -55,7 +56,7 @@ struct dataframe_node{
    }
 
    // Return the column indices from names
-   std::vector<size_t> column_indices(const std::vector<std::string>& names) {
+   std::vector<size_t> column_indices(const std::vector<std::string> &names) {
       std::vector<size_t> indices;
       for (size_t i = 0; i < names.size(); i++) {
          long idx = index_from_name(names[i]);
@@ -69,9 +70,9 @@ struct dataframe_node{
    }
 
    // Get the column names from indices
-   std::vector<std::string> column_names(const std::vector<size_t>& indices) {
+   std::vector<std::string> column_names(const std::vector<size_t> &indices) {
       std::vector<std::string> names;
-      for (size_t i =0; i < indices.size(); i++) {
+      for (size_t i = 0; i < indices.size(); i++) {
          if (i < 0 || i >= _cols) {
             continue;
          } else {
@@ -114,10 +115,7 @@ struct dataframe_node{
       }
    }
 
-   void remove_data(const std::string& name) {
-      _data.erase(name);
-   }
-
+   void remove_data(const std::string &name) { _data.erase(name); }
 };
 
 // Forward declaration of data frame
@@ -125,15 +123,17 @@ class dataframe;
 
 // Data frame view
 class dataframe_view {
-private:
+ private:
    std::vector<size_t> _row_indices;
    std::vector<std::string> _col_names;
    std::vector<data_type> _types;
    std::shared_ptr<dataframe_node> _node;
 
-public:
-   dataframe_view(std::shared_ptr<dataframe_node> node, const std::vector<size_t>& row_indices, const std::vector<std::string>& col_names):
-      _row_indices(row_indices), _col_names(col_names), _node(node) {
+ public:
+   dataframe_view(std::shared_ptr<dataframe_node> node,
+                  const std::vector<size_t> &row_indices,
+                  const std::vector<std::string> &col_names)
+       : _row_indices(row_indices), _col_names(col_names), _node(node) {
       // Get the column indices
       std::vector<size_t> indices = node->column_indices(_col_names);
       // Fill the types
@@ -143,8 +143,7 @@ public:
    }
 
    // Assign a value
-   template<typename T>
-   dataframe_view& operator=(const T& value) {
+   template <typename T> dataframe_view &operator=(const T &value) {
       for (std::string name : _col_names) {
          for (size_t row : _row_indices) {
             _node->at(name, row) = value;
@@ -154,8 +153,8 @@ public:
    }
 
    // Assign a ten::vector
-   template<typename T>
-   dataframe_view& operator=(const ten::vector<T>& values) {
+   template <typename T>
+   dataframe_view &operator=(const ten::vector<T> &values) {
       for (std::string name : _col_names) {
          size_t k = 0;
          for (size_t row : _row_indices) {
@@ -167,8 +166,8 @@ public:
    }
 
    // Assign a std::vector
-   template<typename T>
-   dataframe_view& operator=(const std::vector<T>& values) {
+   template <typename T>
+   dataframe_view &operator=(const std::vector<T> &values) {
       for (std::string name : _col_names) {
          size_t k = 0;
          for (size_t row : _row_indices) {
@@ -179,23 +178,22 @@ public:
       return *this;
    }
 
-
-   friend std::ostream& operator<<(std::ostream& os, const dataframe_view& df);
+   friend std::ostream &operator<<(std::ostream &os, const dataframe_view &df);
 };
 
-namespace{
-std::string center_string(const std::string& s, size_t size) {
+namespace {
+std::string center_string(const std::string &s, size_t size) {
    if (size <= s.size()) {
       return s;
    }
    size_t n = s.size();
    size_t m = size - n;
    size_t k = m / 2;
-   return std::string(k, ' ') + s + std::string(k + m%2, ' ');
+   return std::string(k, ' ') + s + std::string(k + m % 2, ' ');
 }
-}
+} // namespace
 
-std::ostream& operator<<(std::ostream& os, const dataframe_view& df) {
+std::ostream &operator<<(std::ostream &os, const dataframe_view &df) {
    size_t cols = df._col_names.size();
    size_t rows = df._row_indices.size();
    os << "dataframe_view[" << rows << "x" << cols << "]\n";
@@ -333,48 +331,42 @@ std::ostream& operator<<(std::ostream& os, const dataframe_view& df) {
    return os;
 }
 
-
-
-
 // Data frame
-class dataframe{
-public:
+class dataframe {
+ public:
    using vector_type = std::vector<cell_type>;
 
-private:
+ private:
    std::shared_ptr<dataframe_node> _node = nullptr;
 
-public:
+ public:
    dataframe() {}
 
    ~dataframe() {}
 
    // Return whether the data frame is empty
-   bool empty() const {
-      return !_node;
-   }
+   bool empty() const { return !_node; }
 
    // Add a column named name from ten::vector
-   template<typename T>
-   void add_col(const std::string& name, const ten::vector<T>& v) {
+   template <typename T>
+   void add_col(const std::string &name, const ten::vector<T> &v) {
       // If the node is empty, create it
       if (!_node) {
          _node = std::make_shared<dataframe_node>(dataframe_node());
       }
-      [[unlikely]] if (_node->has_column_name(name)) {
-         return;
-      }
+      [[unlikely]] if (_node->has_column_name(name)) { return; }
       size_t size = v.size();
       // Set the rows size
       if (_node->_rows == 0) {
          _node->_rows = size;
          // Fill the indices with 0..rows-1
          _node->_indices.resize(size);
-         for (size_t i = 0; i < _node->_rows;i++) {
+         for (size_t i = 0; i < _node->_rows; i++) {
             _node->_indices[i] = i;
          }
       } else if (_node->_rows != size) {
-         std::cout << "tenseur dataframe: Vector of different size" << std::endl;
+         std::cout << "tenseur dataframe: Vector of different size"
+                   << std::endl;
          return;
       }
       vector_type data({size});
@@ -423,26 +415,25 @@ public:
    }
 
    // Add a column named name from std::vector
-   template<typename T>
-   void add_col(const std::string& name, const std::vector<T>& v) {
+   template <typename T>
+   void add_col(const std::string &name, const std::vector<T> &v) {
       // If the node is empty, create it
       if (!_node) {
          _node = std::make_shared<dataframe_node>(dataframe_node());
       }
-      [[unlikely]] if (_node->has_column_name(name)) {
-         return;
-      }
+      [[unlikely]] if (_node->has_column_name(name)) { return; }
       size_t size = v.size();
       // Set the rows size
       if (_node->_rows == 0) {
          _node->_rows = size;
          // Fill the indices with 0..rows-1
          _node->_indices.resize(size);
-         for (size_t i = 0; i < _node->_rows;i++) {
+         for (size_t i = 0; i < _node->_rows; i++) {
             _node->_indices[i] = i;
          }
       } else if (_node->_rows != size) {
-         std::cout << "tenseur dataframe: Vector of different size" << std::endl;
+         std::cout << "tenseur dataframe: Vector of different size"
+                   << std::endl;
          return;
       }
       vector_type data({size});
@@ -491,7 +482,7 @@ public:
    }
 
    // Remove a column named name
-   void remove(const std::string& name) {
+   void remove(const std::string &name) {
       // Get the index
       long index = _node->index_from_name(name);
       if (index == -1) {
@@ -537,28 +528,30 @@ public:
    }
 
    // Select indices and columns names
-   dataframe_view select(const std::vector<size_t>& indices, const std::vector<std::string>& names) {
+   dataframe_view select(const std::vector<size_t>& indices, const
+   std::vector<std::string>& names) {
    }
 
    // Select indices and column indices
-   dataframe_view select(const std::vector<size_t>& indices, const std::vector<size_t>& col_indices) {
+   dataframe_view select(const std::vector<size_t>& indices, const
+   std::vector<size_t>& col_indices) {
    }
    */
 
    // Select columns by names using [] operator
-   dataframe_view operator[](const std::vector<std::string>& names) {
+   dataframe_view operator[](const std::vector<std::string> &names) {
 
       std::vector<size_t> row_indices(_node->_rows);
-      for(size_t i = 0; i < _node->_rows; i++) {
+      for (size_t i = 0; i < _node->_rows; i++) {
          row_indices[i] = i;
       }
       return dataframe_view(_node, row_indices, names);
    }
 
    // Select columns by indices using [] operator
-   dataframe_view operator[](const std::vector<size_t>& indices) {
+   dataframe_view operator[](const std::vector<size_t> &indices) {
       std::vector<size_t> row_indices(_node->_rows);
-      for(size_t i = 0; i < _node->_rows; i++) {
+      for (size_t i = 0; i < _node->_rows; i++) {
          row_indices[i] = i;
       }
       size_t size = indices.size();
@@ -566,11 +559,10 @@ public:
       return dataframe_view(_node, row_indices, names);
    }
 
-
-   friend std::ostream& operator<<(std::ostream& os, const dataframe& df);
+   friend std::ostream &operator<<(std::ostream &os, const dataframe &df);
 };
 
-std::ostream& operator<<(std::ostream& os, const dataframe& df) {
+std::ostream &operator<<(std::ostream &os, const dataframe &df) {
    os << "dataframe[" << df._node->_rows << "x" << df._node->_cols << "]\n";
    size_t cols = df._node->_cols;
    size_t rows = df._node->_rows;
@@ -708,7 +700,6 @@ std::ostream& operator<<(std::ostream& os, const dataframe& df) {
    return os;
 }
 
-
-}
+} // namespace ten
 
 #endif
