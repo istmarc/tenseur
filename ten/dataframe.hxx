@@ -29,7 +29,7 @@ struct dataframe_node{
    // Data column name -> column data
    std::map<std::string, std::shared_ptr<vector_type>> _data;
 
-   cell_type at(const std::string& name, size_t index) {
+   cell_type& at(const std::string& name, size_t index) {
       auto ptr = _data[name].get();
       return (*ptr)[index];
    }
@@ -141,6 +141,44 @@ public:
          _types.push_back(node->_types[i]);
       }
    }
+
+   // Assign a value
+   template<typename T>
+   dataframe_view& operator=(const T& value) {
+      for (std::string name : _col_names) {
+         for (size_t row : _row_indices) {
+            _node->at(name, row) = value;
+         }
+      }
+      return *this;
+   }
+
+   // Assign a ten::vector
+   template<typename T>
+   dataframe_view& operator=(const ten::vector<T>& values) {
+      for (std::string name : _col_names) {
+         size_t k = 0;
+         for (size_t row : _row_indices) {
+            _node->at(name, row) = values[k];
+            k++;
+         }
+      }
+      return *this;
+   }
+
+   // Assign a std::vector
+   template<typename T>
+   dataframe_view& operator=(const std::vector<T>& values) {
+      for (std::string name : _col_names) {
+         size_t k = 0;
+         for (size_t row : _row_indices) {
+            _node->at(name, row) = values[k];
+            k++;
+         }
+      }
+      return *this;
+   }
+
 
    friend std::ostream& operator<<(std::ostream& os, const dataframe_view& df);
 };
