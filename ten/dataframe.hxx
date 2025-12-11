@@ -18,8 +18,8 @@ struct dataframe_node{
    using vector_type = std::vector<cell_type>;
 
    // Number of rows
-   size_t rows = 0;
-   size_t cols = 0;
+   size_t _rows = 0;
+   size_t _cols = 0;
    // Indices
    std::vector<cell_type> _indices;
    // Column names
@@ -66,6 +66,43 @@ struct dataframe_node{
          }
       }
       return indices;
+   }
+
+   void remove_column(const size_t index) {
+      // Remove from the column names
+      size_t size = _cols;
+      // Save the column names into names
+      std::vector<std::string> names({size});
+      for (size_t i = 0; i < size; i++) {
+         names[i] = _names[i];
+      }
+      // Copy all the column names except name
+      _names = std::vector<std::string>();
+      for (size_t i = 0; i < size; i++) {
+         if (i != index) {
+            _names.push_back(names[i]);
+         }
+      }
+   }
+
+   void remove_types(const size_t index) {
+      size_t size = _cols;
+      // Save the types into types
+      std::vector<data_type> types({size});
+      for (size_t i = 0; i < size; i++) {
+         types[i] = _types[i];
+      }
+      // Copy all the data types except the index'th data type
+      _types = std::vector<data_type>();
+      for (size_t i = 0; i < size; i++) {
+         if (i != index) {
+            _types.push_back(types[i]);
+         }
+      }
+   }
+
+   void remove_data(const std::string& name) {
+      _data.erase(name);
    }
 
 };
@@ -116,14 +153,14 @@ public:
       }
       size_t size = v.size();
       // Set the rows size
-      if (_node->rows == 0) {
-         _node->rows = size;
+      if (_node->_rows == 0) {
+         _node->_rows = size;
          // Fill the indices with 0..rows-1
          _node->_indices.resize(size);
-         for (size_t i = 0; i < _node->rows;i++) {
+         for (size_t i = 0; i < _node->_rows;i++) {
             _node->_indices[i] = i;
          }
-      } else if (_node->rows != size) {
+      } else if (_node->_rows != size) {
          std::cout << "tenseur dataframe: Vector of different size" << std::endl;
          return;
       }
@@ -169,7 +206,7 @@ public:
       // Set the data
       _node->_data[name] = ptr;
       // Set the col index
-      _node->cols++;
+      _node->_cols++;
    }
 
    // Add a column named name from std::vector
@@ -184,14 +221,14 @@ public:
       }
       size_t size = v.size();
       // Set the rows size
-      if (_node->rows == 0) {
-         _node->rows = size;
+      if (_node->_rows == 0) {
+         _node->_rows = size;
          // Fill the indices with 0..rows-1
          _node->_indices.resize(size);
-         for (size_t i = 0; i < _node->rows;i++) {
+         for (size_t i = 0; i < _node->_rows;i++) {
             _node->_indices[i] = i;
          }
-      } else if (_node->rows != size) {
+      } else if (_node->_rows != size) {
          std::cout << "tenseur dataframe: Vector of different size" << std::endl;
          return;
       }
@@ -237,35 +274,51 @@ public:
       // Set the data
       _node->_data[name] = ptr;
       // Set the col index
-      _node->cols++;
+      _node->_cols++;
    }
 
    // Remove a column named name
-   /*
    void remove(const std::string& name) {
-      // Remove from the column names
-      for (auto & n: _node->_names) {
-         if (n == name) {
-            
-            break;
-         }
+      // Get the index
+      long index = _node->index_from_name(name);
+      if (index == -1) {
+         return;
       }
-      _node->_col_indices.erase(name);
-      _node->data.erase(name);
-      _node->cols--;
-      if (_node->cols == 0) {
+      _node->remove_column(index);
+      _node->remove_types(index);
+      _node->remove_data(name);
+      _node->_cols--;
+      // If there's no more columns left, set the rows to 0
+      // and clear the indices
+      if (_node->_cols == 0) {
          // Set the rows to 0
-         _node->rows = 0;
+         _node->_rows = 0;
          // Clear the indices
-         _node->indices = std::vector<cell_type>();
+         _node->_indices = std::vector<cell_type>();
       }
-   }*/
-
-   /*
-   // Remove a column from its index
-   void remove(const size_t index) {
    }
 
+   // Remove a column from its index
+   void remove(const size_t index) {
+      std::string name = _node->_names[index];
+      if (!_node->has_column_name(name)) {
+         return;
+      }
+      _node->remove_column(index);
+      _node->remove_types(index);
+      _node->remove_data(name);
+      _node->_cols--;
+      // If there's no more columns left, set the rows to 0
+      // and clear the indices
+      if (_node->_cols == 0) {
+         // Set the rows to 0
+         _node->_rows = 0;
+         // Clear the indices
+         _node->_indices = std::vector<cell_type>();
+      }
+   }
+
+   /*
    // Remove a row (return a data frame view)
    void remove_row(const size_t index) {
    }
@@ -282,8 +335,8 @@ public:
    // Select columns by names using [] operator
    dataframe_view operator[](const std::vector<std::string>& names) {
 
-      std::vector<size_t> row_indices(_node->rows);
-      for(size_t i = 0; i < _node->rows; i++) {
+      std::vector<size_t> row_indices(_node->_rows);
+      for(size_t i = 0; i < _node->_rows; i++) {
          row_indices[i] = i;
       }
       return dataframe_view(_node, row_indices, names);
@@ -291,8 +344,8 @@ public:
 
    // Select columns by indices using [] operator
    /*dataframe_view operator[](const std::vector<size_t>& indices) {
-      std::vector<size_t> row_indices(_node->rows);
-      for(size_t i = 0; i < _node->rows; i++) {
+      std::vector<size_t> row_indices(_node->_rows);
+      for(size_t i = 0; i < _node->_rows; i++) {
          row_indices[i] = i;
       }
       size_t size = indices.size();
@@ -318,9 +371,9 @@ std::string center_string(const std::string& s, size_t size) {
 }
 
 std::ostream& operator<<(std::ostream& os, const dataframe& df) {
-   os << "dataframe[" << df._node->rows << "x" << df._node->cols << "]\n";
-   size_t cols = df._node->cols;
-   size_t rows = df._node->rows;
+   os << "dataframe[" << df._node->_rows << "x" << df._node->_cols << "]\n";
+   size_t cols = df._node->_cols;
+   size_t rows = df._node->_rows;
    std::vector<size_t> max_len({cols});
    for (size_t i = 0; i < cols; i++) {
       std::string name = df._node->_names[i];
