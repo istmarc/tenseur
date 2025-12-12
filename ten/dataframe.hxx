@@ -525,18 +525,43 @@ class dataframe {
    /*
    // Remove a row (return a data frame view)
    void remove_row(const size_t index) {
-   }
+   }*/
 
    // Select indices and columns names
-   dataframe_view select(const std::vector<size_t>& indices, const
-   std::vector<std::string>& names) {
+   dataframe_view select(const std::vector<size_t> &row_indices,
+                         const std::vector<std::string> &names) {
+      return dataframe_view(_node, row_indices, names);
    }
 
    // Select indices and column indices
-   dataframe_view select(const std::vector<size_t>& indices, const
-   std::vector<size_t>& col_indices) {
+   dataframe_view select(const std::vector<size_t> &row_indices,
+                         const std::vector<size_t> &col_indices) {
+      std::vector<std::string> names = _node->column_names(col_indices);
+      return dataframe_view(_node, row_indices, names);
    }
-   */
+
+   // Select using indices sequences and columns names
+   dataframe_view select(const ten::seq &row_seq,
+                         const std::vector<std::string> &names) {
+      size_t size = row_seq._end - row_seq._start;
+      std::vector<size_t> row_indices(size);
+      for (size_t i = 0; i < size; i++) {
+         row_indices[i] = i + row_seq._start;
+      }
+      return dataframe_view(_node, row_indices, names);
+   }
+
+   // Select using indices sequence and column indices
+   dataframe_view select(const ten::seq &row_seq,
+                         const std::vector<size_t> &col_indices) {
+      size_t size = row_seq._end - row_seq._start;
+      std::vector<size_t> row_indices(size);
+      for (size_t i = 0; i < size; i++) {
+         row_indices[i] = i + row_seq._start;
+      }
+      std::vector<std::string> names = _node->column_names(col_indices);
+      return dataframe_view(_node, row_indices, names);
+   }
 
    // Select columns by names using [] operator
    dataframe_view operator[](const std::vector<std::string> &names) {
@@ -549,13 +574,28 @@ class dataframe {
    }
 
    // Select columns by indices using [] operator
-   dataframe_view operator[](const std::vector<size_t> &indices) {
+   dataframe_view operator[](const std::vector<size_t> &col_indices) {
       std::vector<size_t> row_indices(_node->_rows);
       for (size_t i = 0; i < _node->_rows; i++) {
          row_indices[i] = i;
       }
-      size_t size = indices.size();
-      std::vector<std::string> names = _node->column_names(indices);
+      size_t size = col_indices.size();
+      std::vector<std::string> names = _node->column_names(col_indices);
+      return dataframe_view(_node, row_indices, names);
+   }
+
+   // select columns by indices using ten::seq
+   dataframe_view operator[](const ten::seq &col_seq) {
+      std::vector<size_t> row_indices(_node->_rows);
+      for (size_t i = 0; i < _node->_rows; i++) {
+         row_indices[i] = i;
+      }
+      size_t size = col_seq._end - col_seq._start;
+      std::vector<size_t> col_indices({size});
+      for (size_t i = 0; i < size; i++) {
+         col_indices[i] = col_seq._start + i;
+      }
+      std::vector<std::string> names = _node->column_names(col_indices);
       return dataframe_view(_node, row_indices, names);
    }
 

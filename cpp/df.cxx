@@ -36,5 +36,15 @@ int main() {
       std::cout << s << std::endl;
    }
 
+   {
+      auto s = df[ten::seq(0,1)];
+      std::cout << s << std::endl;
+   }
+
+   {
+      auto s = df.select(ten::seq(0, 2), std::vector<std::string>{"x", "y"});
+      std::cout << s << std::endl;
+   }
+
 }
 
