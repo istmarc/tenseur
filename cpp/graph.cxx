@@ -1,4 +1,3 @@
-#include "ten/graph_theory/gmatrix.hxx"
 #include <ten/tensor>
 #include <ten/graph>
 
@@ -21,7 +20,7 @@ int main() {
    }
 
    {
-      ten::graph::gmatrix<float> g(5);
+      ten::graph::gmatrix<double> g(5);
       g.add_edge(0, 1);
       g.add_edge(1, 0);
       g.add_edge(0, 4);
