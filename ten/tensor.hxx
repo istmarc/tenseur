@@ -265,13 +265,17 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
 
  private:
    T _value;
+   bool _requires_grad = true;
+   T _grad;
 
  public:
-   scalar() {}
+   scalar(bool requires_grad = true) : _requires_grad(requires_grad) {}
 
-   explicit scalar(const T &value) : _value(value) {}
+   explicit scalar(const T &value, bool requires_grad = true) : _value(value),
+      _requires_grad(requires_grad) {}
 
-   explicit scalar(T &&value) : _value(std::move(value)) {}
+   explicit scalar(T &&value, bool requires_grad = true) : _value(std::move(value)),
+      _requires_grad(requires_grad) {}
 
    /// Asignment from an expression
    /*template <class Expr>
@@ -281,8 +285,18 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
       _node = expr.eval();
    }*/
 
+   void set_grad(T value) { _grad = value;}
+
    /// Get the value
    const T &value() const { return _value; }
+
+   const T& grad_value() const {return _grad;}
+
+   const scalar<T>& grad() const {return scalar(_grad, false);}
+
+   //scalar<T>& grad() const {return scalar(_grad, false);}
+
+   [[nodiscard]] bool requires_grad() const { return _requires_grad;}
 
    scalar &operator=(const T &value) {
       _value = value;
@@ -291,6 +305,7 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
 
    scalar &operator=(const scalar &s) {
       _value = s._value;
+      _grad = s._grad;
       return *this;
    }
 };
@@ -570,7 +585,7 @@ class ranked_tensor final
 
  private:
    /// Has gradient
-   bool _has_gradient = true;
+   bool _requires_grad = true;
    /// Storage format
    ::ten::storage_format _format = ::ten::storage_format::dense;
    /// Optional shape (only for dynamic tensors)
@@ -673,8 +688,8 @@ class ranked_tensor final
  public:
    // TODO default constructor for serialization / deserialization and
    // unary_expr, binary_expr
-   ranked_tensor(bool has_gradient = true) noexcept
-       : _has_gradient(has_gradient), _format(::ten::storage_format::dense), _shape(std::nullopt),
+   ranked_tensor(bool requires_grad = true) noexcept
+       : _requires_grad(requires_grad), _format(::ten::storage_format::dense), _shape(std::nullopt),
          _stride(std::nullopt), _node(nullptr), _grad(nullptr) {}
 
    /*
@@ -698,13 +713,13 @@ class ranked_tensor final
    */
 
    /// Constructor for static ranked_tensor
-   explicit ranked_tensor(bool has_gradient = true) noexcept
+   explicit ranked_tensor(bool requires_grad = true) noexcept
       requires(Shape::is_static())
-       :_has_gradient(has_gradient), _format(::ten::storage_format::dense), _shape(std::nullopt),
+       :_requires_grad(requires_grad), _format(::ten::storage_format::dense), _shape(std::nullopt),
          _stride(typename base_type::stride_type()) {
       auto storage = std::make_unique<storage_type>();
       _node = std::make_shared<node_type>(std::move(storage));
-      if (has_gradient) {
+      if (requires_grad) {
          auto grad_storage = std::make_unique<storage_type>();
          _grad = std::make_shared<node_type>(std::move(grad_storage));
       }
@@ -712,11 +727,11 @@ class ranked_tensor final
 
    /// Construct a static ranked_tensor from node and format
    explicit ranked_tensor(std::shared_ptr<node_type> &&node,
-                          ::ten::storage_format format, bool has_gradient = true) noexcept
+                          ::ten::storage_format format, bool requires_grad = true) noexcept
       requires(Shape::is_static())
-       : _has_gradient(has_gradient),_format(format), _shape(std::nullopt),
+       : _requires_grad(requires_grad),_format(format), _shape(std::nullopt),
          _stride(typename base_type::stride_type()), _node(std::move(node)) {
-      if (has_gradient) {
+      if (requires_grad) {
          auto grad_storage = std::make_unique<storage_type>();
          _grad = std::make_shared<node_type>(std::move(grad_storage));
       }
@@ -726,11 +741,11 @@ class ranked_tensor final
    /// TODO Check size
    explicit ranked_tensor(const std::shared_ptr<node_type> &node,
                           const Shape &dims,
-                          ::ten::storage_format format, bool has_gradient = true) noexcept
+                          ::ten::storage_format format, bool requires_grad = true) noexcept
       requires(Shape::is_dynamic())
-       : _has_gradient(has_gradient),_format(format), _shape(dims),
+       : _requires_grad(requires_grad),_format(format), _shape(dims),
          _stride(typename base_type::stride_type(_shape.value())), _node(node) {
-      if (has_gradient) {
+      if (requires_grad) {
          auto grad_storage = std::make_unique<storage_type>(dims);
          _grad = std::make_shared<node_type>(std::move(grad_storage));
       }
@@ -738,21 +753,21 @@ class ranked_tensor final
 
    /// Construct a ranked_tensor from node, shape and format
    explicit ranked_tensor(std::shared_ptr<node_type> &&node, const Shape &dims,
-                          ::ten::storage_format format, bool has_gradient = true) noexcept
+                          ::ten::storage_format format, bool requires_grad = true) noexcept
       requires(Shape::is_dynamic())
-       : _has_gradient(has_gradient),_format(format), _shape(dims),
+       : _requires_grad(requires_grad),_format(format), _shape(dims),
          _stride(typename base_type::stride_type(_shape.value())),
          _node(std::move(node)) {
-      if (has_gradient) {
+      if (requires_grad) {
          auto grad_storage = std::make_unique<storage_type>(dims);
          _grad = std::make_shared<node_type>(std::move(grad_storage));
       }
    }
 
    /// Construct a tensor_node from a list of shape
-   explicit ranked_tensor(std::initializer_list<size_type> &&dims, bool has_gradient = true) noexcept
+   explicit ranked_tensor(std::initializer_list<size_type> &&dims, bool requires_grad = true) noexcept
       requires(Shape::is_dynamic())
-       : _has_gradient(has_gradient),_format(::ten::storage_format::dense), _shape(std::move(dims)),
+       : _requires_grad(requires_grad),_format(::ten::storage_format::dense), _shape(std::move(dims)),
          _stride(typename base_type::stride_type(_shape.value())) {
       auto storage = std::make_unique<storage_type>(_shape.value());
       _node = std::make_shared<node_type>(std::move(storage));
@@ -760,9 +775,9 @@ class ranked_tensor final
 
    /// Construct a tensor_node from a list of shape and format
    explicit ranked_tensor(std::initializer_list<size_type> &&dims,
-                          ten::storage_format format, bool has_gradient = true) noexcept
+                          ten::storage_format format, bool requires_grad = true) noexcept
       requires(Shape::is_dynamic())
-       : _has_gradient(has_gradient),_format(format), _shape(std::move(dims)),
+       : _requires_grad(requires_grad),_format(format), _shape(std::move(dims)),
          _stride(typename base_type::stride_type(_shape.value())) {
       auto storage = std::make_unique<storage_type>(_shape.value());
       _node = std::make_shared<node_type>(std::move(storage));
@@ -770,9 +785,9 @@ class ranked_tensor final
 
    /// Tensor node from shape and data
    explicit ranked_tensor(std::initializer_list<size_type> &&dims,
-                          std::initializer_list<T> &&data, bool has_gradient = true) noexcept
+                          std::initializer_list<T> &&data, bool requires_grad = true) noexcept
       requires(Shape::is_dynamic())
-       : _has_gradient(has_gradient),_shape(std::move(dims)),
+       : _requires_grad(requires_grad),_shape(std::move(dims)),
          _stride(typename base_type::stride_type(_shape.value())) {
       auto storage = std::make_unique<storage_type>(_shape.value());
       size_type i = 0;
@@ -781,20 +796,20 @@ class ranked_tensor final
          i++;
       }
       _node = std::make_shared<node_type>(std::move(storage));
-      if (has_gradient) {
+      if (requires_grad) {
          auto grad_storage = std::make_unique<storage_type>(_shape.value());
          _grad = std::make_shared<node_type>(std::move(grad_storage));
       }
    }
 
    /// Construct a ranked_tensor from the shape
-   explicit ranked_tensor(const Shape &dims, bool has_gradient = true) noexcept
+   explicit ranked_tensor(const Shape &dims, bool requires_grad = true) noexcept
       requires(Shape::is_dynamic())
-       : _has_gradient(has_gradient),_format(ten::storage_format::dense), _shape(dims),
+       : _requires_grad(requires_grad),_format(ten::storage_format::dense), _shape(dims),
          _stride(typename base_type::stride_type(_shape.value())) {
       auto storage = std::make_unique<storage_type>(dims);
       _node = std::make_shared<node_type>(std::move(storage));
-      if (has_gradient) {
+      if (requires_grad) {
          auto grad_storage = std::make_unique<storage_type>(dims);
          _grad = std::make_shared<node_type>(std::move(grad_storage));
       }
@@ -802,9 +817,9 @@ class ranked_tensor final
 
    /// Tensor node from shape and data
    explicit ranked_tensor(const Shape &dims,
-                          std::initializer_list<T> &&data, bool has_gradient = true) noexcept
+                          std::initializer_list<T> &&data, bool requires_grad = true) noexcept
       requires(Shape::is_dynamic())
-       : _has_gradient(has_gradient),_shape(dims),
+       : _requires_grad(requires_grad),_shape(dims),
          _stride(typename base_type::stride_type(_shape.value())) {
       auto storage = std::make_unique<storage_type>(_shape.value());
       size_type i = 0;
@@ -813,16 +828,16 @@ class ranked_tensor final
          i++;
       }
       _node = std::make_shared<node_type>(std::move(storage));
-      if (has_gradient) {
+      if (requires_grad) {
          auto grad_storage = std::make_unique<storage_type>(_shape.value());
          _grad = std::make_shared<node_type>(std::move(grad_storage));
       }
    }
 
    /// Tensor node from data
-   explicit ranked_tensor(std::initializer_list<T> &&data, bool has_gradient = true) noexcept
+   explicit ranked_tensor(std::initializer_list<T> &&data, bool requires_grad = true) noexcept
       requires(Shape::is_static())
-       : _has_gradient(has_gradient),_shape(std::nullopt), _stride(typename base_type::stride_type()) {
+       : _requires_grad(requires_grad),_shape(std::nullopt), _stride(typename base_type::stride_type()) {
       auto storage = std::make_unique<storage_type>();
       size_type i = 0;
       for (auto x : data) {
@@ -830,7 +845,7 @@ class ranked_tensor final
          i++;
       }
       _node = std::make_shared<node_type>(std::move(storage));
-      if (has_gradient) {
+      if (requires_grad) {
          auto grad_storage = std::make_unique<storage_type>();
          _grad = std::make_shared<node_type>(std::move(grad_storage));
       }
@@ -940,24 +955,24 @@ class ranked_tensor final
    }
 
    /// Constructor for vector
-   explicit ranked_tensor(size_type size, bool has_gradient = true) noexcept
-      requires(Shape::is_dynamic() && Shape::rank() == 1) : _has_gradient(has_gradient)
+   explicit ranked_tensor(size_type size, bool requires_grad = true) noexcept
+      requires(Shape::is_dynamic() && Shape::rank() == 1) : _requires_grad(requires_grad)
    {
       _node =
           std::make_shared<node_type>(std::initializer_list<size_type>{size});
-      if (has_gradient) {
+      if (requires_grad) {
          _grad = std::make_shared<node_type>(std::initializer_list<size_type>{size});
       }
    }
 
    /// Constructor for matrix
-   explicit ranked_tensor(size_type rows, size_type cols, bool has_gradient = true) noexcept
+   explicit ranked_tensor(size_type rows, size_type cols, bool requires_grad = true) noexcept
       requires(Shape::is_dynamic() && Shape::rank() == 2) :
-      _has_gradient(has_gradient)
+      _requires_grad(requires_grad)
    {
       _node = std::make_shared<node_type>(
           std::initializer_list<size_type>{rows, cols});
-      if (has_gradient) {
+      if (requires_grad) {
          _grad = std::make_shared<node_type>(std::initializer_list<size_type>{rows, cols});
       }
    }
@@ -990,7 +1005,7 @@ class ranked_tensor final
 
    /// Copy constructor
    ranked_tensor(const ranked_tensor &t) {
-      _has_gradient = t._has_gradient;
+      _requires_grad = t._requires_grad;
       _format = t._format;
       _shape = t._shape;
       _stride = t._stride;
@@ -1000,7 +1015,7 @@ class ranked_tensor final
 
    /// Copy constructor
    ranked_tensor(ranked_tensor &&t) {
-      _has_gradient = std::move(t._has_gradient);
+      _requires_grad = std::move(t._requires_grad);
       _format = std::move(t._format);
       _shape = std::move(t._shape);
       _stride = std::move(t._stride);
@@ -1010,7 +1025,7 @@ class ranked_tensor final
 
    /// Assignment operator
    ranked_tensor &operator=(const ranked_tensor &t) {
-      _has_gradient = t._has_gradient;
+      _requires_grad = t._requires_grad;
       _format = t._format;
       _shape = t._shape;
       _stride = t._stride;
@@ -1021,7 +1036,7 @@ class ranked_tensor final
 
    /// Assignment operator
    ranked_tensor &operator=(ranked_tensor &&t) {
-      _has_gradient = std::move(t._has_gradient);
+      _requires_grad = std::move(t._requires_grad);
       _format = std::move(t._format);
       _shape = std::move(t._shape);
       _stride = std::move(t._stride);
@@ -1230,6 +1245,10 @@ class ranked_tensor final
    // Returns the shared ptr to the gradient node
    [[nodiscard]] std::shared_ptr<node_type> grad_node() const { return _grad; }
 
+   [[nodiscard]] ranked_tensor<T, Shape, order, Storage, Allocator> grad() const {
+      return ranked_tensor(_grad, _shape.value(), _format, false);
+   }
+
    /// Get the gradient data
    [[nodiscard]] const T *grad_data() const { return _grad.get()->data(); }
 
@@ -1241,29 +1260,31 @@ class ranked_tensor final
 
    /// Get the gradient at index
    [[nodiscard]] inline const typename base_type::value_type &
-   grad_at(size_type index) const noexcept {
+   grad_value(size_type index) const noexcept {
       return (*_grad.get())[index];
    }
 
    /// Get the gradient at index
    [[nodiscard]] inline typename base_type::value_type &
-   grad_at(size_type index) noexcept {
+   grad_value(size_type index) noexcept {
       return (*_grad.get())[index];
    }
 
    /// Get the gradient at index...
    [[nodiscard]] inline const typename base_type::value_type &
-   grad(auto... index) const noexcept {
+   grad_at(auto... index) const noexcept {
       static_assert(sizeof...(index) == Shape::rank());
       return grad_linear(index...);
    }
 
    /// Get the gradient at index...
    [[nodiscard]] inline typename base_type::value_type &
-   grad(auto... index) noexcept {
+   grad_at(auto... index) noexcept {
       static_assert(sizeof...(index) == Shape::rank());
       return grad_linear(index...);
    }
+
+   [[nodiscard]] inline bool requires_grad() const { return _requires_grad;}
 
    // copy
    auto copy() const {
