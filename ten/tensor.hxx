@@ -262,6 +262,7 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
  public:
    using node_type = scalar_node<T>;
    using value_type = T;
+   using shape_type = ::ten::shape<1>;
 
  private:
    T _value;
@@ -285,11 +286,12 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
       _node = expr.eval();
    }*/
 
-   void set_grad(T value) { _grad = value;}
-
-   /// Get the value
+   /// Get or set  the value
+   T& value() {return _value;}
    const T &value() const { return _value; }
 
+   // Get or set the gradient value
+   T& grad_value() {return _grad;}
    const T& grad_value() const {return _grad;}
 
    const scalar<T>& grad() const {return scalar(_grad, false);}

@@ -203,9 +203,10 @@ template <class Func> struct has_shape {
 
 /// Square root
 template <class A, class B>
-   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+   requires( ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
              ::ten::is_row<A>::value) &&
             ::ten::is_tensor<B>::value)
+   || (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
 struct sqrt : func<> {
    static constexpr std::string name() { return std::string("sqrt"); }
 
@@ -213,8 +214,13 @@ struct sqrt : func<> {
 
    void operator()(const A &a, B &b) {
       using value_type = typename B::value_type;
-      for (size_t i = 0; i < a.size(); i++) {
-         b[i] = std::sqrt(static_cast<value_type>(a[i]));
+      if constexpr (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>) {
+         b.value() = std::sqrt(a.value());
+      }
+      if constexpr (::ten::is_tensor_v<A> || ::ten::is_column_v<A> || ::ten::is_row_v<A>) {
+         for (size_t i = 0; i < a.size(); i++) {
+            b[i] = std::sqrt(static_cast<value_type>(a[i]));
+         }
       }
    }
 
@@ -222,13 +228,18 @@ struct sqrt : func<> {
    output_shape(const typename B::shape_type &right) {
       return right;
    }
+
+   template<class T>
+   T gradient(T& x) {
+      return T(1) / (2* std::sqrt(x));
+   }
 };
 
 /// Square
 template <class A, class B>
-   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-             ::ten::is_row<A>::value) &&
-            ::ten::is_tensor<B>::value)
+   requires( ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+             ::ten::is_row<A>::value ) && ::ten::is_tensor<B>::value)
+      || (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
 struct sqr : func<> {
    static constexpr std::string name() { return std::string("sqr"); }
 
@@ -236,14 +247,24 @@ struct sqr : func<> {
 
    void operator()(const A &a, B &b) {
       using value_type = typename B::value_type;
-      for (size_t i = 0; i < a.size(); i++) {
-         b[i] = static_cast<value_type>(a[i]) * static_cast<value_type>(a[i]);
+      if constexpr (::ten::is_scalar<A>::value) {
+         b.value() = a.value() * a.value();
+      }
+      if constexpr (::ten::is_tensor_v<A> || ::ten::is_column_v<A> || ::ten::is_row_v<A>) {
+         for (size_t i = 0; i < a.size(); i++) {
+            b[i] = static_cast<value_type>(a[i]) * static_cast<value_type>(a[i]);
+         }
       }
    }
 
    static typename B::shape_type
    output_shape(const typename B::shape_type &right) {
       return right;
+   }
+
+   template<class T>
+   T gradient(T& x) {
+      return T(2) * x;
    }
 };
 
