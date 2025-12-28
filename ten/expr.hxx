@@ -240,9 +240,13 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
 
    [[maybe_unused]] auto backward() noexcept -> output_type {
       using input_type = std::remove_cvref_t<Input>;
+      // If the input is a scalar
+      if constexpr (::ten::is_scalar<input_type>::value) {
+         compute_gradient_scalar<func_type>(_node->_input, _node->_func.value());
+      }
       // if the input is a tensor
       if constexpr (::ten::is_tensor_v<input_type>) {
-         compute_gradient<func_type>(_node->_input);
+         compute_gradient_unary<func_type>(_node->_input, _node->_func.value());
          // return output_type(_node->_input.grad_node(), _node->_input.shape(), _node->_input.format(), false);
          return _node->_input.grad();
       }

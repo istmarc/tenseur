@@ -6,27 +6,25 @@
 
 namespace ten{
 
-// TODO Compute scalar gradient
-/*
+// Compute scalar gradient
 template<class Func, class T>
-void compute_scalar_gradient(ten::scalar<T>& input) {
-   if (::ten::is_sqrt<Func>::value) {
-      input.set_grad(T(1) / (2 * std::sqrt(input.value())));
-   }
-}*/
+void compute_gradient_scalar(ten::scalar<T>& input, Func& f) {
+   input.grad_value() = f.gradient(input.value());
+}
 
 // Compute gradient of a tensor
 // y = f(x) compute the gradient dy/dx = df/dx (x) in x.grad
 template<class Func, class X>
-void compute_gradient_unary(X& x) {
+void compute_gradient_unary(X& x, Func &f) {
+   using T = typename X::value_type;
    // Unary functions
    if (::ten::is_sqrt<Func>::value) {
-      for (size_t i = 0; i < input.size(); i++) {
+      for (size_t i = 0; i < x.size(); i++) {
          x.grad_at(i) = T(1) / (2 * std::sqrt(x[i]));
       }
    }
    if (::ten::is_sqr<Func>::value) {
-      for (size_t i = 0; i < input.size(); i++) {
+      for (size_t i = 0; i < x.size(); i++) {
          x.grad_at(i) = T(2) * x[i];
       }
    }
