@@ -26,6 +26,34 @@ template <class> struct is_add : std::false_type {};
 template <class A, class B, class C>
 struct is_add<::ten::functional::binary_func<
     ::ten::binary_operation::add>::template func<A, B, C>> : std::true_type {};
+template <class A, class B, class C>
+struct is_add<::ten::functional::scalar_left_binary_func<
+    ten::binary_operation::add>::template func<A, B, C>> : std::true_type {};
+template <class A, class B, class C>
+struct is_add<::ten::functional::scalar_right_binary_func<
+    ten::binary_operation::add>::template func<A, B, C>> : std::true_type {};
+
+template <class> struct is_sub : std::false_type {};
+template <class A, class B, class C>
+struct is_sub<::ten::functional::binary_func<
+    ::ten::binary_operation::sub>::template func<A, B, C>> : std::true_type {};
+template <class A, class B, class C>
+struct is_sub<::ten::functional::scalar_left_binary_func<
+    ten::binary_operation::sub>::template func<A, B, C>> : std::true_type {};
+template <class A, class B, class C>
+struct is_sub<::ten::functional::scalar_right_binary_func<
+    ten::binary_operation::sub>::template func<A, B, C>> : std::true_type {};
+
+template <class> struct is_div : std::false_type {};
+template <class A, class B, class C>
+struct is_div<::ten::functional::binary_func<
+    ::ten::binary_operation::div>::template func<A, B, C>> : std::true_type {};
+template <class A, class B, class C>
+struct is_div<::ten::functional::scalar_left_binary_func<
+    ten::binary_operation::div>::template func<A, B, C>> : std::true_type {};
+template <class A, class B, class C>
+struct is_div<::ten::functional::scalar_right_binary_func<
+    ten::binary_operation::div>::template func<A, B, C>> : std::true_type {};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Unary functions

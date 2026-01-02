@@ -179,17 +179,20 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
 
 
    [[nodiscard]] auto grad() noexcept -> output_type {
-      using input_type = std::remove_cvref_t<Input>;
-      // TODO if the input is scalar
-      //if constexpr (::ten::is_scalar_v<input_type>) {
-      //   return _input.grad();
-      //}
+      //using input_type = std::remove_cvref_t<Input>;
+      return _node->_value.grad();
+      //static_assert(::ten::is_scalar<>);
+      // if the input is scalar
+      /*
+      if constexpr (::ten::is_scalar_v<input_type>) {
+         return _node->_input.grad();
+      }
       if constexpr (::ten::is_tensor_v<input_type>) {
          return _node->_input.grad();
       }
       if constexpr (::ten::is_unary_expr_v<input_type> || ::ten::is_binary_expr_v<input_type>) {
          return _node->_input.value().grad();
-      }
+      }*/
    }
 
    /// Evaluate the expression
@@ -238,7 +241,7 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
       return _node->_value;
    }
 
-   [[maybe_unused]] auto backward() noexcept -> output_type {
+   [[maybe_unused]] void backward() noexcept {
       using input_type = std::remove_cvref_t<Input>;
       // If the input is a scalar
       if constexpr (::ten::is_scalar<input_type>::value) {
@@ -246,21 +249,24 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
       }
       // if the input is a tensor
       if constexpr (::ten::is_tensor_v<input_type>) {
-         compute_gradient_unary<func_type>(_node->_input, _node->_func.value());
-         // return output_type(_node->_input.grad_node(), _node->_input.shape(), _node->_input.format(), false);
-         return _node->_input.grad();
+         auto grad = _node->_input.grad();
+         //compute_gradient_unary<func_type>(_node->_input, _node->_func.value());
+         _node->_func.value().gradient(_node->_input, grad);
       }
       // If the input is a unary node
       // Compute gradient of fog = f' x g'of
       if constexpr (::ten::is_unary_expr_v<input_type>) {
-         // comput g' in _input.grad
+         /*
+         // compute g' in _input.grad
          _node->_input.backward();
          // Compute f' in and g'of
          auto grad = _node->_input.grad();
          compute_gradient_chain_rule<func_type>(_node->_input.value(), grad);
-         return _node->_input.value().grad();
+         */
       }
-      // TODO If the input is a binary node
+      // If the input is a binary node
+      if constexpr (::ten::is_binary_expr_v<input_type>) {
+      }
    }
 
 };
@@ -517,14 +523,17 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
    [[maybe_unused]] auto backward() noexcept -> output_type {
       using left_type = std::remove_cvref_t<Left>;
       using right_type = std::remove_cvref_t<Right>;
-      // If the left input is a tensor
-      if constexpr (::ten::is_tensor_v<left_type>) {
-         compute_gradient_binary<func_type>(_node->_left, _node->_right);
+      // If the left input and right input are tensors
+      if constexpr (::ten::is_tensor_v<left_type> && ::ten::is_tensor_v<right_type>) {
+         _node->_func.gradient_left(_node->_value, _node->_left, _node->_right);
       }
+      /*
       // If the right input is a tensor
       if constexpr (::ten::is_tensor_v<right_type>) {
-         compute_gradient_binary<func_type>(_node->_right, _node->_left);
+         _node->_func.gradient_right(_node->_value, _node->_right);
+         //compute_gradient_binary<func_type>(_node->_right, _node->_left);
       }
+      */
       // If the left input is an expression
       if constexpr (::ten::is_unary_expr_v<left_type> || ::ten::is_binary_expr_v<left_type>) {
          _node->_left.backward();

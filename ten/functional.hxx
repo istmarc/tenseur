@@ -965,7 +965,7 @@ template <::ten::binary_operation Kind> struct binary_func {
       using output_type = C;
 
       static constexpr typename C::shape_type
-      output_shape(const typename A::shape_type &left,
+      output_shape(const typename A::shape_type &/*left*/,
                    const typename B::shape_type &right) {
          // FIXME Maybe check that left == right
          typename C::shape_type s(right);
@@ -976,6 +976,48 @@ template <::ten::binary_operation Kind> struct binary_func {
 
       void operator()(const A &left, const B &right, C &result) {
          ::ten::kernels::binary_ops<Kind>(left, right, result);
+      }
+
+      void gradient_left(const A& /*x*/, const B& y, C& z) {
+         if constexpr ((Kind == ::ten::binary_operation::add)
+         || (Kind == ::ten::binary_operation::sub)) {
+            for (size_t i = 0; i < z.size();i++) {
+               z[i] = 1;
+            }
+         }
+         if (Kind == ::ten::binary_operation::mul) {
+            for (size_t i = 0; i< z.size();i++) {
+               z[i] = y[i];
+            }
+         }
+         if (Kind == ::ten::binary_operation::div) {
+            for (size_t i = 0; i< z.size();i++) {
+               z[i] = 1 / y[i];
+            }
+         }
+      }
+
+      void gradient_right(const A& x, const B& y, C& z) {
+         if constexpr (Kind == ::ten::binary_operation::add) {
+            for (size_t i = 0; i < z.size();i++) {
+               z[i] = 1;
+            }
+         }
+         if constexpr (Kind == ::ten::binary_operation::sub) {
+            for (size_t i = 0; i < z.size();i++) {
+               z[i] = -1;
+            }
+         }
+         if (Kind == ::ten::binary_operation::mul) {
+            for (size_t i = 0; i< z.size();i++) {
+               z[i] = x[i];
+            }
+         }
+         if (Kind == ::ten::binary_operation::div) {
+            for (size_t i = 0; i< z.size();i++) {
+               z[i] = - x[i] / (y[i]*y[i]);
+            }
+         }
       }
    };
 };
