@@ -518,6 +518,8 @@ struct sin : func<> {
    static constexpr std::string name() { return std::string("sin"); }
 
    using output_type = Y;
+   using value_type = X::value_type;
+   using output_value_type = Y::value_type;
 
    void operator()(const X &a, Y &b) {
       using type = typename Y::value_type;
@@ -531,9 +533,14 @@ struct sin : func<> {
       return right;
    }
 
-   template<typename T>
-   T gradient(T x) {
-      return std::cos(x);
+   void gradient(value_type& x, output_value_type& y) {
+      y = std::cos(x);
+   }
+
+   void gradient(const X& x, Y& y) {
+      for (size_t i = 0; i < x.size(); i++) {
+         y[i] = std::cos(x[i]);
+      }
    }
 };
 
