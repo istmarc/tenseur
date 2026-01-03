@@ -9,36 +9,39 @@ void f() {
 int main() {
    {
       f();
-      ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
+      ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
       std::cout << x << std::endl;
       std::cout << x.grad() << std::endl;
    }
 
    {
       f();
-      ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
+      ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
       std::cout << x << std::endl;
       auto y = ten::sqrt(x);
-      y.backward();
+      y.backward(true);
       std::cout << "Gradient of sqrt\n";
       std::cout << x.grad() << std::endl;
    }
 
+   /*
    {
       f();
-      ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
-      std::cout << x << std::endl;
+      ten::scalar<float> x(2.0f);
       auto y = ten::sqrt(x);
       auto z = ten::sqr(y);
-      z.eval();
-      std::cout << z.input().input() << std::endl;
-      std::cout << z.input().value() << std::endl;
-
-      std::cout << "z value =\n" << z.value() << std::endl;
-      std::cout << std::boolalpha << z.evaluated() << std::endl;
-      std::cout << std::boolalpha << y.evaluated() << std::endl;
-      std::cout << "y value =\n" << y.value() << std::endl;
       z.backward();
+   }*/
+
+   {
+      f();
+      ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
+      std::cout << x << std::endl;
+      auto y = ten::sqr(x);
+      auto z = ten::sin(y);
+      auto t = ten::cos(z);
+      t.eval();
+      t.backward(true);
       std::cout << "And the gradients\n";
       std::cout << x.grad() << std::endl;
       std::cout << y.grad() << std::endl;
@@ -56,5 +59,16 @@ int main() {
       std::cout << grad << std::endl;
    }*/
 
+
+   /*
+   {
+      f();
+      ten::matrix<float> x({2, 2}, {1.0f, 2.0f, 3.0f, 4.0f});
+      ten::matrix<float> y({2, 2}, {1.0f, 2.0f, 3.0f, 4.0f});
+      auto z = x * y;
+      z.eval();
+      std::cout << z.value() << std::endl;
+   }
+   */
 }
 
