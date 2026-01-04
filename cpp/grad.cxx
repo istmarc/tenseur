@@ -44,12 +44,36 @@ int main() {
       t.backward(true);
       std::cout << "And the gradients\n";
       std::cout << x.grad() << std::endl;
+      // Should be equal to
+      //-0.805725
+      //-1.79517
+      //2.18973
+      //-2.17536
+      //1.30805
       std::cout << y.grad() << std::endl;
       std::cout << z.grad() << std::endl;
    }
 
-   /*
+   {
+      f();
+      ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
+      std::cout << x << std::endl;
+      auto y = ten::sqr(x);
+      auto z = ten::sin(y);
+      auto t = ten::cos(z);
+      t.eval();
+      t.backward();
+      std::cout << "And the gradients\n";
+      std::cout << x.grad() << std::endl;
+      // Should be equal to
+      //-0.805725
+      //-1.79517
+      //2.18973
+      //-2.17536
+      //1.30805
+   }
 
+   /*
    {
       ten::stensor<float, 10> x({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
       std::cout << x << std::endl;
