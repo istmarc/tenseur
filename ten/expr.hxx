@@ -37,7 +37,7 @@ template <class Left, class Right, class Output, template <typename...> class F,
           class... Args>
 struct input_type<::ten::binary_expr<Left, Right, Output, F, Args...>> {
    using type =
-       typename ::ten::binary_expr<Left, Right, Output, F, Args...>::input_type;
+       typename ::ten::binary_expr<Left, Right, Output, F, Args...>::output_type;
 };
 
 // Output type
@@ -97,6 +97,7 @@ template <BinaryExpr ExprType> static inline auto input_value(ExprType &expr) {
 }
 
 
+/*
 template<class Input, class Output, template<typename...> Func>
 auto allocate_output_tensor(Input& input, Func& func) {
    using input_t = typename ::ten::details::input_type<Input>::type;
@@ -119,7 +120,7 @@ auto allocate_output_tensor(Input& input, Func& func) {
              ::ten::details::input_shape(input)));
       }
    }
-}
+}*/
 
 
 } // namespace ten::details
@@ -167,6 +168,8 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
    using func_type = Func<input_type, output_type>;
 
    using node_type = unary_node<Input, Output, Func, Args...>;
+
+   using value_type = output_type::value_type;
 
  private:
    std::shared_ptr<node_type> _node = nullptr;
@@ -269,18 +272,17 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
    }*/
 
    // Compute the gradient using the chain rule
-   template<class GradientF, class GradientG>
+   /*template<class GradientF, class GradientG>
    void backward_chain(GradientF& gradf, GradientG& gradg) {
       for (size_t i = 0; i < gradf.size(); i++) {
          gradf[i] *= gradg[i];
       }
-   }
+   }*/
 
-   /*
    template<class Gradient>
-   void backward_function(std::optional<Gradient>& previous_grad) {
+   void backward_function(const std::optional<Gradient>& previous_grad) {
       using input_type = std::remove_cvref_t<Input>;
-      if constexpr (::ten::is_tensor_v<input_type>) {
+      /*if constexpr (::ten::is_tensor_v<input_type>) {
          auto input_tensor = _node->_input;
          if (input_tensor.requires_grad()) {
             input_tensor.allocate_gradient();
@@ -309,12 +311,24 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
          } else {
             
          }
-      }
-   }*/
+      }*/
+   }
 
    void backward(bool create_graph = false) noexcept {
       if (create_graph) {
          using input_type = std::remove_cvref_t<Input>;
+         if constexpr (::ten::is_scalar_v<input_type>) {
+            auto input = _node->_input;
+            if (!input.requires_grad()) {
+               input.allocate_gradient();
+            }
+            auto grad = input.grad();
+            _node->_func.value().gradient(input.value(), grad.value());
+            if (_node->_value.requires_grad()) {
+               auto previous_grad = _node->_value.grad();
+               //backward_chain(grad.value(); previous_grad.value());
+            }
+         }
          if constexpr (::ten::is_tensor_v<input_type>) {
             auto input_tensor = _node->_input;
             if (!input_tensor.requires_grad()) {
@@ -329,7 +343,7 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
                backward_chain(grad, previous_grad);
             }
          }
-         if constexpr (::ten::is_unary_expr_v<input_type>) {
+         if constexpr (::ten::is_unary_expr_v<input_type> || ::ten::is_binary_expr_v<input_type>) {
             if (!_node->_input.value().requires_grad()) {
                _node->_input.value().allocate_gradient();
             }
@@ -369,6 +383,8 @@ struct binary_node {
 
    /// Flag for evaluated expression
    bool _evaluated = false;
+   // Retain the gradient
+   bool _retain_grad = false;
    /// Function
    std::optional<func_type> _func = std::nullopt;
    /// Left input
@@ -419,6 +435,8 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
 
    using node_type = binary_node<left_type, right_type, output_type, Func, Args...>;
 
+   using value_type = output_type::value_type;
+
  private:
 
    std::shared_ptr<node_type> _node = nullptr;
@@ -443,7 +461,8 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
    }
 
    /// Requires gradient
-   [[nodiscard]] inline bool requires_grad() {return _node->_left.requires_grad() || _node->_right.requires_grad();}
+   [[nodiscard]] inline bool requires_left_grad() {return _node->_left.requires_grad();}
+   [[nodiscard]] inline bool requires_right_grad() {return _node->_right.requires_grad();}
 
    /// Returns the left input
    [[nodiscard]] Left &left() { return _node->_left; }
@@ -600,44 +619,95 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
       return _node->_value;
    }
 
-   [[maybe_unused]] auto backward() noexcept -> output_type {
+   template<class Gradient>
+   void backward_function(const std::optional<Gradient>& grad) {
+   }
+
+   void backward(bool create_graph = false) noexcept {
       using left_type = std::remove_cvref_t<Left>;
       using right_type = std::remove_cvref_t<Right>;
-      // If the left input and right input are tensors
-      if constexpr (::ten::is_tensor_v<left_type> && ::ten::is_tensor_v<right_type>) {
-         _node->_func.gradient_left(_node->_value, _node->_left, _node->_right);
+      if (create_graph) {
+         // Left is tensor
+         if constexpr (::ten::is_tensor_v<left_type>) {
+            auto left_tensor = _node->_left;
+            if (!left_tensor.requires_grad()) {
+               left_tensor.allocate_gradient();
+            }
+            auto grad = left_tensor.grad();
+            // Compute the gradient
+            if constexpr (::ten::is_tensor_v<right_type>) {
+               _node->_func.value().gradient_left(left_tensor, _node->_right, grad);
+            } else {
+               _node->_func.value().gradient_left(left_tensor, _node->_right.value(), grad);
+            }
+            // Use the chain rule
+            if (_node->_value.requires_grad()) {
+               auto previous_grad = _node->_value.grad();
+               backward_chain(grad, previous_grad);
+            }
+         }
+         // Right is tensor
+         if constexpr (::ten::is_tensor_v<right_type>) {
+            auto right_tensor = _node->_right;
+            if (!right_tensor.requires_grad()) {
+               right_tensor.allocate_gradient();
+            }
+            auto grad = right_tensor.grad();
+            // Compute the gradient
+            if constexpr (::ten::is_tensor_v<left_type>) {
+               _node->_func.value().gradient_left(_node->_left, right_tensor, grad);
+            } else {
+               _node->_func.value().gradient_left(_node->_left.value(), right_tensor, grad);
+            }
+            // Use the chain rule
+            if (_node->_value.requires_grad()) {
+               auto previous_grad = _node->_value.grad();
+               backward_chain(grad, previous_grad);
+            }
+         }
+         // Left is expr
+         if constexpr (::ten::is_unary_expr_v<left_type>  || ::ten::is_binary_expr_v<left_type>) {
+            if (!_node->_left.value().requires_grad()) {
+               _node->_left.value().allocate_gradient();
+            }
+            auto grad = _node->_left.value().grad();
+            // Compute the gradient
+            if constexpr (::ten::is_tensor_v<right_type>) {
+               _node->_func.value().gradient_left(_node->_left.value(), _node->_right, grad);
+            } else {
+               _node->_func.value().gradient_left(_node->_left.value(), _node->_right.value(), grad);
+            }
+            // Use the chain rule
+            if (_node->_value.requires_grad()) {
+               auto previous_grad = _node->_value.grad();
+               backward_chain(grad, previous_grad);
+            }
+            _node->_left.backward(create_graph);
+         }
+         // Right is expr
+         if constexpr (::ten::is_unary_expr_v<right_type>  || ::ten::is_binary_expr_v<right_type>) {
+            if (!_node->_right.value().requires_grad()) {
+               _node->_right.value().allocate_gradient();
+            }
+            auto grad = _node->_right.value().grad();
+            // Compute the gradient
+            if constexpr (::ten::is_tensor_v<left_type>) {
+               _node->_func.value().gradient_left(_node->_left, _node->_right.value(), grad);
+            } else {
+               _node->_func.value().gradient_left(_node->_left.value(), _node->_right.value(), grad);
+            }
+            // Use the chain rule
+            if (_node->_value.requires_grad()) {
+               auto previous_grad = _node->_value.grad();
+               backward_chain(grad, previous_grad);
+            }
+            _node->_right.backward(create_graph);
+         }
+      } else {
+         using Gradient = Output;
+         std::optional<Gradient> grad(std::nullopt);
+         backward_function(grad);
       }
-      /*
-      // If the right input is a tensor
-      if constexpr (::ten::is_tensor_v<right_type>) {
-         _node->_func.gradient_right(_node->_value, _node->_right);
-         //compute_gradient_binary<func_type>(_node->_right, _node->_left);
-      }
-      */
-      // If the left input is an expression
-      if constexpr (::ten::is_unary_expr_v<left_type> || ::ten::is_binary_expr_v<left_type>) {
-         _node->_left.backward();
-      }
-      // if the right input is an expression
-      if constexpr (::ten::is_unary_expr_v<right_type> || ::ten::is_binary_expr_v<right_type>) {
-         _node->_right.backward();
-      }
-      /**
-      // if the input is a tensor
-      if constexpr (::ten::is_tensor_v<input_type>) {
-         return _node->_input.grad();
-      }
-      // If the input is a unary node
-      // Compute gradient of fog = f' x g'of
-      if constexpr (::ten::is_unary_expr_v<input_type>) {
-         // comput g' in _input.grad
-         _node->_input.backward();
-         // Compute f' in and g'of
-         auto grad = _node->_input.grad();
-         compute_gradient_chain_rule<func_type>(_node->_input.value(), grad);
-         return _node->_input.value().grad();
-      }*/
-      // TODO If the input is a binary node
    }
 };
 

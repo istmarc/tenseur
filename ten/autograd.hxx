@@ -36,6 +36,13 @@ void compute_gradient_chain_rule(Input& input, GradX& gradx, GradY& grady) {
    }
 }
 
+template<class GradientF, class GradientG>
+void backward_chain(GradientF& gradf, GradientG& gradg) {
+   for (size_t i = 0; i< gradf.size(); i++) {
+      gradf[i] *= gradg[i];
+   }
+}
+
 }
 
 #endif
