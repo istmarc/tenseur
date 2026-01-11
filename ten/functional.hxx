@@ -376,13 +376,15 @@ struct pow : func<true> {
       return right;
    }
 
-   void gradient(const value_type &x, output_value_type &y) {
-      y = static_cast<output_value_type>(_n) * std::pow(x, _n - 1);
-   }
-
    void gradient(const X &x, Y &y) {
-      for (size_t i = 0; i < x.size(); i++) {
-         y[i] = static_cast<output_value_type>(_n) * std::pow(x[i], _n - 1);
+      if constexpr (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>) {
+         y.value() =
+             static_cast<output_value_type>(_n) * std::pow(x.value(), _n - 1);
+      }
+      if constexpr (::ten::is_tensor_v<Y> && ::ten::is_tensor_v<X>) {
+         for (size_t i = 0; i < x.size(); i++) {
+            y[i] = static_cast<output_value_type>(_n) * std::pow(x[i], _n - 1);
+         }
       }
    }
 };
@@ -461,7 +463,11 @@ struct sum : func<> {
       return right;
    }
 
-   void gradient(const X & /*x*/, Y &y) { y = 1; }
+   void gradient(const X &x, X &y) {
+      for (size_t i = 0; i < x.size(); i++) {
+         y[i] = 1;
+      }
+   }
 };
 
 /// Cumulative sum
@@ -975,7 +981,7 @@ struct ceil : func<> {
 /// Binary function
 template <::ten::binary_operation Kind> struct binary_func {
 
-   template <class A, class B, class C>
+   template <class X, class Y, class Z>
    struct func : ::ten::functional::func<> {
       static constexpr std::string name() {
          if constexpr (Kind == ::ten::binary_operation::add) {
@@ -992,23 +998,21 @@ template <::ten::binary_operation Kind> struct binary_func {
          }
       }
 
-      using output_type = C;
+      using output_type = Z;
 
-      static constexpr typename C::shape_type
-      output_shape(const typename A::shape_type & /*left*/,
-                   const typename B::shape_type &right) {
+      static constexpr typename Z::shape_type
+      output_shape(const typename X::shape_type & /*left*/,
+                   const typename Y::shape_type &right) {
          // FIXME Maybe check that left == right
-         typename C::shape_type s(right);
+         typename Z::shape_type s(right);
          return s;
       }
 
-      // static auto output_shape(const A &a, const B &b) { return a.shape(); }
-
-      void operator()(const A &left, const B &right, C &result) {
+      void operator()(const X &left, const Y &right, Z &result) {
          ::ten::kernels::binary_ops<Kind>(left, right, result);
       }
 
-      void gradient_left(const A & /*x*/, const B &y, C &z) {
+      void gradient_left(const X & /*x*/, const Y &y, Z &z) {
          if constexpr ((Kind == ::ten::binary_operation::add) ||
                        (Kind == ::ten::binary_operation::sub)) {
             for (size_t i = 0; i < z.size(); i++) {
@@ -1027,7 +1031,7 @@ template <::ten::binary_operation Kind> struct binary_func {
          }
       }
 
-      void gradient_right(const A &x, const B &y, C &z) {
+      void gradient_right(const X &x, const Y &y, Z &z) {
          if constexpr (Kind == ::ten::binary_operation::add) {
             for (size_t i = 0; i < z.size(); i++) {
                z[i] = 1;

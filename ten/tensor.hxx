@@ -334,7 +334,7 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
    }
 
    scalar &operator=(const T &value) {
-      _value = value;
+      *_value.get() = value;
       return *this;
    }
 
@@ -760,6 +760,19 @@ class ranked_tensor final
    }
 
    /// Construct a static ranked_tensor from node and format
+   explicit ranked_tensor(const std::shared_ptr<node_type> &node,
+                          ::ten::storage_format format,
+                          bool requires_grad = false) noexcept
+      requires(Shape::is_static())
+       : _requires_grad(requires_grad), _format(format), _shape(std::nullopt),
+         _stride(typename base_type::stride_type()), _node(node) {
+      if (requires_grad) {
+         auto grad_storage = std::make_unique<storage_type>();
+         _grad = std::make_shared<node_type>(std::move(grad_storage));
+      }
+   }
+
+   /// Construct a static ranked_tensor from node and format
    explicit ranked_tensor(std::shared_ptr<node_type> &&node,
                           ::ten::storage_format format,
                           bool requires_grad = false) noexcept
@@ -1114,7 +1127,13 @@ class ranked_tensor final
 
    /// Returns the dynamic size
    /// TODO For static size
-   [[nodiscard]] inline size_type size() const { return _node.get()->size(); }
+   [[nodiscard]] inline size_type size() const {
+      if constexpr (Shape::is_dynamic()) {
+         return _node.get()->size();
+      } else {
+         return Shape::static_size();
+      }
+   }
 
    /// Get the storage format
    [[nodiscard]] storage_format format() const { return _format; }
@@ -1294,7 +1313,11 @@ class ranked_tensor final
 
    [[nodiscard]] ranked_tensor<T, Shape, order, Storage, Allocator>
    grad() const {
-      return ranked_tensor(_grad, _shape.value(), _format, false);
+      if constexpr (Shape::is_static()) {
+         return ranked_tensor(_grad, _format, false);
+      } else {
+         return ranked_tensor(_grad, _shape.value(), _format, false);
+      }
    }
 
    /// Get the gradient data

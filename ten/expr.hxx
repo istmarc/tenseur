@@ -673,11 +673,11 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
             auto grad = right_tensor.grad();
             // Compute the gradient
             if constexpr (::ten::is_tensor_v<left_type>) {
-               _node->_func.value().gradient_left(_node->_left, right_tensor,
-                                                  grad);
+               _node->_func.value().gradient_right(_node->_left, right_tensor,
+                                                   grad);
             } else {
-               _node->_func.value().gradient_left(_node->_left.value(),
-                                                  right_tensor, grad);
+               _node->_func.value().gradient_right(_node->_left.value(),
+                                                   right_tensor, grad);
             }
             // Use the chain rule
             if (previous_grad.has_value()) {
@@ -801,11 +801,11 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
             auto grad = right_tensor.grad();
             // Compute the gradient
             if constexpr (::ten::is_tensor_v<left_type>) {
-               _node->_func.value().gradient_left(_node->_left, right_tensor,
-                                                  grad);
+               _node->_func.value().gradient_right(_node->_left, right_tensor,
+                                                   grad);
             } else {
-               _node->_func.value().gradient_left(_node->_left.value(),
-                                                  right_tensor, grad);
+               _node->_func.value().gradient_right(_node->_left.value(),
+                                                   right_tensor, grad);
             }
             // Use the chain rule
             if (_node->_value.requires_grad()) {
@@ -844,11 +844,11 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
             auto grad = _node->_right.value().grad();
             // Compute the gradient
             if constexpr (::ten::is_tensor_v<left_type>) {
-               _node->_func.value().gradient_left(_node->_left,
-                                                  _node->_right.value(), grad);
+               _node->_func.value().gradient_right(_node->_left,
+                                                   _node->_right.value(), grad);
             } else {
-               _node->_func.value().gradient_left(_node->_left.value(),
-                                                  _node->_right.value(), grad);
+               _node->_func.value().gradient_right(_node->_left.value(),
+                                                   _node->_right.value(), grad);
             }
             // Use the chain rule
             if (_node->_value.requires_grad()) {
