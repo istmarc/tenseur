@@ -14,7 +14,7 @@ void save_mtx(const T &t, std::string filename) {
    if (filename.empty()) {
       return;
    }
-   size_t index = filename.rfind(".");
+   long index = filename.rfind(".");
    if (index == -1) {
       filename.append(".ext");
    }

@@ -1,5 +1,5 @@
-#ifndef TENSEUR_DATAFRAME_HXX
-#define TENSEUR_DATAFRAME_HXX
+#ifndef TENSEUR_DATAFRAMES_DATAFRAME_HXX
+#define TENSEUR_DATAFRAMES_DATAFRAME_HXX
 
 #include <cstdint>
 #include <map>
@@ -21,6 +21,11 @@ struct dataframe_node {
    // Number of rows
    size_t _rows = 0;
    size_t _cols = 0;
+   // TODO MAYBE Index names
+   // std::string _index_name;
+
+   // Indices type
+   data_type _indices_type = data_type::uint64;
    // Indices
    std::vector<cell_type> _indices;
    // Column names
@@ -30,9 +35,24 @@ struct dataframe_node {
    // Data column name -> column data
    std::map<std::string, std::shared_ptr<vector_type>> _data;
 
+   data_type indices_type() const {return _indices_type;}
+
+   cell_type index(size_t row) const {
+      return _indices[row];
+   }
+
    cell_type &at(const std::string &name, size_t index) {
       auto ptr = _data[name].get();
       return (*ptr)[index];
+   }
+
+   cell_type& at(size_t row, size_t col) {
+      std::string name = column_name(col);
+      return at(name, row);
+   }
+
+   data_type type(size_t index) const {
+      return _types[index];
    }
 
    // Return whether the column name exist or not
@@ -80,6 +100,11 @@ struct dataframe_node {
          }
       }
       return names;
+   }
+
+   // Get the column name from indices
+   std::string column_name(size_t index) const {
+      return _names[index];
    }
 
    void remove_column(const size_t index) {
@@ -141,6 +166,9 @@ class dataframe_view {
          _types.push_back(node->_types[i]);
       }
    }
+
+   // Returns the column names
+   std::vector<std::string> names() const { return _col_names;}
 
    // Assign a value
    template <typename T> dataframe_view &operator=(const T &value) {
@@ -346,6 +374,29 @@ class dataframe {
 
    // Return whether the data frame is empty
    bool empty() const { return !_node; }
+
+   // Returns the indices type
+   data_type indices_type() const {return _node->_indices_type;}
+
+   // Returns the index at row
+   [[nodiscard]] cell_type index(size_t row) const {
+      return _node->index(row);
+   }
+
+   // Returns the number of rows
+   [[nodiscard]] size_t rows() const {return _node->_rows;}
+
+   // Returns the number of columns
+   [[nodiscard]] size_t cols() const {return _node->_cols;}
+
+   // Returns the column names
+   [[nodiscard]] std::vector<std::string> names() const { return _node->_names;}
+
+   // Returns the indices
+   [[nodiscard]] std::vector<cell_type> indices() const {return _node->_indices;}
+
+   // Returns the type of the column at index
+   [[nodiscard]] data_type type(size_t index) const {return _node->type(index);}
 
    // Add a column named name from ten::vector
    template <typename T>
@@ -597,6 +648,12 @@ class dataframe {
       }
       std::vector<std::string> names = _node->column_names(col_indices);
       return dataframe_view(_node, row_indices, names);
+   }
+
+   // Get the value at row and col
+   cell_type operator()(size_t row, size_t col) const {
+      std::string name = _node->column_name(col);
+      return _node->at(name, row);
    }
 
    friend std::ostream &operator<<(std::ostream &os, const dataframe &df);
