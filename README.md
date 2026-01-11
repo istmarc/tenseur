@@ -2,7 +2,7 @@
 
 # Tenseur
 
-A header only C++20 tensor library [WIP]
+A header only C++20 tensor and mathematical library [WIP]
 
 Tenseur is a header only C++20 tensor library designed for high performance numerical computations, prioritizing speed above all else. It assume that the user will ensure the correctness of their program. Execptions handling and bounds checking are disabled to minimize overhead. This makes it ideal for applications where computational efficiency is the goal such as deep learning and scientific computing. It has also support for automatic differentiation.
 
