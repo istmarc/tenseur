@@ -628,7 +628,131 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
    }
 
    template <class Gradient>
-   void backward_function(const std::optional<Gradient> &grad) {}
+   void backward_function(const std::optional<Gradient> &previous_grad) {
+      using left_type = std::remove_cvref_t<Left>;
+      using right_type = std::remove_cvref_t<Right>;
+      // Left is tensor
+      if constexpr (::ten::is_tensor_v<left_type>) {
+         auto left_tensor = _node->_left;
+         if (left_tensor.requires_grad()) {
+            left_tensor.allocate_gradient();
+            auto grad = left_tensor.grad();
+            // Compute the gradient
+            if constexpr (::ten::is_tensor_v<right_type>) {
+               _node->_func.value().gradient_left(left_tensor, _node->_right,
+                                                  grad);
+            } else {
+               _node->_func.value().gradient_left(left_tensor,
+                                                  _node->_right.value(), grad);
+            }
+            // Use the chain rule
+            if (previous_grad.has_value()) {
+               backward_chain(grad, previous_grad.value());
+            }
+         }
+      }
+      // Right is tensor
+      if constexpr (::ten::is_tensor_v<right_type>) {
+         auto right_tensor = _node->_right;
+         if (right_tensor.requires_grad()) {
+            // Allocate the gradient for the right tensor
+            right_tensor.allocate_gradient();
+            auto grad = right_tensor.grad();
+            // Compute the gradient
+            if constexpr (::ten::is_tensor_v<left_type>) {
+               _node->_func.value().gradient_left(_node->_left, right_tensor,
+                                                  grad);
+            } else {
+               _node->_func.value().gradient_left(_node->_left.value(),
+                                                  right_tensor, grad);
+            }
+            // Use the chain rule
+            if (previous_grad.has_value()) {
+               backward_chain(grad, previous_grad.value());
+            }
+         }
+      }
+      // Left is expr
+      if constexpr (::ten::is_unary_expr_v<left_type> ||
+                    ::ten::is_binary_expr_v<left_type>) {
+         if (_node->_left.has_retain_grad()) {
+            _node->_left.value().allocate_gradient();
+            auto grad = _node->_left.value().grad();
+            // Compute the gradient
+            if constexpr (::ten::is_tensor_v<right_type>) {
+               _node->_func.value().gradient_left(_node->_left.value(),
+                                                  _node->_right, grad);
+            } else {
+               _node->_func.value().gradient_left(_node->_left.value(),
+                                                  _node->_right.value(), grad);
+            }
+            // Use the chain rule
+            if (previous_grad.has_value()) {
+               backward_chain(grad, previous_grad.value());
+            }
+            using grad_type = std::remove_cvref_t<decltype(grad)>;
+            std::optional<grad_type> opt_grad(grad);
+            _node->_left.backward_function(opt_grad);
+         } else {
+            auto grad = ::ten::like(_node->_left.value());
+            // Compute the gradient
+            if constexpr (::ten::is_tensor_v<right_type>) {
+               _node->_func.value().gradient_left(_node->_left.value(),
+                                                  _node->_right, grad);
+            } else {
+               _node->_func.value().gradient_left(_node->_left.value(),
+                                                  _node->_right.value(), grad);
+            }
+            // Use the chain rule
+            if (previous_grad.has_value()) {
+               backward_chain(grad, previous_grad.value());
+            }
+            using grad_type = std::remove_cvref_t<decltype(grad)>;
+            std::optional<grad_type> opt_grad(grad);
+            _node->_left.backward_function(opt_grad);
+         }
+      }
+      // Right is expr
+      if constexpr (::ten::is_unary_expr_v<right_type> ||
+                    ::ten::is_binary_expr_v<right_type>) {
+         if (_node->_right.has_retain_grad()) {
+            _node->_right.value().allocate_gradient();
+            auto grad = _node->_right.value().grad();
+            // Compute the gradient
+            if constexpr (::ten::is_tensor_v<left_type>) {
+               _node->_func.value().gradient_right(_node->_left,
+                                                   _node->_right.value(), grad);
+            } else {
+               _node->_func.value().gradient_right(_node->_left.value(),
+                                                   _node->_right.value(), grad);
+            }
+            // Use the chain rule
+            if (previous_grad.has_value()) {
+               backward_chain(grad, previous_grad.value());
+            }
+            using grad_type = std::remove_cvref_t<decltype(grad)>;
+            std::optional<grad_type> opt_grad(grad);
+            _node->_right.backward_function(opt_grad);
+         } else {
+            auto grad = ::ten::like(_node->_right.value());
+            // Compute the gradient
+            if constexpr (::ten::is_tensor_v<left_type>) {
+               _node->_func.value().gradient_right(_node->_left,
+                                                   _node->_right.value(), grad);
+            } else {
+               _node->_func.value().gradient_right(_node->_left.value(),
+                                                   _node->_right.value(), grad);
+            }
+            // Use the chain rule
+            if (previous_grad.has_value()) {
+               backward_chain(grad, previous_grad.value());
+            }
+            using grad_type = std::remove_cvref_t<decltype(grad)>;
+            std::optional<grad_type> opt_grad(grad);
+            _node->_right.backward_function(opt_grad);
+         }
+      }
+   }
 
    void backward(bool create_graph = false) noexcept {
       using left_type = std::remove_cvref_t<Left>;
