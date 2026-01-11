@@ -4,7 +4,7 @@
 
 A header only C++20 tensor library [WIP]
 
-Tenseur is a header only C++20 tensor library designed for high performance numerical computations, prioritizing speed above all else. It assume that the user will ensure the correctness of their program. Execptions handling and bounds checking are disabled to minimize overhead. This makes it ideal for applications where computational efficiency is the goal such as deep learning and scientific computing. An extension with automatic differentiation is planned.
+Tenseur is a header only C++20 tensor library designed for high performance numerical computations, prioritizing speed above all else. It assume that the user will ensure the correctness of their program. Execptions handling and bounds checking are disabled to minimize overhead. This makes it ideal for applications where computational efficiency is the goal such as deep learning and scientific computing. It has also support for automatic differentiation.
 
 ## Tensor classes
 
@@ -19,6 +19,7 @@ An expression API class for representing unary and binary operations between ten
 - Support static, dynamic and mixed shape tensors
 - Lazy evaluation of expressions
 - BLAS backend for high performance numerical linear algebra
+- Automatic differentiation
 - Chain expressions
 - Factory functions: fill, ones, zeros, range, rand
 - Compile to a shared library
@@ -32,7 +33,6 @@ An expression API class for representing unary and binary operations between ten
 - Pythonizations
 - CI/CD with tests
 - More special matrices
-- Automatic differentiation
 - Python documentation
 - C++ API documentation
 
@@ -44,6 +44,7 @@ An expression API class for representing unary and binary operations between ten
 # Examples
 
 - Tensors
+
 ```c++
 // Dynamic uninitialized tensors
 ten::tensor<float, 3> x({2, 3, 4});
@@ -64,7 +65,7 @@ auto second_slice = x[index];
 second_slice = 2.0f;
 ```
 
-- Assignment
+- Assignment, and rows and columns
 
 ```c++
 ten::matrix<float> x({3, 3});
@@ -87,7 +88,7 @@ slice = 99.0f;
 std::cout << x << std::endl;
 ```
 
-- Gemm
+- Gemm with expressions matching
 
 ```c++
 #include <ten/tensor>
@@ -115,6 +116,26 @@ int main() {
 
    std::cout << q << std::endl;
    std::cout << r << std::endl;
+}
+```
+
+- Automatic differentiation
+
+```
+#include <ten/tensor>
+#include <ten/io>
+
+int main() {
+   ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
+   ten::vector<float> y({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
+   auto z = x / y;
+   auto t = ten::sum(z);
+   t.eval();
+   t.backward();
+   std::cout << "Output = " << t.value() << std::endl;
+   std::cout << "The gradients\n";
+   std::cout << x.grad() << std::endl;
+   std::cout << y.grad() << std::endl;
 }
 ```
 
