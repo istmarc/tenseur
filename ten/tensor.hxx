@@ -5,17 +5,17 @@
 
 #include <algorithm>
 #include <array>
-#include <complex>
-// FIXME move fstream and ostream to io
-#include <fstream>
+// #include <complex>
+//  FIXME move fstream and ostream to io
+// #include <fstream>
 #include <ostream>
 
 #include <array>
 #include <initializer_list>
 #include <memory>
 #include <optional>
-#include <stdexcept>
-#include <tuple>
+// #include <stdexcept>
+// #include <tuple>
 #include <type_traits>
 #include <utility>
 // #include <vector>
@@ -1306,12 +1306,14 @@ class ranked_tensor final
 
    // Allocate the gradient tensor
    void allocate_gradient() {
-      if constexpr (Shape::is_static()) {
-         auto grad_storage = std::make_unique<storage_type>();
-         _grad = std::make_shared<node_type>(std::move(grad_storage));
-      } else {
-         auto grad_storage = std::make_unique<storage_type>(_shape.value());
-         _grad = std::make_shared<node_type>(std::move(grad_storage));
+      if (!_grad) {
+         if constexpr (Shape::is_static()) {
+            auto grad_storage = std::make_unique<storage_type>();
+            _grad = std::make_shared<node_type>(std::move(grad_storage));
+         } else {
+            auto grad_storage = std::make_unique<storage_type>(_shape.value());
+            _grad = std::make_shared<node_type>(std::move(grad_storage));
+         }
       }
       _requires_grad = true;
    }

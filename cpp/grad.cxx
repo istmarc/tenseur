@@ -71,7 +71,50 @@ int main() {
       //2.18973
       //-2.17536
       //1.30805
+      std::cout << y.has_retain_grad() << std::endl;
+      std::cout << z.has_retain_grad() << std::endl;
+      std::cout << t.has_retain_grad() << std::endl;
    }
+
+   {
+      f();
+      ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
+      std::cout << x << std::endl;
+      auto y = ten::sqr(x);
+      auto z = ten::sin(y);
+      z.retain_grad();
+      auto t = ten::cos(z);
+      t.eval();
+      t.backward();
+      std::cout << "And the gradients\n";
+      std::cout << x.grad() << std::endl;
+      // Should be equal to
+      //-0.805725
+      //-1.79517
+      //2.18973
+      //-2.17536
+      //1.30805
+      std::cout << z.has_retain_grad() << std::endl;
+      std::cout << y.grad() << std::endl;
+      // [-0.402862, ..., 0.130805]
+   }
+
+
+
+   /*
+   {
+      f();
+      ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
+      ten::vector<float> y({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
+      auto z = x + y;
+      auto t = ten::sum(z);
+      z.eval();
+      z.backward(true);
+      std::cout << "And the gradients\n";
+      std::cout << x.grad() << std::endl;
+      std::cout << y.grad() << std::endl;
+   }*/
+
 
    /*
    {

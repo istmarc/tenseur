@@ -1,6 +1,7 @@
 #ifndef TENSEUR_IOS_SERIALIZATION
 #define TENSEUR_IOS_SERIALIZATION
 
+#include <fstream>
 #include <ten/tensor>
 
 namespace ten::io {
