@@ -273,6 +273,19 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
    template <class Gradient>
    void backward_function(const std::optional<Gradient> &previous_grad) {
       using input_type = std::remove_cvref_t<Input>;
+      if constexpr (::ten::is_scalar_v<input_type>) {
+         auto input = _node->_input;
+         if (input.requires_grad()) {
+            input.allocate_gradient();
+            auto grad = input.grad();
+            // Compute the gradient
+            _node->_func.value().gradient(input, grad);
+            // Use the chain rule
+            if (previous_grad.has_value()) {
+               backward_chain(grad, previous_grad.value());
+            }
+         }
+      }
       if constexpr (::ten::is_tensor_v<input_type>) {
          auto input_tensor = _node->_input;
          if (input_tensor.requires_grad()) {
@@ -323,10 +336,10 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
                input.allocate_gradient();
             }
             auto grad = input.grad();
-            _node->_func.value().gradient(input.value(), grad.value());
+            _node->_func.value().gradient(input, grad);
             if (_node->_value.requires_grad()) {
                auto previous_grad = _node->_value.grad();
-               // backward_chain(grad.value(); previous_grad.value());
+               backward_chain(grad, previous_grad);
             }
          }
          if constexpr (::ten::is_tensor_v<input_type>) {

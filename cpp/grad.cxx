@@ -99,6 +99,33 @@ int main() {
       // [-0.402862, ..., 0.130805]
    }
 
+   // Scalar functions
+   {
+      f();
+      ten::scalar<float> x(2.0f, true);
+      auto y = ten::sin(x);
+      auto z = ten::cos(y);
+      z.eval();
+      std::cout << "z value = " << z.value() << std::endl;
+      // 0.6143
+      z.backward(true);
+      std::cout << x.grad() << std::endl;
+      // 0.32837
+   }
+
+   // Scalar functions with create_graph=false
+   {
+      f();
+      ten::scalar<float> x(2.0f, true);
+      auto y = ten::sin(x);
+      auto z = ten::cos(y);
+      z.eval();
+      std::cout << "z value = " << z.value() << std::endl;
+      // 0.6143
+      z.backward();
+      std::cout << x.grad() << std::endl;
+      // 0.32837
+   }
 
 
    /*
@@ -106,10 +133,10 @@ int main() {
       f();
       ten::vector<float> x({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
       ten::vector<float> y({5}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f}, true);
-      auto z = x + y;
+      auto z = x / y;
       auto t = ten::sum(z);
-      z.eval();
-      z.backward(true);
+      t.eval();
+      t.backward(true);
       std::cout << "And the gradients\n";
       std::cout << x.grad() << std::endl;
       std::cout << y.grad() << std::endl;

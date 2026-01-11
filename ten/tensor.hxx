@@ -265,18 +265,39 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
    using shape_type = ::ten::shape<1>;
 
  private:
-   T _value;
    bool _requires_grad = false;
-   T _grad;
+   std::shared_ptr<T> _value = nullptr;
+   std::shared_ptr<T> _grad = nullptr;
 
  public:
-   scalar(bool requires_grad = false) : _requires_grad(requires_grad) {}
+   scalar(std::shared_ptr<T> value, bool requires_grad = false)
+       : _value(value), _requires_grad(requires_grad) {
+      if (requires_grad) {
+         _grad = std::make_shared<T>();
+      }
+   }
+
+   scalar(bool requires_grad = false)
+       : _requires_grad(requires_grad), _value(std::make_shared<T>()) {
+      if (requires_grad) {
+         _grad = std::make_shared<T>();
+      }
+   }
 
    explicit scalar(const T &value, bool requires_grad = false)
-       : _value(value), _requires_grad(requires_grad) {}
+       : _value(std::make_shared<T>(value)), _requires_grad(requires_grad) {
+      if (requires_grad) {
+         _grad = std::make_shared<T>();
+      }
+   }
 
    explicit scalar(T &&value, bool requires_grad = false)
-       : _value(std::move(value)), _requires_grad(requires_grad) {}
+       : _value(std::make_shared<T>(std::move(value))),
+         _requires_grad(requires_grad) {
+      if (requires_grad) {
+         _grad = std::make_shared<T>();
+      }
+   }
 
    /// Asignment from an expression
    /*template <class Expr>
@@ -287,20 +308,30 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
    }*/
 
    /// Get or set  the value
-   T &value() { return _value; }
-   const T &value() const { return _value; }
+   T &value() { return *_value.get(); }
+   const T &value() const { return *_value.get(); }
 
    // Get or set the gradient value
-   T &grad_value() { return _grad; }
-   const T &grad_value() const { return _grad; }
+   T &grad_value() { return *_grad.get(); }
+   const T &grad_value() const { return *_grad.get(); }
 
-   const scalar<T> &grad() const { return scalar(_grad, false); }
+   // Returns the node to the gradient
+   std::shared_ptr<T> grad_node() { return _grad; }
 
-   // scalar<T>& grad() const {return scalar(_grad, false);}
+   // Returns the gradient in a scalar
+   scalar<T> grad() const { return scalar<T>(_grad, false); }
 
+   // Returns whether the scalar requires gradient or not
    [[nodiscard]] bool requires_grad() const { return _requires_grad; }
 
-   void allocate_gradient() { _requires_grad = true; }
+   /// Allocate the gradient scalar
+   void allocate_gradient() {
+      if (!_grad) {
+         _grad = std::make_shared<T>();
+      }
+      std::cout << *_grad.get() << std::endl;
+      _requires_grad = true;
+   }
 
    scalar &operator=(const T &value) {
       _value = value;
@@ -4026,12 +4057,31 @@ bool all_close(const T &t, double eps) {
 template <class T, class Shape, storage_order order, class Storage,
           class Allocator>
 ranked_tensor<T, Shape, order, Storage, Allocator>
-like(const ranked_tensor<T, Shape, order, Storage, Allocator> &x) {
+like(const ranked_tensor<T, Shape, order, Storage, Allocator> &x,
+     std::optional<bool> requires_grad) {
    using tensor_type = ranked_tensor<T, Shape, order, Storage, Allocator>;
    if constexpr (Shape::is_static()) {
-      return tensor_type(x.requires_grad());
+      if (requires_grad.has_value()) {
+         return tensor_type(requires_grad.value());
+      } else {
+         return tensor_type(x.requires_grad());
+      }
    } else {
-      return tensor_type(x.shape(), x.requires_grad());
+      if (requires_grad.has_value()) {
+         return tensor_type(x.shape(), requires_grad.value());
+      } else {
+         return tensor_type(x.shape(), x.requires_grad());
+      }
+   }
+}
+
+// Returns a scalar like x with same requires_grad value
+template <class T>
+scalar<T> like(const scalar<T> &x, std::optional<bool> requires_grad) {
+   if (requires_grad.has_value()) {
+      return scalar<T>(requires_grad.value());
+   } else {
+      return scalar<T>(x.requires_grad());
    }
 }
 

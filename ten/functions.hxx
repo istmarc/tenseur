@@ -16,7 +16,13 @@ static void gemm(const T /*alpha*/, X && /*x*/, Y && /*y*/, const T /*beta*/,
 template <class T, class Shape, storage_order order, class Storage,
           class Allocator>
 ten::ranked_tensor<T, Shape, order, Storage, Allocator>
-like(const ten::ranked_tensor<T, Shape, order, Storage, Allocator> & /*x*/);
+like(const ten::ranked_tensor<T, Shape, order, Storage, Allocator> & /*x*/,
+     std::optional<bool> requires_grad = std::nullopt);
+
+// Like for scalar
+template <class T>
+ten::scalar<T> like(const ten::scalar<T> & /*x*/,
+                    std::optional<bool> requires_grad = std::nullopt);
 
 } // namespace ten
 

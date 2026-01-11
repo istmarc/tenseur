@@ -53,9 +53,9 @@ template <class A, class B>
 using mul_result_t = typename mul_result<A, B>::type;
 
 // scalar * scalar
-template<Scalar A, Scalar B>
-struct mul_result<A, B> {
-   using value_type = std::common_type_t<typename A::value_type, typename B::value_type>;
+template <Scalar A, Scalar B> struct mul_result<A, B> {
+   using value_type =
+       std::common_type_t<typename A::value_type, typename B::value_type>;
    using type = ::ten::scalar<value_type>;
 };
 
@@ -210,10 +210,10 @@ template <class Func> struct has_shape {
 
 /// Square root
 template <class X, class Y>
-   requires( ((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
-             ::ten::is_row<X>::value) &&
-            ::ten::is_tensor<Y>::value)
-   || (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
 struct sqrt : func<> {
    static constexpr std::string name() { return std::string("sqrt"); }
 
@@ -225,7 +225,8 @@ struct sqrt : func<> {
       if constexpr (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>) {
          y.value() = std::sqrt(x.value());
       }
-      if constexpr (::ten::is_tensor_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>) {
+      if constexpr (::ten::is_tensor_v<X> || ::ten::is_column_v<X> ||
+                    ::ten::is_row_v<X>) {
          for (size_t i = 0; i < x.size(); i++) {
             y[i] = std::sqrt(static_cast<output_value_type>(x[i]));
          }
@@ -237,11 +238,11 @@ struct sqrt : func<> {
       return right;
    }
 
-   void gradient(const value_type& x, output_value_type& y) {
-      y = 1 / (2* std::sqrt(x));
+   void gradient(const value_type &x, output_value_type &y) {
+      y = 1 / (2 * std::sqrt(x));
    }
 
-   void gradient(const X& x, Y& y) {
+   void gradient(const X &x, Y &y) {
       for (size_t i = 0; i < x.size(); i++) {
          y[i] = 1 / (2 * std::sqrt(x[i]));
       }
@@ -250,9 +251,10 @@ struct sqrt : func<> {
 
 /// Square
 template <class X, class Y>
-   requires( ((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
-             ::ten::is_row<X>::value ) && ::ten::is_tensor<Y>::value)
-      || (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
 struct sqr : func<> {
    static constexpr std::string name() { return std::string("sqr"); }
 
@@ -264,9 +266,10 @@ struct sqr : func<> {
       if constexpr (::ten::is_scalar<X>::value) {
          y.value() = x.value() * x.value();
       }
-   if constexpr (::ten::is_tensor_v<Y>) {
+      if constexpr (::ten::is_tensor_v<Y>) {
          for (size_t i = 0; i < x.size(); i++) {
-            y[i] = static_cast<output_value_type>(x[i]) * static_cast<output_value_type>(x[i]);
+            y[i] = static_cast<output_value_type>(x[i]) *
+                   static_cast<output_value_type>(x[i]);
          }
       }
    }
@@ -276,12 +279,12 @@ struct sqr : func<> {
       return right;
    }
 
-   void gradient(const value_type& x, output_value_type& y) {
+   void gradient(const value_type &x, output_value_type &y) {
       y = output_value_type(2) * x;
    }
 
-   void gradient(const X& x, Y& y) {
-      for (size_t i = 0; i< x.size() ; i++) {
+   void gradient(const X &x, Y &y) {
+      for (size_t i = 0; i < x.size(); i++) {
          y[i] = output_value_type(2) * x[i];
       }
    }
@@ -289,10 +292,10 @@ struct sqr : func<> {
 
 /// absolute value
 template <class X, class Y>
-   requires( ((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
-             ::ten::is_row<X>::value) &&
-            ::ten::is_tensor<Y>::value)
-   || (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
 struct abs : func<> {
    static constexpr std::string name() { return std::string("abs"); }
 
@@ -317,17 +320,17 @@ struct abs : func<> {
       return right;
    }
 
-   void gradient(const value_type& x, output_value_type& y) {
-      if (x>= 0) {
+   void gradient(const value_type &x, output_value_type &y) {
+      if (x >= 0) {
          y = 1;
       } else {
          y = -1;
       }
    }
 
-   void gradient(const X& x, Y& y) {
+   void gradient(const X &x, Y &y) {
       for (size_t i = 0; i < x.size(); i++) {
-         if (x[i]>=0) {
+         if (x[i] >= 0) {
             y[i] = 1;
          } else {
             y[i] = -1;
@@ -338,10 +341,10 @@ struct abs : func<> {
 
 /// Power
 template <class X, class Y>
-   requires( ((ten::is_tensor<X>::value || ten::is_column<X>::value ||
-             ten::is_row<X>::value) &&
-            ::ten::is_tensor<Y>::value) ||
-      (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+   requires(((ten::is_tensor<X>::value || ten::is_column<X>::value ||
+              ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
 struct pow : func<true> {
    static constexpr std::string name() { return std::string("pow"); }
 
@@ -360,7 +363,8 @@ struct pow : func<true> {
       if constexpr (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>) {
          y.value() = std::pow(x.value(), _n);
       }
-      if constexpr (::ten::is_tensor_v<X> || ::ten::is_column_v<X> || ::ten::is_row_v<X>) {
+      if constexpr (::ten::is_tensor_v<X> || ::ten::is_column_v<X> ||
+                    ::ten::is_row_v<X>) {
          for (size_t i = 0; i < x.size(); i++) {
             y[i] = std::pow(static_cast<value_type>(x[i]), _n);
          }
@@ -372,13 +376,13 @@ struct pow : func<true> {
       return right;
    }
 
-   void gradient(const value_type& x, output_value_type& y) {
-      y = static_cast<output_value_type>(_n) * std::pow(x, _n-1);
+   void gradient(const value_type &x, output_value_type &y) {
+      y = static_cast<output_value_type>(_n) * std::pow(x, _n - 1);
    }
 
-   void gradient(const X& x, Y& y) {
+   void gradient(const X &x, Y &y) {
       for (size_t i = 0; i < x.size(); i++) {
-         y[i] = static_cast<output_value_type>(_n) * std::pow(x[i], _n-1);
+         y[i] = static_cast<output_value_type>(_n) * std::pow(x[i], _n - 1);
       }
    }
 };
@@ -456,6 +460,8 @@ struct sum : func<> {
    output_shape(const typename Y::shape_type &right) {
       return right;
    }
+
+   void gradient(const X & /*x*/, Y &y) { y = 1; }
 };
 
 /// Cumulative sum
@@ -511,9 +517,10 @@ struct prod : func<> {
 
 /// Sine
 template <class X, class Y>
-   requires( ((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
-             ::ten::is_row<X>::value) &&
-            ::ten::is_tensor<Y>::value) || (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
 struct sin : func<> {
    static constexpr std::string name() { return std::string("sin"); }
 
@@ -521,10 +528,15 @@ struct sin : func<> {
    using value_type = X::value_type;
    using output_value_type = Y::value_type;
 
-   void operator()(const X &a, Y &b) {
+   void operator()(const X &x, Y &y) {
       using type = typename Y::value_type;
-      for (size_t i = 0; i < a.size(); i++) {
-         b[i] = std::sin(static_cast<type>(a[i]));
+      if constexpr (::ten::is_scalar_v<Y>) {
+         y.value() = std::sin(x.value());
+      }
+      if constexpr (::ten::is_tensor_v<Y>) {
+         for (size_t i = 0; i < x.size(); i++) {
+            y[i] = std::sin(static_cast<type>(x[i]));
+         }
       }
    }
 
@@ -533,13 +545,16 @@ struct sin : func<> {
       return right;
    }
 
-   void gradient(value_type& x, output_value_type& y) {
-      y = std::cos(x);
-   }
+   void gradient(value_type &x, output_value_type &y) { y = std::cos(x); }
 
-   void gradient(const X& x, Y& y) {
-      for (size_t i = 0; i < x.size(); i++) {
-         y[i] = std::cos(x[i]);
+   void gradient(const X &x, Y &y) {
+      if constexpr (::ten::is_scalar_v<Y>) {
+         y.value() = std::cos(x.value());
+      }
+      if constexpr (::ten::is_tensor_v<Y>) {
+         for (size_t i = 0; i < x.size(); i++) {
+            y[i] = std::cos(x[i]);
+         }
       }
    }
 };
@@ -592,9 +607,10 @@ struct sinh : func<> {
 
 /// Cosine
 template <class X, class Y>
-   requires( ((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
-             ::ten::is_row<X>::value) &&
-            ::ten::is_tensor<Y>::value) || (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
 struct cos : func<> {
    static constexpr std::string name() { return std::string("cos"); }
 
@@ -606,7 +622,7 @@ struct cos : func<> {
       if constexpr (::ten::is_scalar_v<X>) {
          y.value() = std::cos(x.value());
       }
-      if constexpr(::ten::is_tensor_v<Y>) {
+      if constexpr (::ten::is_tensor_v<Y>) {
          for (size_t i = 0; i < x.size(); i++) {
             y[i] = std::cos(static_cast<output_value_type>(x[i]));
          }
@@ -618,13 +634,18 @@ struct cos : func<> {
       return right;
    }
 
-   void gradient(const value_type& x, output_value_type& y) {
+   void gradient(const value_type &x, output_value_type &y) {
       y = -std::sin(x);
    }
 
-   void gradient(const X& x, Y& y) {
-      for (size_t i = 0; i < x.size(); i++) {
-         y[i] = -std::sin(x[i]);
+   void gradient(const X &x, Y &y) {
+      if constexpr (::ten::is_scalar_v<Y>) {
+         y.value() = -std::sin(x.value());
+      }
+      if constexpr (::ten::is_tensor_v<Y>) {
+         for (size_t i = 0; i < x.size(); i++) {
+            y[i] = -std::sin(x[i]);
+         }
       }
    }
 };
@@ -677,9 +698,10 @@ struct cosh : func<> {
 
 /// Tangent
 template <class X, class Y>
-   requires( ((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
-             ::ten::is_row<X>::value) &&
-            ::ten::is_tensor<Y>::value) || (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
 struct tan : func<> {
    static constexpr std::string name() { return std::string("tan"); }
 
@@ -703,23 +725,24 @@ struct tan : func<> {
       return right;
    }
 
-   void gradient(const value_type& x, output_value_type& y) {
+   void gradient(const value_type &x, output_value_type &y) {
       value_type z = std::tan(x);
-      y = 1 + z*z;
+      y = 1 + z * z;
    }
 
-   void gradient(const X& x, Y& y) {
+   void gradient(const X &x, Y &y) {
       for (size_t i = 0; i < x.size(); i++) {
          value_type z = std::tan(x[i]);
-         y[i] = 1 + z*z;
+         y[i] = 1 + z * z;
       }
    }
 };
 
 template <class X, class Y>
-   requires( ((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
-             ::ten::is_row<X>::value) &&
-            ::ten::is_tensor<Y>::value) || (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
 struct atan : func<> {
    static constexpr std::string name() { return std::string("atan"); }
 
@@ -744,21 +767,22 @@ struct atan : func<> {
       return right;
    }
 
-   void gradient(const value_type& x, output_value_type& y) {
-      y = 1 / (1 + x*x);
+   void gradient(const value_type &x, output_value_type &y) {
+      y = 1 / (1 + x * x);
    }
 
-   void gradient(const X& x, Y& y) {
+   void gradient(const X &x, Y &y) {
       for (size_t i = 0; i < x.size(); i++) {
-         y[i] = 1 / (1 + x[i]*x[i]);
+         y[i] = 1 / (1 + x[i] * x[i]);
       }
    }
 };
 
 template <class X, class Y>
-   requires( ((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
-             ::ten::is_row<X>::value) &&
-            ::ten::is_tensor<Y>::value) || (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
 struct tanh : func<> {
    static constexpr std::string name() { return std::string("tanh"); }
 
@@ -786,9 +810,10 @@ struct tanh : func<> {
 
 /// Exponential
 template <class A, class B>
-   requires( ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-             ::ten::is_row<A>::value) &&
-            ::ten::is_tensor<B>::value) || (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
+   requires(((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+              ::ten::is_row<A>::value) &&
+             ::ten::is_tensor<B>::value) ||
+            (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
 struct exp : func<> {
    static constexpr std::string name() { return std::string("exp"); }
 
@@ -812,11 +837,9 @@ struct exp : func<> {
       return right;
    }
 
-   void gradient(const value_type& x, value_type& y) {
-      y = std::exp(x);
-   }
+   void gradient(const value_type &x, value_type &y) { y = std::exp(x); }
 
-   void gradient(const A& a, B& b) {
+   void gradient(const A &a, B &b) {
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = std::exp(a[i]);
       }
@@ -825,9 +848,10 @@ struct exp : func<> {
 
 /// Natural logarithm
 template <class A, class B>
-   requires( ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-             ::ten::is_row<A>::value) &&
-            ::ten::is_tensor<B>::value) || (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
+   requires(((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+              ::ten::is_row<A>::value) &&
+             ::ten::is_tensor<B>::value) ||
+            (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
 struct log : func<> {
    static constexpr std::string name() { return std::string("log"); }
 
@@ -851,11 +875,9 @@ struct log : func<> {
       return right;
    }
 
-   void gradient(const value_type& x, value_type& y) {
-      y = value_type(1) / x;
-   }
+   void gradient(const value_type &x, value_type &y) { y = value_type(1) / x; }
 
-   void gradient(const A& a, B& b) {
+   void gradient(const A &a, B &b) {
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = value_type(1) / a[i];
       }
@@ -864,9 +886,10 @@ struct log : func<> {
 
 /// Logarithm
 template <class A, class B>
-   requires( ((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-             ::ten::is_row<A>::value) &&
-            ::ten::is_tensor<B>::value) || (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
+   requires(((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
+              ::ten::is_row<A>::value) &&
+             ::ten::is_tensor<B>::value) ||
+            (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
 struct log10 : func<> {
    static constexpr std::string name() { return std::string("log10"); }
    using value_type = A::value_type;
@@ -875,7 +898,7 @@ struct log10 : func<> {
    void operator()(const A &a, B &b) {
       using type = typename B::value_type;
       if constexpr (::ten::is_scalar_v<A>) {
-            b.value() = std::log10(a.value());
+         b.value() = std::log10(a.value());
       }
       if constexpr (::ten::is_tensor_v<B>) {
          for (size_t i = 0; i < a.size(); i++) {
@@ -889,11 +912,11 @@ struct log10 : func<> {
       return right;
    }
 
-   void gradient(const value_type& x, value_type& y) {
+   void gradient(const value_type &x, value_type &y) {
       y = value_type(1) / (x * std::log(value_type(10)));
    }
 
-   void gradient(const A& a, B& b) {
+   void gradient(const A &a, B &b) {
       for (size_t i = 0; i < a.size(); i++) {
          b[i] = value_type(1) / (a[i] * std::log(value_type(10)));
       }
@@ -972,7 +995,7 @@ template <::ten::binary_operation Kind> struct binary_func {
       using output_type = C;
 
       static constexpr typename C::shape_type
-      output_shape(const typename A::shape_type &/*left*/,
+      output_shape(const typename A::shape_type & /*left*/,
                    const typename B::shape_type &right) {
          // FIXME Maybe check that left == right
          typename C::shape_type s(right);
@@ -985,44 +1008,44 @@ template <::ten::binary_operation Kind> struct binary_func {
          ::ten::kernels::binary_ops<Kind>(left, right, result);
       }
 
-      void gradient_left(const A& /*x*/, const B& y, C& z) {
-         if constexpr ((Kind == ::ten::binary_operation::add)
-         || (Kind == ::ten::binary_operation::sub)) {
-            for (size_t i = 0; i < z.size();i++) {
+      void gradient_left(const A & /*x*/, const B &y, C &z) {
+         if constexpr ((Kind == ::ten::binary_operation::add) ||
+                       (Kind == ::ten::binary_operation::sub)) {
+            for (size_t i = 0; i < z.size(); i++) {
                z[i] = 1;
             }
          }
          if (Kind == ::ten::binary_operation::mul) {
-            for (size_t i = 0; i< z.size();i++) {
+            for (size_t i = 0; i < z.size(); i++) {
                z[i] = y[i];
             }
          }
          if (Kind == ::ten::binary_operation::div) {
-            for (size_t i = 0; i< z.size();i++) {
+            for (size_t i = 0; i < z.size(); i++) {
                z[i] = 1 / y[i];
             }
          }
       }
 
-      void gradient_right(const A& x, const B& y, C& z) {
+      void gradient_right(const A &x, const B &y, C &z) {
          if constexpr (Kind == ::ten::binary_operation::add) {
-            for (size_t i = 0; i < z.size();i++) {
+            for (size_t i = 0; i < z.size(); i++) {
                z[i] = 1;
             }
          }
          if constexpr (Kind == ::ten::binary_operation::sub) {
-            for (size_t i = 0; i < z.size();i++) {
+            for (size_t i = 0; i < z.size(); i++) {
                z[i] = -1;
             }
          }
          if (Kind == ::ten::binary_operation::mul) {
-            for (size_t i = 0; i< z.size();i++) {
+            for (size_t i = 0; i < z.size(); i++) {
                z[i] = x[i];
             }
          }
          if (Kind == ::ten::binary_operation::div) {
-            for (size_t i = 0; i< z.size();i++) {
-               z[i] = - x[i] / (y[i]*y[i]);
+            for (size_t i = 0; i < z.size(); i++) {
+               z[i] = -x[i] / (y[i] * y[i]);
             }
          }
       }
@@ -1151,6 +1174,18 @@ struct mul<A, B, C> : ::ten::functional::func<> {
    void operator()(const A &left, const B &right, C &result) {
       ::ten::kernels::binary_ops<::ten::binary_operation::mul>(left, right,
                                                                result);
+   }
+
+   void gradient_left(const A & /*x*/, const B &y, C &z) {
+      for (size_t i = 0; i < z.size(); i++) {
+         z[i] = y[i];
+      }
+   }
+
+   void gradient_right(const A &x, const B & /*y*/, C &z) {
+      for (size_t i = 0; i < z.size(); i++) {
+         z[i] = x[i];
+      }
    }
 };
 
