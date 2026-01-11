@@ -178,6 +178,8 @@ template <class T> class scalar;
 template <class> struct is_scalar : std::false_type {};
 template <class T> struct is_scalar<scalar<T>> : std::true_type {};
 
+template <typename T> static constexpr bool is_scalar_v = is_scalar<T>::value;
+
 // Scalar concept
 template <class T>
 concept Scalar = is_scalar<std::remove_cvref_t<T>>::value;
