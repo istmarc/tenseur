@@ -121,7 +121,7 @@ int main() {
 
 - Automatic differentiation
 
-```
+```c++
 #include <ten/tensor>
 #include <ten/io>
 
@@ -152,6 +152,23 @@ int main() {
    std::cout << "shape = " << y.shape() << std::endl;
    std::cout << "stride = " << y.strides() << std::endl;
    std::cout << "data = \n" << y << std::endl;
+}
+```
+
+- Data frame
+
+```c++
+#include <ten/dataframe>
+
+int main() {
+    auto df = ten::read_csv("path/to/file.csv");
+    std::cout << df << std::endl;
+    // Select by column name
+    std::cout << df[{"x"}] << std::endl;
+    // Select by column index
+    std::cout << df[{0, 1, 4}] << std::endl;
+    // Select by row index and column name
+    std::cout << df.select(ten::seq(0, 2), std::vector<std::string>{"x", "y"}) << std::endl;
 }
 ```
 
