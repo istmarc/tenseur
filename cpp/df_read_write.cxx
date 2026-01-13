@@ -1,6 +1,8 @@
 #include <ten/tensor>
 #include <ten/dataframe>
 
+#include <ten/dataframes/datasets.hxx>
+
 int main() {
    ten::dataframe df;
 
@@ -13,6 +15,9 @@ int main() {
    df.add_col("z", z);
 
    save(df, "dataframe.csv");
+
+   auto iris = ten::load_iris("/home/marc/repos/tenseur");
+   std::cout << iris << std::endl;
 
 }
 
