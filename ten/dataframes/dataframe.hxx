@@ -532,6 +532,39 @@ class dataframe {
       _node->_cols++;
    }
 
+   // Add a column named name from type and std::vector<cell_type>
+   void add_col(const std::string &name, const data_type type, const std::vector<cell_type> &v) {
+      // If the node is empty, create it
+      if (!_node) {
+         _node = std::make_shared<dataframe_node>(dataframe_node());
+      }
+      [[unlikely]] if (_node->has_column_name(name)) { return; }
+      size_t size = v.size();
+      // Set the rows size
+      if (_node->_rows == 0) {
+         _node->_rows = size;
+         // Fill the indices with 0..rows-1
+         _node->_indices.resize(size);
+         for (size_t i = 0; i < _node->_rows; i++) {
+            _node->_indices[i] = i;
+         }
+      } else if (_node->_rows != size) {
+         std::cout << "tenseur dataframe: Vector of different size"
+                   << std::endl;
+         return;
+      }
+      auto ptr = std::make_shared<vector_type>(v);
+      // Set the column name
+      _node->_names.push_back(name);
+      // Set the type
+      _node->_types.push_back(type);
+      // Set the data
+      _node->_data[name] = ptr;
+      // Set the col index
+      _node->_cols++;
+   }
+
+
    // Remove a column named name
    void remove(const std::string &name) {
       // Get the index
