@@ -1,4 +1,5 @@
 #include <ten/tensor>
+#include <ten/io>
 
 int main() {
    ten::sdiagonal<float, 3, 3> x;

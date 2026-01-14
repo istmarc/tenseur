@@ -1,4 +1,3 @@
-#include "ten/types.hxx"
 #include <ten/tensor>
 #include <ten/io>
 
@@ -38,7 +37,7 @@ int main() {
       std::cout << "For a matrix row and column\n";
       auto a = ten::rand_norm<ten::matrix<float>>({3, 3});
       std::cout << a << std::endl;
-      auto b = a.column(0);
+      auto b = a.col(0);
       std::cout << "Column = " << b << std::endl;
       std::cout << ten::asum(b) << std::endl;
       std::cout << absolute_sum(b) << std::endl;
@@ -51,8 +50,8 @@ int main() {
    {
       std::cout << "axpy with column, column\n";
       auto a = ten::range<ten::matrix<float>>({3,3});
-      auto col_0 = a.column(0);
-      auto col_1 = a.column(1);
+      auto col_0 = a.col(0);
+      auto col_1 = a.col(1);
       ten::axpy(1.0f, col_0, col_1);
       std::cout << a << std::endl;
    }
@@ -73,8 +72,8 @@ int main() {
       auto row_1 = a.row(1);
       ten::copy(row_0, row_1);
       std::cout << a << std::endl;
-      auto col_0 = a.column(0);
-      auto col_1 = a.column(1);
+      auto col_0 = a.col(0);
+      auto col_1 = a.col(1);
       ten::copy(col_0, col_1);
       std::cout << a << std::endl;
    }
@@ -84,7 +83,7 @@ int main() {
       auto a = ten::rand_norm<ten::matrix<float>>({3, 3});
       std::cout << a << std::endl;
       std::cout << ten::iamax(a.row(0)) << std::endl;
-      std::cout << ten::iamax(a.column(0)) << std::endl;
+      std::cout << ten::iamax(a.col(0)) << std::endl;
    }
 
    {
@@ -123,9 +122,9 @@ int main() {
    {
       std::cout << "swap\n";
       auto a = ten::range<ten::matrix<float>>({3, 3});
-      // this or ten::swap(a.column(0), a.column(1));
-      auto col_0 = a.column(0);
-      auto col_1 = a.column(1);
+      // this or ten::swap(a.col(0), a.col(1));
+      auto col_0 = a.col(0);
+      auto col_1 = a.col(1);
       ten::swap(col_0, col_1);
       std::cout << a << std::endl;
    }

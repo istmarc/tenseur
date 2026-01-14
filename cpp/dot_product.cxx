@@ -1,5 +1,6 @@
 #include <ten/tensor>
 #include <ten/linalg>
+#include <ten/io>
 
 int main() {
    using namespace ten;
@@ -8,8 +9,8 @@ int main() {
    std::cout << v << std::endl;
 
    std::cout << "Dot product" << std::endl;
-   std::cout << ten::dot(v, w) << std::endl;
+   std::cout << ten::linalg::dot(v, w) << std::endl;
    std::cout << "Outer product" << std::endl;
-   std::cout << ten::outer(v, w) << std::endl;
+   std::cout << ten::linalg::outer(v, w) << std::endl;
 
 }

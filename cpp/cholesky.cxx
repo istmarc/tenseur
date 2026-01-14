@@ -1,3 +1,4 @@
+#include <ios>
 #include <ten/tensor>
 #include <ten/io>
 #include <ten/linalg>
@@ -17,6 +18,6 @@ int main() {
    std::cout << (l * u).eval() << std::endl;
 
    ::ten::matrix<float> v = (l*u).eval() - a;
-   std::cout << ten::all_close(v, 1e-3) << std::endl;
+   std::cout << std::boolalpha << ten::all_close(v, 1e-3) << std::endl;
 
 }

@@ -1,4 +1,5 @@
 #include <ten/tensor>
+#include <ten/io>
 
 int main() {
    auto x = ten::range<ten::matrix<float>>({2, 2});
@@ -9,9 +10,9 @@ int main() {
    ten::matrix<float> t = z.eval();
 
    std::cout << t << std::endl;
-   //ten::matrix<float> z = 
 
-   auto a = ten::max(x) * x;
+   float m = ten::max(x).eval().value();
+   auto a = m * x;
    std::cout << a.eval() << std::endl;
 
 }
