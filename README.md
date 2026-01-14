@@ -15,26 +15,45 @@ The library is build around a core tensor class `ranked_tensor<T, class Shape, s
 An expression API class for representing unary and binary operations between tensors is implemented. Its inspired by compiler optimization techniques and passes. It makes it possible to do expression matching at compile time and fuse some opeations, for examples a basic call to gemm can be written as `c = a * b + c`, it will be lowered to `gemm(1.0, a, b, 1.0, c);` instead of writing `c.noalis() = a * b + c` as in most numerical libraries. Also unary operation will be lowered to inplace operations whenever that's possible. For example `c = ten::sqrt(c)` will be lowered to an inplace operation `inplace_sqrt(c)`.
 
 ## Features
+
 -[x] Multi dimensional arrays
+
 -[x] Support static, dynamic and mixed shape tensors
+
 -[x] Lazy evaluation of expressions
+
 -[x] BLAS backend for high performance numerical linear algebra
+
 -[x] Automatic differentiation
+
 -[x] Chain expressions
+
 -[x] Factory functions: fill, ones, zeros, range, rand
+
 -[] Compile to a shared library (support for up to 5d dynamic tensors)
+
 -[] Tests for shared library
+
 -[] Generate automatic python bindings
+
 -[x] Match and fuse operations
+
 -[x] Inplace operations
+
 -[] Sparse tensors
+
 -[] Python bindings ([tenseurpy](https://github.com/istmarc/tenseurpy))
 
 ## Todo
+
 -[] Pythonizations
+
 -[] CI/CD with tests
+
 -[] More special matrices
+
 -[] Python documentation
+
 -[] C++ API documentation
 
 ## Requirements
