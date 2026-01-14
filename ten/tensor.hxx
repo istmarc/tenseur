@@ -983,6 +983,7 @@ class ranked_tensor final
          _shape = value.shape();
          _stride = value.strides();
          _node = value.node();
+         _grad = value.grad_node();
       }
       return *this;
    }
@@ -1006,6 +1007,7 @@ class ranked_tensor final
          _shape = value.shape();
          _stride = value.strides();
          _node = value.node();
+         _grad = value.grad_node();
       }
       return *this;
    }

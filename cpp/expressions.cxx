@@ -1,5 +1,5 @@
-#include "ten/tensor.hxx"
 #include <ten/tensor>
+#include <ten/io>
 
 int main(){
    auto x = ten::range<ten::vector<float>>({10}, 1.);

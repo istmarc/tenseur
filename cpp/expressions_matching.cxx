@@ -14,6 +14,11 @@ int main() {
    }
 
    {
+      auto e = (a * b) + c;
+      std::cout << e << std::endl;
+   }
+
+   {
       std::cout << "c = \n";
       std::cout << c << std::endl;
       c = a * b + c;
@@ -22,10 +27,6 @@ int main() {
    }
 
    {
-      /*auto d = 2.0f * (a * b);
-      std::cout << "d = \n";
-      std::cout << d.eval() << std::endl;
-      */
       c = 2.0f * a * b + c;
       std::cout << "After call to gemm\n";
       std::cout << c << std::endl;

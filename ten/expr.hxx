@@ -422,7 +422,7 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
    // using shape_type = typename Output::shape_type;
 
    using node_type =
-       binary_node<left_type, right_type, output_type, Func, Args...>;
+         binary_node<Left, Right, Output, Func, Args...>;
 
    using value_type = output_type::value_type;
 
@@ -460,10 +460,10 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
    }
 
    /// Returns the left input
-   [[nodiscard]] Left &left() { return _node->_left; }
+   [[nodiscard]] Left &left() const { return _node->_left; }
 
    // Returns the right input
-   [[nodiscard]] Right &right() { return _node->_right; }
+   [[nodiscard]] Right &right() const { return _node->_right; }
 
    /// Returns whether the expression is evaluated
    [[nodiscard]] inline bool evaluated() const { return _node->_evaluated; }
@@ -482,9 +482,7 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
       using left_type = std::remove_cvref_t<Left>;
       if constexpr (::ten::is_unary_expr_v<left_type> ||
                     ::ten::is_binary_expr_v<left_type>) {
-         if (!_node->_left.evaluated()) {
-            _node->_left.eval();
-         }
+         _node->_left.eval();
       }
       // Evaluate the right expr
       using right_type = std::remove_cvref_t<Right>;
