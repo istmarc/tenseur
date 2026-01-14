@@ -99,10 +99,11 @@ auto operator+(T &&scalar, E &&expr) {
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   auto s = ::ten::scalar<T>(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_left_binary_func<
                                  ::ten::binary_operation::add>::func>(
-       ::ten::scalar<T>(scalar), expr);
+       s, expr);
 }
 
 template <Expr E, typename T>
@@ -114,10 +115,11 @@ auto operator+(E &&expr, T &&scalar) {
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   auto s = ::ten::scalar<T>(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_right_binary_func<
                                  ::ten::binary_operation::add>::func>(
-       expr, ::ten::scalar<T>(scalar));
+       expr, s);
 }
 
 // Substract two expressions
@@ -144,10 +146,11 @@ auto operator-(T &&scalar, E &&expr) {
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   auto s = ::ten::scalar<T>(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_left_binary_func<
                                  ::ten::binary_operation::sub>::func>(
-       ::ten::scalar<T>(scalar), expr);
+       s, expr);
 }
 
 template <Expr E, typename T>
@@ -159,10 +162,11 @@ auto operator-(E &&expr, T &&scalar) {
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   auto s = ::ten::scalar<T>(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_right_binary_func<
                                  ::ten::binary_operation::sub>::func>(
-       expr, ::ten::scalar<T>(scalar));
+       expr, s);
 }
 
 // Multiply two expressions
@@ -188,10 +192,11 @@ auto operator*(T &&scalar, E &&expr) {
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   auto s = ::ten::scalar<T>(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_left_binary_func<
                                  ::ten::binary_operation::mul>::func>(
-       ::ten::scalar<T>(scalar), expr);
+       s, expr);
 }
 template <Expr E, typename T>
    requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
@@ -202,10 +207,11 @@ auto operator*(E &&expr, T &&scalar) {
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   auto s = ::ten::scalar<T>(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_right_binary_func<
                                  ::ten::binary_operation::mul>::func>(
-       expr, ::ten::scalar<T>(scalar));
+       expr, s);
 }
 
 // Divide two expressions
