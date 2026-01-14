@@ -35,6 +35,8 @@ struct dataframe_node {
    // Data column name -> column data
    std::map<std::string, std::shared_ptr<vector_type>> _data;
 
+   ~dataframe_node() {}
+
    data_type indices_type() const {return _indices_type;}
 
    cell_type index(size_t row) const {
@@ -53,6 +55,14 @@ struct dataframe_node {
 
    data_type type(size_t index) const {
       return _types[index];
+   }
+
+   void set_names(const std::vector<std::string>& names) {
+      for (size_t i = 0; i < names.size(); i++) {
+         _data[names[i]] = _data[_names[i]];
+         _data.erase(_names[i]);
+         _names[i] = names[i];
+      }
    }
 
    // Return whether the column name exist or not
@@ -398,6 +408,11 @@ class dataframe {
    // Returns the type of the column at index
    [[nodiscard]] data_type type(size_t index) const {return _node->type(index);}
 
+   // Set the names of the data frame
+   void set_names(const std::vector<std::string>& names) {
+      _node->set_names(names);
+   }
+
    // Add a column named name from ten::vector
    template <typename T>
    void add_col(const std::string &name, const ten::vector<T> &v) {
@@ -533,7 +548,7 @@ class dataframe {
    }
 
    // Add a column named name from type and std::vector<cell_type>
-   void add_col(const std::string &name, const data_type type, const std::vector<cell_type> &v) {
+   void add_col(const std::string &name, const data_type type, const std::vector<cell_type>& v) {
       // If the node is empty, create it
       if (!_node) {
          _node = std::make_shared<dataframe_node>(dataframe_node());
@@ -553,7 +568,7 @@ class dataframe {
                    << std::endl;
          return;
       }
-      auto ptr = std::make_shared<vector_type>(v);
+      std::shared_ptr<vector_type> ptr = std::make_shared<vector_type>(v);
       // Set the column name
       _node->_names.push_back(name);
       // Set the type
