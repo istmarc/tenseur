@@ -97,31 +97,6 @@ template <BinaryExpr ExprType> static inline auto input_value(ExprType &expr) {
    return expr.value();
 }
 
-/*
-template<class Input, class Output, template<typename...> Func>
-auto allocate_output_tensor(Input& input, Func& func) {
-   using input_t = typename ::ten::details::input_type<Input>::type;
-   using output_t = typename ::ten::details::output_type<Output>::type;
-   using func_type = Func<input_t, output_t>;
-   using output_type = std::remove_cvref_t<Output>;
-   // Allocate output
-   if constexpr (::ten::is_scalar<output_type>::value) {
-      return output_type();
-   } else if constexpr (!::ten::is_scalar<output_type>::value &&
-                        Output::is_static()) {
-      return output_type();
-   } else {
-      if constexpr (ten::functional::has_shape<func_type>::value) {
-         return output_type(func.output_shape(
-             ::ten::details::input_shape(input)));
-      }
-      if constexpr (!ten::functional::has_shape<func_type>::value) {
-         return output_type(func.output_shape(
-             ::ten::details::input_shape(input)));
-      }
-   }
-}*/
-
 } // namespace ten::details
 
 namespace ten {
