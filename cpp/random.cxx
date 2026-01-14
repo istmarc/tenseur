@@ -1,4 +1,5 @@
 #include <ten/tensor>
+#include <ten/io>
 
 int main(){
    using namespace ten;

@@ -15,8 +15,8 @@ namespace ten {
 template <DynamicTensor T>
 auto rand_norm(std::initializer_list<size_t> &&dims,
                const typename T::value_type mean = 0.,
-               const typename T::value_type std = 1.) {
-   T x(std::move(dims));
+               const typename T::value_type std = 1., bool requires_grad = false) {
+   T x(std::move(dims), requires_grad);
    using value_type = typename T::value_type;
 
    ten::normal<value_type> dist(mean, std);
@@ -34,17 +34,17 @@ template <class T, size_type Rank, class Shape = dynamic_shape<Rank>,
           class Storage = default_storage<T, Shape>,
           class Allocator = typename details::allocator_type<Storage>::type>
 auto rand_norm(std::initializer_list<size_t> &&dims, const T mean = 0.,
-               const T std = 1.) {
+               const T std = 1., bool requires_grad = false) {
    return rand_norm<ranked_tensor<T, Shape, Order, Storage, Allocator>>(
-       std::move(dims), mean, std);
+       std::move(dims), mean, std, requires_grad);
 }
 
 /// Random static tensor
 /// rand_norm<stensor<...>>
 template <StaticTensor T>
 auto rand_norm(const typename T::value_type mean = 0.,
-               const typename T::value_type std = 1.) {
-   T x;
+               const typename T::value_type std = 1., bool requires_grad = false) {
+   T x(requires_grad);
    using value_type = typename T::value_type;
 
    ten::normal<value_type> dist(mean, std);
@@ -60,8 +60,8 @@ auto rand_norm(const typename T::value_type mean = 0.,
 template <DynamicTensor T>
 auto rand_unif(std::initializer_list<size_t> &&dims,
                const typename T::value_type lower_bound = 0.,
-               const typename T::value_type upper_bound = 1.) {
-   T x(std::move(dims));
+               const typename T::value_type upper_bound = 1., bool requires_grad = false) {
+   T x(std::move(dims), requires_grad);
    using value_type = typename T::value_type;
 
    ten::uniform<value_type> dist(lower_bound, upper_bound);
@@ -73,23 +73,23 @@ auto rand_unif(std::initializer_list<size_t> &&dims,
 }
 
 /// Random tensor
-/// rand_norm<t, rank>(shape)
+/// rand_unif<t, rank>(shape)
 template <class T, size_type Rank, class Shape = dynamic_shape<Rank>,
           storage_order Order = ::ten::default_order,
           class Storage = default_storage<T, Shape>,
           class Allocator = typename details::allocator_type<Storage>::type>
 auto rand_unif(std::initializer_list<size_t> &&dims, const T lower_bound = 0.,
-               const T upper_bound = 1.) {
-   return rand_norm<ranked_tensor<T, Shape, Order, Storage, Allocator>>(
-       std::move(dims), lower_bound, upper_bound);
+               const T upper_bound = 1., bool requires_grad = false) {
+   return rand_unif<ranked_tensor<T, Shape, Order, Storage, Allocator>>(
+       std::move(dims), lower_bound, upper_bound, requires_grad);
 }
 
 /// Random static tensor
 /// rand_norm<stensor<...>>
 template <StaticTensor T>
 auto rand_unif(const typename T::value_type lower_bound = 0.,
-               const typename T::value_type upper_bound = 1.) {
-   T x;
+               const typename T::value_type upper_bound = 1., bool requires_grad = false) {
+   T x(requires_grad);
    using value_type = typename T::value_type;
 
    ten::uniform<value_type> dist(lower_bound, upper_bound);
