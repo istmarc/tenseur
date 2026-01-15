@@ -220,4 +220,14 @@ cd build-docs
 cmake .. -DCMAKE_CXX_COMPILER=clang++ -DTENSEUR_DOCS=ON
 cmake --build . --
 ```
+## Build and install the python bindings
+
+```shell
+mkdir build-bindings
+cd build-docs
+cmake .. -DCMAKE_CXX_COMPILER=clang++ -DTENSEUR_PYTHON=ON
+cmake --build . --
+sudo make install
+```
+
 
