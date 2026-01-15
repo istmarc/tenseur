@@ -36,24 +36,34 @@ using tensor5_stride =
 // vector, matrix and tensor
 using vector_float = ten::vector<float>;
 using vector_double = ten::vector<double>;
-using vector_int32 = ten::vector<int>;
-using vector_int64 = ten::vector<long int>;
+using vector_int32 = ten::vector<int32_t>;
+using vector_int64 = ten::vector<int64_t>;
 using matrix_float = ten::matrix<float>;
 using matrix_double = ten::matrix<double>;
+using matrix_int32 = ten::matrix<int32_t>;
+using matrix_int64 = ten::matrix<int64_t>;
 using tensor3_float = ten::tensor<float, 3>;
 using tensor3_double = ten::tensor<double, 3>;
+using tensor3_int32 = ten::tensor<int32_t, 3>;
+using tensor3_int64 = ten::tensor<int64_t, 3>;
 using tensor4_float = ten::tensor<float, 4>;
 using tensor4_double = ten::tensor<double, 4>;
+using tensor4_int32 = ten::tensor<int32_t, 4>;
+using tensor4_int64 = ten::tensor<int64_t, 4>;
 using tensor5_float = ten::tensor<float, 5>;
 using tensor5_double = ten::tensor<double, 5>;
+using tensor5_int32 = ten::tensor<int32_t, 5>;
+using tensor5_int64 = ten::tensor<int64_t, 5>;
 using diagonal_float = ten::diagonal<float>;
 using diagonal_double = ten::diagonal<double>;
+using diagonal_int32 = ten::diagonal<int32_t>;
+using diagonal_int64 = ten::diagonal<int64_t>;
 
 // Scalars
 using scalar_float = ten::scalar<float>;
 using scalar_double = ten::scalar<double>;
-using scalar_int32 = ten::scalar<int>;
-using scalar_int64 = ten::scalar<long int>;
+using scalar_int32 = ten::scalar<int32_t>;
+using scalar_int64 = ten::scalar<int64_t>;
 
 // Scalar nodes
 using scalarnode_float = scalar_float::node_type;
@@ -68,326 +78,338 @@ using vectornode_int32 = vector_int32::node_type;
 using vectornode_int64 = vector_int64::node_type;
 using matrixnode_float = matrix_float::node_type;
 using matrixnode_double = matrix_double::node_type;
+using matrixnode_int32 = matrix_int32::node_type;
+using matrixnode_int64 = matrix_int64::node_type;
 using tensor3node_float = tensor3_float::node_type;
 using tensor3node_double = tensor3_double::node_type;
+using tensor3node_int32 = tensor3_int32::node_type;
+using tensor3node_int64 = tensor3_int64::node_type;
 using tensor4node_float = tensor4_float::node_type;
 using tensor4node_double = tensor4_double::node_type;
+using tensor4node_int32 = tensor4_int32::node_type;
+using tensor4node_int64 = tensor4_int64::node_type;
 using tensor5node_float = tensor5_float::node_type;
 using tensor5node_double = tensor5_double::node_type;
+using tensor5node_int32 = tensor5_int32::node_type;
+using tensor5node_int64 = tensor5_int64::node_type;
 using diagonalnode_float = diagonal_float::node_type;
 using diagonalnode_double = diagonal_double::node_type;
+using diagonalnode_int32 = diagonal_int32::node_type;
+using diagonalnode_int64 = diagonal_int64::node_type;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 
 template <typename T> auto min_py(T tensor) {
-   return ten::unary_expr<typename T::node_type, ten::functional::min>(
+   using value_type = T::value_type;
+   return ten::unary_expr<T, ten::scalar<value_type>, ten::functional::min>(
        tensor.node());
 }
 
 template <typename T> auto max_py(T tensor) {
-   return ten::unary_expr<typename T::node_type, ten::functional::max>(
+   using value_type = T::value_type;
+   return ten::unary_expr<T, ten::scalar<value_type>, ten::functional::max>(
        tensor.node());
 }
 
 // TODO Unary expr
 using expr_min_vector_float =
-    ten::unary_expr<vectornode_float, ten::functional::min>;
+    ten::unary_expr<vector_float, ten::scalar<float>, ten::functional::min>;
 using expr_min_vector_double =
-    ten::unary_expr<vectornode_double, ten::functional::min>;
+    ten::unary_expr<vector_double, ten::scalar<double>, ten::functional::min>;
 using expr_min_matrix_float =
-    ten::unary_expr<matrixnode_float, ten::functional::min>;
+    ten::unary_expr<matrix_float, ten::scalar<float>, ten::functional::min>;
 using expr_min_matrix_double =
-    ten::unary_expr<matrixnode_double, ten::functional::min>;
+    ten::unary_expr<matrix_double, ten::scalar<double>, ten::functional::min>;
 using expr_min_tensor3_float =
-    ten::unary_expr<tensor3node_float, ten::functional::min>;
+    ten::unary_expr<tensor3_float, ten::scalar<float>, ten::functional::min>;
 using expr_min_tensor3_double =
-    ten::unary_expr<tensor3node_double, ten::functional::min>;
+    ten::unary_expr<tensor3_double, ten::scalar<double>, ten::functional::min>;
 using expr_min_tensor4_float =
-    ten::unary_expr<tensor4node_float, ten::functional::min>;
+    ten::unary_expr<tensor4_float, ten::scalar<float>, ten::functional::min>;
 using expr_min_tensor4_double =
-    ten::unary_expr<tensor4node_double, ten::functional::min>;
+    ten::unary_expr<tensor4_double, ten::scalar<double>, ten::functional::min>;
 using expr_min_tensor5_float =
-    ten::unary_expr<tensor5node_float, ten::functional::min>;
+    ten::unary_expr<tensor5_float, ten::scalar<float>, ten::functional::min>;
 using expr_min_tensor5_double =
-    ten::unary_expr<tensor5node_double, ten::functional::min>;
+    ten::unary_expr<tensor5_double, ten::scalar<double>, ten::functional::min>;
 
 using expr_max_vector_float =
-    ten::unary_expr<vectornode_float, ten::functional::max>;
+    ten::unary_expr<vector_float, ten::scalar<float>, ten::functional::max>;
 using expr_max_vector_double =
-    ten::unary_expr<vectornode_double, ten::functional::max>;
+    ten::unary_expr<vector_double, ten::scalar<double>, ten::functional::max>;
 using expr_max_matrix_float =
-    ten::unary_expr<matrixnode_float, ten::functional::max>;
+    ten::unary_expr<matrix_float, ten::scalar<float>, ten::functional::max>;
 using expr_max_matrix_double =
-    ten::unary_expr<matrixnode_double, ten::functional::max>;
+    ten::unary_expr<matrix_double, ten::scalar<double>, ten::functional::max>;
 using expr_max_tensor3_float =
-    ten::unary_expr<tensor3node_float, ten::functional::max>;
+    ten::unary_expr<tensor3_float, ten::scalar<float>, ten::functional::max>;
 using expr_max_tensor3_double =
-    ten::unary_expr<tensor3node_double, ten::functional::max>;
+    ten::unary_expr<tensor3_double, ten::scalar<double>, ten::functional::max>;
 using expr_max_tensor4_float =
-    ten::unary_expr<tensor4node_float, ten::functional::max>;
+    ten::unary_expr<tensor4_float, ten::scalar<float>, ten::functional::max>;
 using expr_max_tensor4_double =
-    ten::unary_expr<tensor4node_double, ten::functional::max>;
+    ten::unary_expr<tensor4_double, ten::scalar<double>, ten::functional::max>;
 using expr_max_tensor5_float =
-    ten::unary_expr<tensor5node_float, ten::functional::max>;
+    ten::unary_expr<tensor5_float, ten::scalar<float>, ten::functional::max>;
 using expr_max_tensor5_double =
-    ten::unary_expr<tensor5node_double, ten::functional::max>;
+    ten::unary_expr<tensor5_double, ten::scalar<double>, ten::functional::max>;
 
 // Binary expr
 using add_vector_float = ten::binary_expr<
-    vectornode_float, vectornode_float,
+    vector_float, vector_float, vector_float,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_vector_float = ten::binary_expr<
-    vectornode_float, vectornode_float,
+    vector_float, vector_float, vector_float,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using mul_vector_float = ten::binary_expr<
-    vectornode_float, vectornode_float,
+    vector_float, vector_float, vector_float,
     ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_vector_float = ten::binary_expr<
-    vectornode_float, vectornode_float,
+    vector_float, vector_float, vector_float,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_vector_double = ten::binary_expr<
-    vectornode_double, vectornode_double,
+    vector_double, vector_double, vector_double,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_vector_double = ten::binary_expr<
-    vectornode_double, vectornode_double,
+    vector_double, vector_double, vector_double,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using mul_vector_double = ten::binary_expr<
-    vectornode_double, vectornode_double,
+    vector_double, vector_double, vector_double,
     ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_vector_double = ten::binary_expr<
-    vectornode_double, vectornode_double,
+    vector_double, vector_double, vector_double,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_vector_int32 = ten::binary_expr<
-    vectornode_int32, vectornode_int32,
+    vector_int32, vector_int32, vector_int32,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_vector_int32 = ten::binary_expr<
-    vectornode_int32, vectornode_int32,
+    vector_int32, vector_int32, vector_int32,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using mul_vector_int32 = ten::binary_expr<
-    vectornode_int32, vectornode_int32,
+    vector_int32, vector_int32, vector_int32,
     ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_vector_int32 = ten::binary_expr<
-    vectornode_int32, vectornode_int32,
+    vector_int32, vector_int32, vector_int32,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_vector_int64 = ten::binary_expr<
-    vectornode_int64, vectornode_int64,
+    vector_int64, vector_int64, vector_int64,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_vector_int64 = ten::binary_expr<
-    vectornode_int64, vectornode_int64,
+    vector_int64, vector_int64, vector_int64,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using mul_vector_int64 = ten::binary_expr<
-    vectornode_int64, vectornode_int64,
+    vector_int64, vector_int64, vector_int64,
     ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_vector_int64 = ten::binary_expr<
-    vectornode_int64, vectornode_int64,
+    vector_int64, vector_int64, vector_int64,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_matrix_float = ten::binary_expr<
-    matrixnode_float, matrixnode_float,
+    matrix_float, matrix_float, matrix_float,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_matrix_float = ten::binary_expr<
-    matrixnode_float, matrixnode_float,
+    matrix_float, matrix_float, matrix_float,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using mul_matrix_float = ten::binary_expr<
-    matrixnode_float, matrixnode_float,
+    matrix_float, matrix_float, matrix_float,
     ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_matrix_float = ten::binary_expr<
-    matrixnode_float, matrixnode_float,
+    matrix_float, matrix_float, matrix_float,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_matrix_double = ten::binary_expr<
-    matrixnode_double, matrixnode_double,
+    matrix_double, matrix_double, matrix_double,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_matrix_double = ten::binary_expr<
-    matrixnode_double, matrixnode_double,
+    matrix_double, matrix_double, matrix_double,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using mul_matrix_double = ten::binary_expr<
-    matrixnode_double, matrixnode_double,
+    matrix_double, matrix_double, matrix_double,
     ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_matrix_double = ten::binary_expr<
-    matrixnode_double, matrixnode_double,
+    matrix_double, matrix_double, matrix_double,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_tensor3_float = ten::binary_expr<
-    tensor3node_float, tensor3node_float,
+    tensor3_float, tensor3_float, tensor3_float,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor3_float = ten::binary_expr<
-    tensor3node_float, tensor3node_float,
+    tensor3_float, tensor3_float, tensor3_float,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using div_tensor3_float = ten::binary_expr<
-    tensor3node_float, tensor3node_float,
+    tensor3_float, tensor3_float, tensor3_float,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_tensor3_double = ten::binary_expr<
-    tensor3node_double, tensor3node_double,
+    tensor3_double, tensor3_double, tensor3_double,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor3_double = ten::binary_expr<
-    tensor3node_double, tensor3node_double,
+    tensor3_double, tensor3_double, tensor3_double,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using div_tensor3_double = ten::binary_expr<
-    tensor3node_double, tensor3node_double,
+    tensor3_double, tensor3_double, tensor3_double,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_tensor4_float = ten::binary_expr<
-    tensor4node_float, tensor4node_float,
+    tensor4_float, tensor4_float, tensor4_float,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor4_float = ten::binary_expr<
-    tensor4node_float, tensor4node_float,
+    tensor4_float, tensor4_float,  tensor4_float,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using div_tensor4_float = ten::binary_expr<
-    tensor4node_float, tensor4node_float,
+    tensor4_float, tensor4_float, tensor4_float,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_tensor4_double = ten::binary_expr<
-    tensor4node_double, tensor4node_double,
+    tensor4_double, tensor4_double, tensor4_double,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor4_double = ten::binary_expr<
-    tensor4node_double, tensor4node_double,
+    tensor4_double, tensor4_double, tensor4_double,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using div_tensor4_double = ten::binary_expr<
-    tensor4node_double, tensor4node_double,
+    tensor4_double, tensor4_double, tensor4_double,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_tensor5_float = ten::binary_expr<
-    tensor5node_float, tensor5node_float,
+    tensor5_float, tensor5_float, tensor5_float,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor5_float = ten::binary_expr<
-    tensor5node_float, tensor5node_float,
+    tensor5_float, tensor5_float, tensor5_float,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using div_tensor5_float = ten::binary_expr<
-    tensor5node_float, tensor5node_float,
+    tensor5_float, tensor5_float, tensor5_float,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_tensor5_double = ten::binary_expr<
-    tensor5node_double, tensor5node_double,
+    tensor5_double, tensor5_double, tensor5_double,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_tensor5_double = ten::binary_expr<
-    tensor5node_double, tensor5node_double,
+    tensor5_double, tensor5_double, tensor5_double,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
 using div_tensor5_double = ten::binary_expr<
-    tensor5node_double, tensor5node_double,
+    tensor5_double, tensor5_double, tensor5_double,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_diagonal_float = ten::binary_expr<
-    diagonalnode_float, diagonalnode_float,
+    diagonal_float, diagonal_float, diagonal_float,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_diagonal_float = ten::binary_expr<
-    diagonalnode_float, diagonalnode_float,
+    diagonal_float, diagonal_float, diagonal_float,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
-// using mul_diagonal_float = ten::binary_expr<diagonalnode_float,
-// diagonalnode_float,
+// using mul_diagonal_float = ten::binary_expr<diagonal_float,
+// diagonal_float,
 //    ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_diagonal_float = ten::binary_expr<
-    diagonalnode_float, diagonalnode_float,
+    diagonal_float, diagonal_float, diagonal_float,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 using add_diagonal_double = ten::binary_expr<
-    diagonalnode_double, diagonalnode_double,
+    diagonal_double, diagonal_double, diagonal_double,
     ten::functional::binary_func<ten::binary_operation::add>::template func>;
 using sub_diagonal_double = ten::binary_expr<
-    diagonalnode_double, diagonalnode_double,
+    diagonal_double, diagonal_double, diagonal_double,
     ten::functional::binary_func<ten::binary_operation::sub>::template func>;
-// using mul_diagonal_double = ten::binary_expr<diagonalnode_double,
-// diagonalnode_double,
+// using mul_diagonal_double = ten::binary_expr<diagonal_double,
+// diagonal_double,
 //    ten::functional::binary_func<ten::binary_operation::mul>::template func>;
 using div_diagonal_double = ten::binary_expr<
-    diagonalnode_double, diagonalnode_double,
+    diagonal_double, diagonal_double, diagonal_double,
     ten::functional::binary_func<ten::binary_operation::div>::template func>;
 
 // Binary func mul
 using mul_vector_float_vector_float =
-    ten::binary_expr<vectornode_float, vectornode_float,
-                     ten::functional::mul<vectornode_float, vectornode_float,
-                                          vectornode_float>::template func>;
+    ten::binary_expr<vector_float, vector_float, vector_float,
+                     ten::functional::mul<vector_float, vector_float,
+                                          vector_float>::template func>;
 using mul_vector_double_vector_double =
-    ten::binary_expr<vectornode_double, vectornode_double,
-                     ten::functional::mul<vectornode_double, vectornode_double,
-                                          vectornode_double>::template func>;
+    ten::binary_expr<vector_double, vector_double, vector_double,
+                     ten::functional::mul<vector_double, vector_double,
+                                          vector_double>::template func>;
 
 using mul_vector_int32_vector_int32 =
-    ten::binary_expr<vectornode_int32, vectornode_int32,
-                     ten::functional::mul<vectornode_int32, vectornode_int32,
-                                          vectornode_int32>::template func>;
+    ten::binary_expr<vector_int32, vector_int32, vector_int32,
+                     ten::functional::mul<vector_int32, vector_int32,
+                                          vector_int32>::template func>;
 using mul_vector_int64_vector_int64 =
-    ten::binary_expr<vectornode_int64, vectornode_int64,
-                     ten::functional::mul<vectornode_int64, vectornode_int64,
-                                          vectornode_int64>::template func>;
+    ten::binary_expr<vector_int64, vector_int64, vector_int64,
+                     ten::functional::mul<vector_int64, vector_int64,
+                                          vector_int64>::template func>;
 
 using mul_matrix_float_matrix_float =
-    ten::binary_expr<matrixnode_float, matrixnode_float,
-                     ten::functional::mul<matrixnode_float, matrixnode_float,
-                                          matrixnode_float>::template func>;
+    ten::binary_expr<matrix_float, matrix_float, matrix_float,
+                     ten::functional::mul<matrix_float, matrix_float,
+                                          matrix_float>::template func>;
 using mul_matrix_double_matrix_double =
-    ten::binary_expr<matrixnode_double, matrixnode_double,
-                     ten::functional::mul<matrixnode_double, matrixnode_double,
-                                          matrixnode_double>::template func>;
+    ten::binary_expr<matrix_double, matrix_double, matrix_double,
+                     ten::functional::mul<matrix_double, matrix_double,
+                                          matrix_double>::template func>;
 
 using mul_matrix_float_vector_float =
-    ten::binary_expr<matrixnode_float, vectornode_float,
-                     ten::functional::mul<matrixnode_float, vectornode_float,
-                                          vectornode_float>::template func>;
+    ten::binary_expr<matrix_float, vector_float, matrix_float,
+                     ten::functional::mul<matrix_float, vector_float,
+                                          vector_float>::template func>;
 using mul_matrix_double_vector_double =
-    ten::binary_expr<matrixnode_double, vectornode_double,
-                     ten::functional::mul<matrixnode_double, vectornode_double,
-                                          vectornode_double>::template func>;
+    ten::binary_expr<matrix_double, vector_double, matrix_double,
+                     ten::functional::mul<matrix_double, vector_double,
+                                          vector_double>::template func>;
 
 using mul_scalar_float_vector_float =
-    ten::binary_expr<scalarnode_float, vectornode_float,
-                     ten::functional::mul<scalarnode_float, vectornode_float,
-                                          vectornode_float>::template func>;
+    ten::binary_expr<scalar_float, vector_float, vector_float,
+                     ten::functional::mul<scalar_float, vector_float,
+                                          vector_float>::template func>;
 using mul_scalar_double_vector_double =
-    ten::binary_expr<scalarnode_double, vectornode_double,
-                     ten::functional::mul<scalarnode_double, vectornode_double,
-                                          vectornode_double>::template func>;
+    ten::binary_expr<scalar_double, vector_double, vector_double,
+                     ten::functional::mul<scalar_double, vector_double,
+                                          vector_double>::template func>;
 
 using mul_scalar_float_matrix_float =
-    ten::binary_expr<scalarnode_float, matrixnode_float,
-                     ten::functional::mul<scalarnode_float, matrixnode_float,
-                                          matrixnode_float>::template func>;
+    ten::binary_expr<scalar_float, matrix_float, matrix_float,
+                     ten::functional::mul<scalar_float, matrix_float,
+                                          matrix_float>::template func>;
 using mul_scalar_double_matrix_double =
-    ten::binary_expr<scalarnode_double, matrixnode_double,
-                     ten::functional::mul<scalarnode_double, matrixnode_double,
-                                          matrixnode_double>::template func>;
+    ten::binary_expr<scalar_double, matrix_double, matrix_double,
+                     ten::functional::mul<scalar_double, matrix_double,
+                                          matrix_double>::template func>;
 
 using mul_scalar_float_tensor3_float =
-    ten::binary_expr<scalarnode_float, tensor3node_float,
-                     ten::functional::mul<scalarnode_float, tensor3node_float,
-                                          tensor3node_float>::template func>;
+    ten::binary_expr<scalar_float, tensor3_float, tensor3_float,
+                     ten::functional::mul<scalar_float, tensor3_float,
+                                          tensor3_float>::template func>;
 using mul_scalar_double_tensor3_double =
-    ten::binary_expr<scalarnode_double, tensor3node_double,
-                     ten::functional::mul<scalarnode_double, tensor3node_double,
-                                          tensor3node_double>::template func>;
+    ten::binary_expr<scalar_double, tensor3_double, tensor3_double,
+                     ten::functional::mul<scalar_double, tensor3_double,
+                                          tensor3_double>::template func>;
 
 using mul_scalar_float_tensor4_float =
-    ten::binary_expr<scalarnode_float, tensor4node_float,
-                     ten::functional::mul<scalarnode_float, tensor4node_float,
-                                          tensor4node_float>::template func>;
+    ten::binary_expr<scalar_float, tensor4_float, tensor4_float,
+                     ten::functional::mul<scalar_float, tensor4_float,
+                                          tensor4_float>::template func>;
 using mul_scalar_double_tensor4_double =
-    ten::binary_expr<scalarnode_double, tensor4node_double,
-                     ten::functional::mul<scalarnode_double, tensor4node_double,
-                                          tensor4node_double>::template func>;
+    ten::binary_expr<scalar_double, tensor4_double, tensor4_double,
+                     ten::functional::mul<scalar_double, tensor4_double,
+                                          tensor4_double>::template func>;
 
 using mul_scalar_float_tensor5_float =
-    ten::binary_expr<scalarnode_float, tensor5node_float,
-                     ten::functional::mul<scalarnode_float, tensor5node_float,
-                                          tensor5node_float>::template func>;
+    ten::binary_expr<scalar_float, tensor5_float, tensor5_float,
+                     ten::functional::mul<scalar_float, tensor5_float,
+                                          tensor5_float>::template func>;
 using mul_scalar_double_tensor5_double =
-    ten::binary_expr<scalarnode_double, tensor5node_double,
-                     ten::functional::mul<scalarnode_double, tensor5node_double,
-                                          tensor5node_double>::template func>;
+    ten::binary_expr<scalar_double, tensor5_double, tensor5_double,
+                     ten::functional::mul<scalar_double, tensor5_double,
+                                          tensor5_double>::template func>;
 
 using mul_diagonal_float_diagonal_float = ten::binary_expr<
-    diagonalnode_float, diagonalnode_float,
-    ten::functional::mul<diagonalnode_float, diagonalnode_float,
-                         diagonalnode_float>::template func>;
+    diagonal_float, diagonal_float, matrix_float,
+    ten::functional::mul<diagonal_float, diagonal_float,
+                         diagonal_float>::template func>;
 using mul_diagonal_double_diagonal_double = ten::binary_expr<
-    diagonalnode_double, diagonalnode_double,
-    ten::functional::mul<diagonalnode_double, diagonalnode_double,
-                         diagonalnode_double>::template func>;
+    diagonal_double, diagonal_double, matrix_double,
+    ten::functional::mul<diagonal_double, diagonal_double,
+                         diagonal_double>::template func>;
 
 // Others binary functions
 
