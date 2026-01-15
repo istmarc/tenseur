@@ -9,7 +9,7 @@ project(tenseur VERSION 1.0.0
 include(GNUInstallDirs)
 
 # Compiler options
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -30,7 +30,7 @@ else()
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
    )
    # Compiler features
-   target_compile_features(tenseur INTERFACE cxx_std_20)
+   target_compile_features(tenseur INTERFACE cxx_std_23)
 endif()
 
 # Target paths
