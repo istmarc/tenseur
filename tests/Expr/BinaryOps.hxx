@@ -31,7 +31,7 @@ TEST(Add, StaticVector_StaticVector) {
 TEST(Sub, Vector_Vector) {
    size_t size = 10;
    ten::vector<float> a = range<ten::vector<float>>({size});
-   ten::vector<float> b(size);
+   ten::vector<float> b({size});
    for (size_t i = 0; i < size; i++) {
       b[i] = 2 * i;
    }
@@ -75,7 +75,7 @@ TEST(Mul, StaticVector_StaticVector) {
 TEST(Div, Vector_Vector) {
    size_t size = 10;
    ten::vector<float> a = range<ten::vector<float>>({size});
-   ten::vector<float> b(size);
+   ten::vector<float> b({size});
    for (size_t i = 0; i < size; i++) {
       b[i] = i + 1;
    }

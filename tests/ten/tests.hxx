@@ -83,8 +83,8 @@ testing::AssertionResult same_values(const A &a, const B &b) {
 
 // Compare two tensors
 template <class A, class B>
-   requires(::ten::is_dtensor<A>::value &&
-            ::ten::is_dtensor<B>::value)
+   requires(::ten::is_dynamic_tensor<A>::value &&
+            ::ten::is_dynamic_tensor<B>::value)
 testing::AssertionResult equal(const A &a, const B &b, double eps = 1e-3) {
    testing::AssertionResult r_type = same_value_type(a, b);
    if (!r_type)
