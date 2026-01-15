@@ -276,6 +276,9 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
    std::shared_ptr<T> _grad = nullptr;
 
  public:
+   // For serialization
+   scalar() : _value(std::make_shared<T>()), _requires_grad(false) {}
+
    scalar(std::shared_ptr<T> value, bool requires_grad = false)
        : _value(value), _requires_grad(requires_grad) {
       if (requires_grad) {
@@ -290,14 +293,14 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
       }
    }
 
-   explicit scalar(const T &value, bool requires_grad = false)
+   scalar(const T &value, bool requires_grad = false)
        : _value(std::make_shared<T>(value)), _requires_grad(requires_grad) {
       if (requires_grad) {
          _grad = std::make_shared<T>();
       }
    }
 
-   explicit scalar(T &&value, bool requires_grad = false)
+   scalar(T &&value, bool requires_grad = false)
        : _value(std::make_shared<T>(std::move(value))),
          _requires_grad(requires_grad) {
       if (requires_grad) {

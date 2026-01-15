@@ -8,6 +8,7 @@
 #include <ten/ml>
 #include <ten/tensor>
 #include <ten/types.hxx>
+#include <ten/io>
 
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
@@ -103,13 +104,13 @@ using diagonalnode_int64 = diagonal_int64::node_type;
 template <typename T> auto min_py(T tensor) {
    using value_type = T::value_type;
    return ten::unary_expr<T, ten::scalar<value_type>, ten::functional::min>(
-       tensor.node());
+       tensor);
 }
 
 template <typename T> auto max_py(T tensor) {
    using value_type = T::value_type;
    return ten::unary_expr<T, ten::scalar<value_type>, ten::functional::max>(
-       tensor.node());
+       tensor);
 }
 
 // TODO Unary expr
@@ -323,93 +324,73 @@ using div_diagonal_double = ten::binary_expr<
 // Binary func mul
 using mul_vector_float_vector_float =
     ten::binary_expr<vector_float, vector_float, vector_float,
-                     ten::functional::mul<vector_float, vector_float,
-                                          vector_float>::template func>;
+                     ten::functional::mul>;
 using mul_vector_double_vector_double =
     ten::binary_expr<vector_double, vector_double, vector_double,
-                     ten::functional::mul<vector_double, vector_double,
-                                          vector_double>::template func>;
+                     ten::functional::mul>;
 
 using mul_vector_int32_vector_int32 =
     ten::binary_expr<vector_int32, vector_int32, vector_int32,
-                     ten::functional::mul<vector_int32, vector_int32,
-                                          vector_int32>::template func>;
+                     ten::functional::mul>;
 using mul_vector_int64_vector_int64 =
     ten::binary_expr<vector_int64, vector_int64, vector_int64,
-                     ten::functional::mul<vector_int64, vector_int64,
-                                          vector_int64>::template func>;
+                     ten::functional::mul>;
 
 using mul_matrix_float_matrix_float =
     ten::binary_expr<matrix_float, matrix_float, matrix_float,
-                     ten::functional::mul<matrix_float, matrix_float,
-                                          matrix_float>::template func>;
+                     ten::functional::mul>;
 using mul_matrix_double_matrix_double =
     ten::binary_expr<matrix_double, matrix_double, matrix_double,
-                     ten::functional::mul<matrix_double, matrix_double,
-                                          matrix_double>::template func>;
+                     ten::functional::mul>;
 
 using mul_matrix_float_vector_float =
     ten::binary_expr<matrix_float, vector_float, matrix_float,
-                     ten::functional::mul<matrix_float, vector_float,
-                                          vector_float>::template func>;
+                     ten::functional::mul>;
 using mul_matrix_double_vector_double =
     ten::binary_expr<matrix_double, vector_double, matrix_double,
-                     ten::functional::mul<matrix_double, vector_double,
-                                          vector_double>::template func>;
+                     ten::functional::mul>;
 
 using mul_scalar_float_vector_float =
     ten::binary_expr<scalar_float, vector_float, vector_float,
-                     ten::functional::mul<scalar_float, vector_float,
-                                          vector_float>::template func>;
+                     ten::functional::mul>;
 using mul_scalar_double_vector_double =
     ten::binary_expr<scalar_double, vector_double, vector_double,
-                     ten::functional::mul<scalar_double, vector_double,
-                                          vector_double>::template func>;
+                     ten::functional::mul>;
 
 using mul_scalar_float_matrix_float =
     ten::binary_expr<scalar_float, matrix_float, matrix_float,
-                     ten::functional::mul<scalar_float, matrix_float,
-                                          matrix_float>::template func>;
+                     ten::functional::mul>;
 using mul_scalar_double_matrix_double =
     ten::binary_expr<scalar_double, matrix_double, matrix_double,
-                     ten::functional::mul<scalar_double, matrix_double,
-                                          matrix_double>::template func>;
+                     ten::functional::mul>;
 
 using mul_scalar_float_tensor3_float =
     ten::binary_expr<scalar_float, tensor3_float, tensor3_float,
-                     ten::functional::mul<scalar_float, tensor3_float,
-                                          tensor3_float>::template func>;
+                     ten::functional::mul>;
 using mul_scalar_double_tensor3_double =
     ten::binary_expr<scalar_double, tensor3_double, tensor3_double,
-                     ten::functional::mul<scalar_double, tensor3_double,
-                                          tensor3_double>::template func>;
+                     ten::functional::mul>;
 
 using mul_scalar_float_tensor4_float =
     ten::binary_expr<scalar_float, tensor4_float, tensor4_float,
-                     ten::functional::mul<scalar_float, tensor4_float,
-                                          tensor4_float>::template func>;
+                     ten::functional::mul>;
 using mul_scalar_double_tensor4_double =
     ten::binary_expr<scalar_double, tensor4_double, tensor4_double,
-                     ten::functional::mul<scalar_double, tensor4_double,
-                                          tensor4_double>::template func>;
+                     ten::functional::mul>;
 
 using mul_scalar_float_tensor5_float =
     ten::binary_expr<scalar_float, tensor5_float, tensor5_float,
-                     ten::functional::mul<scalar_float, tensor5_float,
-                                          tensor5_float>::template func>;
+                     ten::functional::mul>;
 using mul_scalar_double_tensor5_double =
     ten::binary_expr<scalar_double, tensor5_double, tensor5_double,
-                     ten::functional::mul<scalar_double, tensor5_double,
-                                          tensor5_double>::template func>;
+                     ten::functional::mul>;
 
 using mul_diagonal_float_diagonal_float = ten::binary_expr<
     diagonal_float, diagonal_float, matrix_float,
-    ten::functional::mul<diagonal_float, diagonal_float,
-                         diagonal_float>::template func>;
+    ten::functional::mul>;
 using mul_diagonal_double_diagonal_double = ten::binary_expr<
     diagonal_double, diagonal_double, matrix_double,
-    ten::functional::mul<diagonal_double, diagonal_double,
-                         diagonal_double>::template func>;
+    ten::functional::mul>;
 
 // Others binary functions
 
@@ -485,8 +466,9 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    // Scalars
    py::class_<scalar_float>(m, "scalar_float")
-       .def(py::init<float>())
+       .def(py::init<>())
        .def("value", &scalar_float::value)
+       .def("grad", &scalar_float::grad)
        .def("__repr__", [](const scalar_float &s) {
           std::stringstream ss;
           ss << s;
@@ -496,6 +478,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<scalar_double>(m, "scalar_double")
        .def(py::init<double>())
        .def("value", &scalar_double::value)
+       .def("grad", &scalar_double::grad)
        .def("__repr__", [](const scalar_double &s) {
           std::stringstream ss;
           ss << s;
@@ -503,8 +486,9 @@ PYBIND11_MODULE(tenseurbackend, m) {
        });
 
    py::class_<scalar_int32>(m, "scalar_int32")
-       .def(py::init<int>())
+       .def(py::init<int32_t>())
        .def("value", &scalar_int32::value)
+       .def("grad", &scalar_int32::grad)
        .def("__repr__", [](const scalar_int32 &s) {
           std::stringstream ss;
           ss << s;
@@ -512,8 +496,9 @@ PYBIND11_MODULE(tenseurbackend, m) {
        });
 
    py::class_<scalar_int64>(m, "scalar_int64")
-       .def(py::init<long int>())
+       .def(py::init<int64_t>())
        .def("value", &scalar_int64::value)
+       .def("grad", &scalar_int64::grad)
        .def("__repr__", [](const scalar_int64 &s) {
           std::stringstream ss;
           ss << s;
@@ -1542,7 +1527,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    m.def("range_tensor5_double", &range_py<tensor5_double>);
 
    // Save to a binary file
-   m.def("save_vector_float", &ten::save<vector_float>);
+   /*m.def("save_vector_float", &ten::save<vector_float>);
    m.def("save_vector_double", &ten::save<vector_double>);
    m.def("save_matrix_float", &ten::save<matrix_float>);
    m.def("save_matrix_double", &ten::save<matrix_double>);
@@ -1552,8 +1537,10 @@ PYBIND11_MODULE(tenseurbackend, m) {
    m.def("save_tensor4_double", &ten::save<tensor4_double>);
    m.def("save_tensor5_float", &ten::save<tensor5_float>);
    m.def("save_tensor5_double", &ten::save<tensor5_double>);
+   */
 
    // Load from binary file
+   /*
    m.def("load_vector_float", &ten::load<vector_float>);
    m.def("load_vector_double", &ten::load<vector_double>);
    m.def("load_matrix_float", &ten::load<matrix_float>);
@@ -1564,12 +1551,13 @@ PYBIND11_MODULE(tenseurbackend, m) {
    m.def("load_tensor4_double", &ten::load<tensor4_double>);
    m.def("load_tensor5_float", &ten::load<tensor5_float>);
    m.def("load_tensor5_double", &ten::load<tensor5_double>);
-
+   */
+   
    // Save to a mtx file
-   m.def("save_mtx_vector_float", &ten::save_mtx<vector_float>);
-   m.def("save_mtx_vector_double", &ten::save_mtx<vector_double>);
-   m.def("save_mtx_matrix_float", &ten::save_mtx<matrix_float>);
-   m.def("save_mtx_matrix_double", &ten::save_mtx<matrix_double>);
+   m.def("save_mtx_vector_float", &ten::io::save_mtx<vector_float>);
+   m.def("save_mtx_vector_double", &ten::io::save_mtx<vector_double>);
+   m.def("save_mtx_matrix_float", &ten::io::save_mtx<matrix_float>);
+   m.def("save_mtx_matrix_double", &ten::io::save_mtx<matrix_double>);
 
    /////////////////////////////////////////////////////////////////////////////
    // Functions
