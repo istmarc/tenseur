@@ -344,10 +344,10 @@ using mul_matrix_double_matrix_double =
                      ten::functional::mul>;
 
 using mul_matrix_float_vector_float =
-    ten::binary_expr<matrix_float, vector_float, matrix_float,
+    ten::binary_expr<matrix_float, vector_float, vector_float,
                      ten::functional::mul>;
 using mul_matrix_double_vector_double =
-    ten::binary_expr<matrix_double, vector_double, matrix_double,
+    ten::binary_expr<matrix_double, vector_double, vector_double,
                      ten::functional::mul>;
 
 using mul_scalar_float_vector_float =
@@ -466,8 +466,10 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    // Scalars
    py::class_<scalar_float>(m, "scalar_float")
-       .def(py::init<>())
+       .def(py::init<bool>())
+       .def(py::init<const float&, bool>())
        .def("value", &scalar_float::value)
+       .def("requires_grad", &scalar_float::requires_grad)
        .def("grad", &scalar_float::grad)
        .def("__repr__", [](const scalar_float &s) {
           std::stringstream ss;
@@ -476,8 +478,9 @@ PYBIND11_MODULE(tenseurbackend, m) {
        });
 
    py::class_<scalar_double>(m, "scalar_double")
-       .def(py::init<double>())
+       .def(py::init<const double&, bool>())
        .def("value", &scalar_double::value)
+       .def("requires_grad", &scalar_double::requires_grad)
        .def("grad", &scalar_double::grad)
        .def("__repr__", [](const scalar_double &s) {
           std::stringstream ss;
@@ -486,8 +489,9 @@ PYBIND11_MODULE(tenseurbackend, m) {
        });
 
    py::class_<scalar_int32>(m, "scalar_int32")
-       .def(py::init<int32_t>())
+       .def(py::init<const int32_t&, bool>())
        .def("value", &scalar_int32::value)
+       .def("requires_grad", &scalar_int32::requires_grad)
        .def("grad", &scalar_int32::grad)
        .def("__repr__", [](const scalar_int32 &s) {
           std::stringstream ss;
@@ -496,8 +500,9 @@ PYBIND11_MODULE(tenseurbackend, m) {
        });
 
    py::class_<scalar_int64>(m, "scalar_int64")
-       .def(py::init<int64_t>())
+       .def(py::init<const int64_t&, bool>())
        .def("value", &scalar_int64::value)
+       .def("requires_grad", &scalar_int64::requires_grad)
        .def("grad", &scalar_int64::grad)
        .def("__repr__", [](const scalar_int64 &s) {
           std::stringstream ss;
@@ -627,8 +632,8 @@ PYBIND11_MODULE(tenseurbackend, m) {
        .value("float64", ten::data_type::float64)
        .value("int32", ten::data_type::int32)
        .value("int64", ten::data_type::int64)
-       .value("complexfloat", ten::data_type::complexfloat)
-       .value("complexdouble", ten::data_type::complexdouble);
+       .value("complexfloat32", ten::data_type::complexfloat32)
+       .value("complexfloat64", ten::data_type::complexfloat64);
 
    // Format
    py::enum_<ten::storage_format>(m, "storage_format", py::arithmetic())

@@ -1231,7 +1231,6 @@ struct mul<A, B, C> : ::ten::functional::func<> {
    void operator()(const A &left, const B &right, C &result) {
       kernels::mul(left, right, result);
    }
-   //};
 };
 
 // scalar * tensor

@@ -277,7 +277,7 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
 
  public:
    // For serialization
-   scalar() : _value(std::make_shared<T>()), _requires_grad(false) {}
+   //scalar() : _value(std::make_shared<T>()), _requires_grad(false) {}
 
    scalar(std::shared_ptr<T> value, bool requires_grad = false)
        : _value(value), _requires_grad(requires_grad) {
