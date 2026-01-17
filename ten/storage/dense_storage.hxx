@@ -8,6 +8,15 @@
 #include <ten/types.hxx>
 
 namespace ten {
+
+template<class To, class From, typename allocator>
+struct casted_allocator;
+
+template<class To, class From>
+struct casted_allocator<To, From, std::allocator<From>> {
+   using type = std::allocator<To>;
+};
+
 /// \class dense_storage
 /// Dense array
 template <typename T, typename allocator> class dense_storage final {
@@ -16,7 +25,9 @@ template <typename T, typename allocator> class dense_storage final {
    using allocator_type = allocator;
    using allocator_traits = std::allocator_traits<allocator>;
 
-   template <class to> using casted_type = dense_storage<to, allocator>;
+   template <class To> using casted_type = dense_storage<To, 
+         typename ten::casted_allocator<To, T, allocator>::type
+   >;
 
  private:
    allocator_type _allocator{};
@@ -95,7 +106,7 @@ template <typename T, size_t N> class sdense_storage final {
  public:
    using value_type = T;
 
-   template <class to> using casted_type = sdense_storage<to, N>;
+   template <class To> using casted_type = sdense_storage<To, N>;
 
    using allocator_type = void;
 
