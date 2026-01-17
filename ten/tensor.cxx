@@ -164,6 +164,18 @@ using expr_max_tensor5_float =
 using expr_max_tensor5_double =
     ten::unary_expr<tensor5_double, ten::scalar<double>, ten::functional::max>;
 
+// Reshape
+using expr_reshape_vector_float_matrix_float = 
+   ten::unary_expr<vector_float, matrix_float, ten::functional::dynamic_reshape<ten::shape<0, 0>>::func>;
+using expr_reshape_vector_float_tensor3_float = 
+   ten::unary_expr<vector_float, tensor3_float, ten::functional::dynamic_reshape<ten::shape<0, 0, 0>>::func>;
+using expr_reshape_vector_float_tensor4_float = 
+   ten::unary_expr<vector_float, tensor4_float, ten::functional::dynamic_reshape<ten::shape<0, 0, 0, 0>>::func>;
+using expr_reshape_vector_float_tensor5_float = 
+   ten::unary_expr<vector_float, tensor5_float, ten::functional::dynamic_reshape<ten::shape<0, 0, 0, 0, 0>>::func>;
+
+
+
 // Binary expr
 using add_vector_float = ten::binary_expr<
     vector_float, vector_float, vector_float,
@@ -502,6 +514,24 @@ range_py(typename __t::shape_type shape,
    return x;
 }
 
+// reshape
+template <class T, class Shape>
+requires(::ten::is_tensor_v<T>)
+auto py_reshape(T x, Shape &dims) {
+   using expr_type = typename std::remove_cvref_t<T>;
+   using value_type = expr_type::value_type;
+   using output_type = ten::ranked_tensor<value_type, Shape, expr_type::storage_order(), typename expr_type::storage_type,
+      typename expr_type::allocator_type>;
+   //using output_type = typename ten::details::output_type<expr_type>::type;
+   using shape_type = std::remove_cvref_t<Shape>;
+   using reshape_type =
+       typename ::ten::details::reshape_result<output_type, shape_type>::type;
+   return ::ten::unary_expr<
+       expr_type, reshape_type,
+       ::ten::functional::dynamic_reshape<shape_type>::template func>(x,
+                                                                      dims);
+}
+
 // learning
 using histogram_float = ten::ml::histogram<float>;
 using histogram_double = ten::ml::histogram<double>;
@@ -777,6 +807,21 @@ PYBIND11_MODULE(tenseurbackend, m) {
    py::class_<expr_max_tensor5_double>(m, "expr_max_tensor5_double")
        .def("value", &expr_max_tensor5_double::value)
        .def("eval", &expr_max_tensor5_double::eval);
+
+   // Reshape
+   // Reshape a vector to a matrix, tensor3, tensor4 or tensor5
+   py::class_<expr_reshape_vector_float_matrix_float>(m, "expr_reshape_vector_float_matrix_float")
+       .def("value", &expr_reshape_vector_float_matrix_float::value)
+       .def("eval", &expr_reshape_vector_float_matrix_float::eval);
+   py::class_<expr_reshape_vector_float_tensor3_float>(m, "expr_reshape_vector_float_tensor3_float")
+       .def("value", &expr_reshape_vector_float_tensor3_float::value)
+       .def("eval", &expr_reshape_vector_float_tensor3_float::eval);
+   py::class_<expr_reshape_vector_float_tensor4_float>(m, "expr_reshape_vector_float_tensor4_float")
+       .def("value", &expr_reshape_vector_float_tensor4_float::value)
+       .def("eval", &expr_reshape_vector_float_tensor4_float::eval);
+   py::class_<expr_reshape_vector_float_tensor5_float>(m, "expr_reshape_vector_float_tensor5_float")
+       .def("value", &expr_reshape_vector_float_tensor5_float::value)
+       .def("eval", &expr_reshape_vector_float_tensor5_float::eval);
 
    // Binar expr
 
@@ -1987,8 +2032,67 @@ PYBIND11_MODULE(tenseurbackend, m) {
    m.def("cast_matrix_float_double", &ten::cast<double, matrix_float>);
    m.def("cast_matrix_double_float", &ten::cast<float, matrix_double>);
 
-   // FIXME Reshape
-   //m.def("reshape_vector_float_matrix_float", &ten::reshape<vector_float, ten::shape<0, 0>>);
+   // Reshape
+   // vector to matrix
+   m.def("reshape_vector_float_matrix_float", &py_reshape<vector_float, ten::shape<0, 0>>);
+   m.def("reshape_vector_double_matrix_double", &py_reshape<vector_double, ten::shape<0, 0>>);
+   // vector to tensor3
+   m.def("reshape_vector_float_tensor3_float", &py_reshape<vector_float, ten::shape<0, 0, 0>>);
+   m.def("reshape_vector_double_tensor3_double", &py_reshape<vector_double, ten::shape<0, 0, 0>>);
+   // vector to tensor4
+   m.def("reshape_vector_float_tensor4_float", &py_reshape<vector_float, ten::shape<0, 0, 0, 0>>);
+   m.def("reshape_vector_double_tensor4_double", &py_reshape<vector_double, ten::shape<0, 0, 0, 0>>);
+   // vector to tensor5
+   m.def("reshape_vector_float_tensor5_float", &py_reshape<vector_float, ten::shape<0, 0, 0, 0, 0>>);
+   m.def("reshape_vector_double_tensor5_double", &py_reshape<vector_double, ten::shape<0, 0, 0, 0, 0>>);
+   // matrix to vector
+   m.def("reshape_matrix_float_vector_float", &py_reshape<matrix_float, ten::shape<0>>);
+   m.def("reshape_matrix_double_vector_double", &py_reshape<matrix_double, ten::shape<0>>);
+   // matrix to tensor3
+   m.def("reshape_matrix_float_tensor3_float", &py_reshape<vector_float, ten::shape<0, 0, 0>>);
+   m.def("reshape_matrix_double_tensor3_double", &py_reshape<vector_float, ten::shape<0, 0, 0>>);
+   // matrix to tensor4
+   m.def("reshape_matrix_float_tensor4_float", &py_reshape<matrix_float, ten::shape<0, 0, 0, 0>>);
+   m.def("reshape_matrix_double_tensor4_double", &py_reshape<matrix_double, ten::shape<0, 0, 0, 0>>);
+   // matrix to tensor5
+   m.def("reshape_matrix_float_tensor5_float", &py_reshape<matrix_float, ten::shape<0, 0, 0, 0, 0>>);
+   m.def("reshape_matrix_double_tensor5_double", &py_reshape<matrix_double, ten::shape<0, 0, 0, 0, 0>>);
+   // tensor3 to vector
+   m.def("reshape_tensor3_float_vector_float", &py_reshape<tensor3_float, ten::shape<0>>);
+   m.def("reshape_tensor3_double_vector_double", &py_reshape<tensor3_double, ten::shape<0>>);
+   // tensor3 to matrix
+   m.def("reshape_tensor3_float_matrix_float", &py_reshape<tensor3_float, ten::shape<0, 0>>);
+   m.def("reshape_tensor3_double_matrix_double", &py_reshape<tensor3_double, ten::shape<0, 0>>);
+   // tensor3 to tensor4
+   m.def("reshape_tensor3_float_tensor4_float", &py_reshape<tensor3_float, ten::shape<0, 0, 0, 0>>);
+   m.def("reshape_tensor3_double_tensor4_double", &py_reshape<tensor3_double, ten::shape<0, 0, 0, 0>>);
+   // tensor3 to tensor5
+   m.def("reshape_tensor3_float_tensor5_float", &py_reshape<tensor3_float, ten::shape<0, 0, 0, 0, 0>>);
+   m.def("reshape_tensor3_double_tensor5_double", &py_reshape<tensor3_double, ten::shape<0, 0, 0, 0, 0>>);
+   // tensor4 to vector
+   m.def("reshape_tensor4_float_vector_float", &py_reshape<tensor4_float, ten::shape<0>>);
+   m.def("reshape_tensor4_double_vector_double", &py_reshape<tensor4_double, ten::shape<0>>);
+   // tensor4 to matrix
+   m.def("reshape_tensor4_float_matrix_float", &py_reshape<tensor4_float, ten::shape<0, 0>>);
+   m.def("reshape_tensor4_double_matrix_double", &py_reshape<tensor4_double, ten::shape<0, 0>>);
+   // tensor4 to tensor3
+   m.def("reshape_tensor4_float_tensor3_float", &py_reshape<tensor4_float, ten::shape<0, 0, 0>>);
+   m.def("reshape_tensor4_double_tensor3_double", &py_reshape<tensor4_double, ten::shape<0, 0, 0>>);
+   // tensor4 to tensor5
+   m.def("reshape_tensor4_float_tensor5_float", &py_reshape<tensor4_float, ten::shape<0, 0, 0, 0, 0>>);
+   m.def("reshape_tensor4_double_tensor5_double", &py_reshape<tensor4_double, ten::shape<0, 0, 0, 0, 0>>);
+   // tensor5 to vector
+   m.def("reshape_tensor5_float_vector_float", &py_reshape<tensor5_float, ten::shape<0>>);
+   m.def("reshape_tensor5_double_vector_double", &py_reshape<tensor5_double, ten::shape<0>>);
+   // tensor5 to matrix
+   m.def("reshape_tensor5_float_matrix_float", &py_reshape<tensor5_float, ten::shape<0, 0>>);
+   m.def("reshape_tensor5_double_matrix_double", &py_reshape<tensor5_double, ten::shape<0, 0>>);
+   // tensor5 to tensor3
+   m.def("reshape_tensor5_float_tensor3_float", &py_reshape<tensor5_float, ten::shape<0, 0, 0>>);
+   m.def("reshape_tensor5_double_tensor3_double", &py_reshape<tensor5_double, ten::shape<0, 0, 0>>);
+   // tensor5 to tensor4
+   m.def("reshape_tensor5_float_tensor4_float", &py_reshape<tensor5_float, ten::shape<0, 0, 0, 0>>);
+   m.def("reshape_tensor5_double_tensor4_double", &py_reshape<tensor5_double, ten::shape<0, 0, 0, 0>>);
 
    // Flatten
    m.def("flatten_matrix_float", &ten::flatten<matrix_float>);
