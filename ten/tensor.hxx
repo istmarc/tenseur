@@ -880,8 +880,27 @@ class ranked_tensor final
       }
    }
 
-   /// Tensor node from shape and data
+   /// Tensor node from shape and std::initializer_list data
    explicit ranked_tensor(const Shape &dims, std::initializer_list<T> &&data,
+                          bool requires_grad = false) noexcept
+      requires(Shape::is_dynamic())
+       : _requires_grad(requires_grad), _shape(dims),
+         _stride(typename base_type::stride_type(_shape.value())) {
+      auto storage = std::make_unique<storage_type>(_shape.value());
+      size_type i = 0;
+      for (auto x : data) {
+         (*storage.get())[i] = x;
+         i++;
+      }
+      _node = std::make_shared<node_type>(std::move(storage));
+      if (requires_grad) {
+         auto grad_storage = std::make_unique<storage_type>(_shape.value());
+         _grad = std::make_shared<node_type>(std::move(grad_storage));
+      }
+   }
+
+   /// Tensor node from shape and std::vector data
+   explicit ranked_tensor(const Shape &dims, std::vector<T> &&data,
                           bool requires_grad = false) noexcept
       requires(Shape::is_dynamic())
        : _requires_grad(requires_grad), _shape(dims),
