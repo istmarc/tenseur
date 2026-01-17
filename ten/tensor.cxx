@@ -1366,18 +1366,29 @@ PYBIND11_MODULE(tenseurbackend, m) {
           return ss.str();
        });
 
-   /*
    // Matrix float
    py::class_<matrix_float>(m, "matrix_float")
-       .def(py::init<std::size_t, std::size_t>())
+       .def(py::init<std::initializer_list<std::size_t>>())
+       .def(py::init<std::initializer_list<std::size_t>, bool>())
+       .def(py::init<std::initializer_list<std::size_t>, std::initializer_list<float>>())
+       .def(py::init<std::initializer_list<std::size_t>, std::initializer_list<float>, bool>())
        .def("rank", &matrix_float::rank)
        .def("size", &matrix_float::size)
        .def("shape", &matrix_float::shape)
        .def("strides", &matrix_float::strides)
+       .def("requires_grad", &matrix_float::requires_grad)
+       .def("grad", &matrix_float::grad)
        .def("__getitem__",
             [](const matrix_float &m, size_t index) { return m[index]; })
+       .def("__getitem__",
+            [](const matrix_float &m, std::tuple<size_t, size_t> indices) {
+               return m(std::get<0>(indices), std::get<1>(indices));
+            })
        .def("__setitem__", [](matrix_float &m, size_t index,
                               float value) { m[index] = value; })
+       .def("__setitem__", [](matrix_float& m, std::tuple<size_t, size_t> indices, float value) {
+            m(std::get<0>(indices), std::get<1>(indices)) = value;
+         })
        .def("__call__", [](const matrix_float &m, size_t rows,
                            size_t cols) { return m(rows, cols); })
        .def("set", [](matrix_float &m, size_t rows, size_t cols,
@@ -1385,19 +1396,29 @@ PYBIND11_MODULE(tenseurbackend, m) {
        .def("copy", &matrix_float::copy)
        .def("format", &matrix_float::format)
        .def("data_type", &matrix_float::data_type)
-       //.def(py::self + py::self)
-       //.def(py::self - py::self)
-       //.def(py::self * py::self)
-       //.def(py::self / py::self)
+       .def(
+           "__add__",
+           [](matrix_float &self, matrix_float &other) { return self + other; },
+           py::is_operator())
+       .def(
+           "__sub__",
+           [](matrix_float &self, matrix_float &other) { return self - other; },
+           py::is_operator())
+       .def(
+           "__mul__",
+           [](matrix_float &self, matrix_float &other) { return self * other; },
+           py::is_operator())
+      .def(
+           "__truediv__",
+           [](matrix_float &self, matrix_float &other) { return self / other; },
+           py::is_operator())
        .def(
            "__mul__",
            [](matrix_float &self, vector_float &other) { return self * other; },
            py::is_operator())
-       /
        .def("__mul__", [](float f, matrix_float& self) {
           return scalar_float(f) * self;
-       }, py::is_operator())/
-       //.def(float() * py::self)
+       }, py::is_operator())
        .def("is_transposed", &matrix_float::is_transposed)
        .def("is_symmetric", &matrix_float::is_symmetric)
        .def("is_hermitian", &matrix_float::is_hermitian)
@@ -1416,15 +1437,27 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    // Matrix double
    py::class_<matrix_double>(m, "matrix_double")
-       .def(py::init<std::size_t, std::size_t>())
+       .def(py::init<std::initializer_list<std::size_t>>())
+       .def(py::init<std::initializer_list<std::size_t>, bool>())
+       .def(py::init<std::initializer_list<std::size_t>, std::initializer_list<double>>())
+       .def(py::init<std::initializer_list<std::size_t>, std::initializer_list<double>, bool>())
        .def("rank", &matrix_double::rank)
        .def("size", &matrix_double::size)
        .def("shape", &matrix_double::shape)
        .def("strides", &matrix_double::strides)
+       .def("requires_grad", &matrix_double::requires_grad)
+       .def("grad", &matrix_double::grad)
        .def("__getitem__",
             [](const matrix_double &m, size_t index) { return m[index]; })
+       .def("__getitem__",
+            [](const matrix_double &m, std::tuple<size_t, size_t> indices) {
+               return m(std::get<0>(indices), std::get<1>(indices));
+            })
        .def("__setitem__", [](matrix_double &m, size_t index,
                               double value) { m[index] = value; })
+       .def("__setitem__", [](matrix_double& m, std::tuple<size_t, size_t> indices, double value) {
+            m(std::get<0>(indices), std::get<1>(indices)) = value;
+         })
        .def("__call__", [](const matrix_double &m, size_t rows,
                            size_t cols) { return m(rows, cols); })
        .def("set", [](matrix_double &m, size_t rows, size_t cols,
@@ -1432,18 +1465,29 @@ PYBIND11_MODULE(tenseurbackend, m) {
        .def("copy", &matrix_double::copy)
        .def("format", &matrix_double::format)
        .def("data_type", &matrix_double::data_type)
-       //.def(py::self + py::self)
-       //.def(py::self - py::self)
-       //.def(py::self * py::self)
-       //.def(py::self / py::self)
+       .def(
+           "__add__",
+           [](matrix_double &self, matrix_double &other) { return self + other; },
+           py::is_operator())
+       .def(
+           "__sub__",
+           [](matrix_double &self, matrix_double &other) { return self - other; },
+           py::is_operator())
        .def(
            "__mul__",
-           [](matrix_double &self, vector_double &other) {
-              return self * other;
-           },
+           [](matrix_double &self, matrix_double &other) { return self * other; },
            py::is_operator())
-       //.def(py::self * vector_double)
-       //.def(double() * py::self)
+      .def(
+           "__truediv__",
+           [](matrix_double &self, matrix_double &other) { return self / other; },
+           py::is_operator())
+       .def(
+           "__mul__",
+           [](matrix_double &self, vector_double &other) { return self * other; },
+           py::is_operator())
+       .def("__mul__", [](double d, matrix_double& self) {
+          return scalar_double(d) * self;
+       }, py::is_operator())
        .def("is_transposed", &matrix_double::is_transposed)
        .def("is_symmetric", &matrix_double::is_symmetric)
        .def("is_hermitian", &matrix_double::is_hermitian)
@@ -1463,6 +1507,7 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Tensor classes
 
    // Tensor 3d
+   /*
    py::class_<tensor3_float>(m, "tensor3_float")
        .def(py::init<std::size_t, std::size_t, std::size_t>())
        .def("rank", &tensor3_float::rank)
