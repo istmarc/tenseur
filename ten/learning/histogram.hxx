@@ -28,7 +28,7 @@ template <typename T = float> class histogram {
    explicit histogram(histogram_options &&options) : _options(std::move(options)) {}
 
    // fit a histogram
-   void fit(const ::ten::vector<T> &data) {
+   void fit(::ten::vector<T> &data) {
       size_t n = data.size();
       size_t nbins = 0;
       if (_options.nbins == 0) {
@@ -36,7 +36,7 @@ template <typename T = float> class histogram {
       } else {
          nbins = _options.nbins;
       }
-      _bins = ::ten::vector<T>(nbins + 1);
+      _bins = ::ten::vector<T>({nbins + 1});
       _hist = ::ten::zeros<::ten::vector<T>>({nbins});
       // Set bins
       T min = ::ten::min(data).eval().value();
@@ -47,14 +47,7 @@ template <typename T = float> class histogram {
       for (size_t i = 1; i < nbins; i++) {
          _bins[i] = _bins[i - 1] + width;
       }
-      // Fit Standardized histogram
-      if (_options.standartize) {
-         std::cout << "Fitting standardized histgram with ";
-         std::cout << nbins << " bins.\n";
-      } else {
-         std::cout << "Fitting histgram with ";
-         std::cout << nbins << " bins.\n";
-      }
+      // Fit histogram
       for (size_t i = 0; i < n; i++) {
          for (size_t j = 0; j < nbins; j++) {
             if (j == nbins - 1) {

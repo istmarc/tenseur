@@ -170,9 +170,6 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
           std::make_shared<node_type>(inp, std::forward<func_args>(fargs)...);
    }
 
-   /// Returns a shared ptr to the output
-   /*[[nodiscard]] inline Output output() { return _value; }*/
-
    /// Requires gradient
    [[nodiscard]] inline bool requires_grad() {
       return _node->_input.requires_grad();
