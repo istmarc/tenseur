@@ -600,9 +600,9 @@ class ranked_tensor final
       requires std::convertible_to<T, To>
    using casted_type =
        ranked_tensor<To, Shape, order,
-                     typename Storage::template casted_type<To>,
-                     typename details::allocator_type<
-                         typename Storage::template casted_type<To>>::type>;
+                     typename Storage::template casted_type<To>>;
+                     //typename details::allocator_type<
+                     //    typename Storage::template casted_type<To>>::type>;
 
    /// \typedef base_type
    /// Type of the tensor operations.
