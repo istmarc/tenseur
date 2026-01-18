@@ -15,4 +15,8 @@ int main(){
    auto y = rand_norm<stensor<float, 2,2>>();
    std::cout << y << std::endl;
 
+   std::cout << "with gradient" << std::endl;
+   auto z = rand_unif<matrix<float>>({2, 2}, 0., 1., true);
+   std::cout << z << std::endl;
+   std::cout << z.grad() << std::endl;
 }
