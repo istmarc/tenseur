@@ -373,6 +373,8 @@ struct is_stensor<ranked_tensor<T, shape, order, storage, allocator>> {
    static constexpr bool value = shape::is_static();
 };
 
+template <typename T> static constexpr bool is_stensor_v = is_stensor<T>::value;
+
 template <class T>
 concept StaticTensor = is_stensor<std::remove_cvref_t<T>>::value;
 
