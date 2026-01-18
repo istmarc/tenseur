@@ -146,6 +146,8 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
 
    using value_type = output_type::value_type;
 
+   using expr_type = unary_expr<Input, Output, Func, Args...>;
+
  private:
    std::shared_ptr<node_type> _node = nullptr;
 
@@ -422,6 +424,8 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
          binary_node<Left, Right, Output, Func, Args...>;
 
    using value_type = output_type::value_type;
+
+   using expr_type = binary_expr<Left, Right, Output, Func, Args...>;
 
  private:
    std::shared_ptr<node_type> _node = nullptr;
