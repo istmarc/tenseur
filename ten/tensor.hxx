@@ -2804,6 +2804,26 @@ class ranked_column final
       }
       return *this;
    }
+
+   // Convert a column to a vector
+   auto vector() {
+      size_t rows = _shape.value().dim(0);
+      ten::vector<T, Order, Storage, Allocator> v({rows});
+      for (size_t idx = 0; idx < rows; idx++) {
+         v[idx] = (*_node.get())[idx + _index * rows];
+      }
+      return v;
+   }
+
+   // Convert a column to a static vector
+   auto svector() {
+      constexpr size_t rows = Shape::template static_dim<0>();
+      ten::svector<T, rows, Order> v;
+      for (size_t idx = 0; idx < rows; idx++) {
+         v[idx] = (*_node.get())[idx + _index * rows];
+      }
+      return v;
+   }
 };
 
 // column<T> or column<T, Shape>
@@ -3015,6 +3035,28 @@ class ranked_row final
          (*_node.get())[_index + idx * rows] = value;
       }
       return *this;
+   }
+
+   // Convert a row to a vector
+   auto vector() {
+      size_t rows = _shape.value().dim(0);
+      size_t cols = _shape.value().dim(1);
+      ten::vector<T, Order, Storage, Allocator> v({cols});
+      for (size_t idx = 0; idx < cols; idx++) {
+         v[idx] = (*_node.get())[_index + idx * rows];
+      }
+      return v;
+   }
+
+   // TODO Convert a row to a static vector
+   auto svector() {
+      constexpr size_t rows = Shape::template static_dim<0>();
+      constexpr size_t cols = Shape::template static_dim<1>();
+      ten::svector<T, cols, Order> v;
+      for (size_t idx = 0; idx < cols; idx++) {
+         v[idx] = (*_node.get())[_index + idx * rows];
+      }
+      return v;
    }
 };
 
@@ -4132,6 +4174,15 @@ template <Expr ExprType, class T = float> auto pow(ExprType &&expr, T n) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
    return unary_expr<expr_type, output_type, functional::pow>(expr, n);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Neural networks (activation functions and layers)
+
+template <Expr ExprType> auto relu(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename ::ten::details::output_type<expr_type>::type;
+   return unary_expr<expr_type, output_type, functional::relu>(expr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

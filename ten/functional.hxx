@@ -105,12 +105,16 @@ template <Scalar A, Tensor B> struct mul_result<A, B> {
 };
 
 // tensor * tensor
-template<Tensor X, Tensor Y>
-requires(X::order() >= 3 && Y::order()>=3 && same_shape<X, Y> && same_storage_order<X, Y> && same_storage<X, Y> && same_allocator<X, Y>)
+template <Tensor X, Tensor Y>
+   requires(X::order() >= 3 && Y::order() >= 3 && same_shape<X, Y> &&
+            same_storage_order<X, Y> && same_storage<X, Y> &&
+            same_allocator<X, Y>)
 struct mul_result<X, Y> {
-   using value_type = std::common_type_t<typename X::value_type, typename Y::value_type>;
-   using type = ranked_tensor<value_type, typename X::shape_type, X::storage_order(), typename X::storage_type,
-      typename X::allocator_type>;
+   using value_type =
+       std::common_type_t<typename X::value_type, typename Y::value_type>;
+   using type =
+       ranked_tensor<value_type, typename X::shape_type, X::storage_order(),
+                     typename X::storage_type, typename X::allocator_type>;
 };
 
 /// scalar * unary_expr
@@ -1423,6 +1427,43 @@ template <class Shape> struct dynamic_transpose {
          }
       }
    };
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Neural networks activation functions
+
+/// Relu
+template <class X, class Y>
+   requires(::ten::is_tensor<X>::value && ::ten::is_tensor<Y>::value)
+struct relu : func<> {
+   static constexpr std::string name() { return std::string("relu"); }
+   using value_type = X::value_type;
+   using output_type = Y;
+
+   void operator()(const X &x, Y &y) {
+      for (size_t i = 0; i < x.size(); i++) {
+         if (x[i] >= 0) {
+            y[i] = x[i];
+         } else {
+            y[i] = 0;
+         }
+      }
+   }
+
+   static typename Y::shape_type
+   output_shape(const typename Y::shape_type &right) {
+      return right;
+   }
+
+   void gradient(const X &x, Y &y) {
+      for (size_t i = 0; i < x.size(); i++) {
+         if (x[i] >= 0) {
+            y[i] = 1;
+         } else {
+            y[i] = 0;
+         }
+      }
+   }
 };
 
 } // namespace ten::functional
