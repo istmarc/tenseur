@@ -120,13 +120,13 @@ struct unary_node {
    [[nodiscard]] inline Input &input() const { return *_input.get(); }
 
    /// Return the input node
-   [[nodiscard]] inline std::shared_ptr<Input> input_node() {return _input;}
+   [[nodiscard]] inline std::shared_ptr<Input> input_node() { return _input; }
 
    /// Return the output
-   [[nodiscard]] inline Output& value() const {return *_value.get();}
+   [[nodiscard]] inline Output &value() const { return *_value.get(); }
 
    /// Return the std::shared_ptr to the output
-   [[nodiscard]] inline std::shared_ptr<Output> value_node() {return _value;}
+   [[nodiscard]] inline std::shared_ptr<Output> value_node() { return _value; }
 
    unary_node(Input &inp) noexcept
       requires(!::ten::functional::has_params<func_type>::value)
@@ -138,7 +138,8 @@ struct unary_node {
    template <typename... func_args>
    unary_node(Input &inp, func_args... fargs) noexcept
       requires(::ten::functional::has_params<func_type>::value)
-       : _input(std::make_shared<Input>(inp)), _func(func_type(std::forward<func_args>(fargs)...)) {}
+       : _input(std::make_shared<Input>(inp)),
+         _func(func_type(std::forward<func_args>(fargs)...)) {}
 
    ~unary_node() {
       _input = nullptr;
@@ -207,7 +208,9 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
    [[nodiscard]] inline Input &input() { return *_node->_input.get(); }
 
    /// Return the input node
-   [[nodiscard]] inline std::shared_ptr<Input> input_node() {return _node->_input;}
+   [[nodiscard]] inline std::shared_ptr<Input> input_node() {
+      return _node->_input;
+   }
 
    /// Returns whether the expression is evaluated
    [[nodiscard]] inline bool evaluated() { return _node->_evaluated; }
@@ -215,8 +218,11 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
    /// Returns the evaluated expression of type ten::scalar or ten::tensor
    [[nodiscard]] inline output_type &value() { return *_node->_value.get(); }
 
-   /// Return the node to the evaluated expression of type ten::scalar or ten::tensor
-   [[nodiscard]] inline std::shared_ptr<Output> value_node() {return _node->_value;}
+   /// Return the node to the evaluated expression of type ten::scalar or
+   /// ten::tensor
+   [[nodiscard]] inline std::shared_ptr<Output> value_node() {
+      return _node->_value;
+   }
 
    [[nodiscard]] auto grad() noexcept -> output_type {
       return _node->_value.get()->grad();
@@ -245,12 +251,14 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
             _node->_value = std::make_shared<Output>();
          } else {
             if constexpr (ten::functional::has_shape<func_type>::value) {
-               _node->_value = std::make_shared<Output>(_node->_func.value().output_shape(
-                   ::ten::details::input_shape(_node->input())));
+               _node->_value =
+                   std::make_shared<Output>(_node->_func.value().output_shape(
+                       ::ten::details::input_shape(_node->input())));
             }
             if constexpr (!ten::functional::has_shape<func_type>::value) {
-               _node->_value = std::make_shared<Output>(_node->_func.value().output_shape(
-                   ::ten::details::input_shape(_node->input())));
+               _node->_value =
+                   std::make_shared<Output>(_node->_func.value().output_shape(
+                       ::ten::details::input_shape(_node->input())));
             }
          }
       }
@@ -334,7 +342,8 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
 
    void backward(bool create_graph = false) noexcept {
       if (!_node->_value) {
-         std::cerr << "Called backward(create_graph = " << std::boolalpha << create_graph << ") without calling eval first\n";
+         std::cerr << "Called backward(create_graph = " << std::boolalpha
+                   << create_graph << ") without calling eval first\n";
          return;
       }
       if (create_graph) {
@@ -420,25 +429,26 @@ struct binary_node {
    [[nodiscard]] Left &left() const { return *_left.get(); }
 
    /// Returns a std::shared_ptr to the left input
-   [[nodiscard]] std::shared_ptr<Left> left_node() const { return _left;}
+   [[nodiscard]] std::shared_ptr<Left> left_node() const { return _left; }
 
    // Returns the right input
    [[nodiscard]] Right &right() const { return *_right.get(); }
 
    /// Returns a std::shared_ptr to the right input
-   [[nodiscard]] std::shared_ptr<Right> right_node() const { return _right;}
+   [[nodiscard]] std::shared_ptr<Right> right_node() const { return _right; }
 
    /// return the output
-   [[nodiscard]] Output &value() const {return *_value.get();}
+   [[nodiscard]] Output &value() const { return *_value.get(); }
 
    /// return a std::shared_ptr to the output
-   [[nodiscard]] std::shared_ptr<Output> value_node() const {return _value;}
+   [[nodiscard]] std::shared_ptr<Output> value_node() const { return _value; }
 
    /// Construct a binary noe if the function doesn't take additional
    /// parameters
    binary_node(Left &l, Right &r) noexcept
       requires(!::ten::functional::has_params<func_type>::value)
-       : _left(std::make_shared<Left>(l)), _right(std::make_shared<Right>(r)), _func(func_type()) {}
+       : _left(std::make_shared<Left>(l)), _right(std::make_shared<Right>(r)),
+         _func(func_type()) {}
 
    /// Construct a binary node if the function take additional parameters.
    /// The parameters of the functions fargs of type func_args are forwarded
@@ -446,11 +456,10 @@ struct binary_node {
    template <typename... func_args>
    binary_node(Left &l, Right &r, func_args... fargs) noexcept
       requires(::ten::functional::has_params<func_type>::value)
-       : _func(func_type(std::forward<func_args>(fargs)...)), _left(std::make_shared<Left>(l)),
-         _right(std::make_shared<Right>(r)) {}
+       : _func(func_type(std::forward<func_args>(fargs)...)),
+         _left(std::make_shared<Left>(l)), _right(std::make_shared<Right>(r)) {}
 
    ~binary_node() {}
-
 };
 
 // \class binary_expr
@@ -476,8 +485,7 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
    using func_type = Func<left_type, right_type, Output, Args...>;
    // using shape_type = typename Output::shape_type;
 
-   using node_type =
-         binary_node<Left, Right, Output, Func, Args...>;
+   using node_type = binary_node<Left, Right, Output, Func, Args...>;
 
    using value_type = output_type::value_type;
 
@@ -522,13 +530,17 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
    [[nodiscard]] Left &left() const { return *(_node->_left.get()); }
 
    /// Returns a std::shared_ptr to the left input
-   [[nodiscard]] std::shared_ptr<Left>& left_node() const { return _node->_left;}
+   [[nodiscard]] std::shared_ptr<Left> &left_node() const {
+      return _node->_left;
+   }
 
    // Returns the right input
    [[nodiscard]] Right &right() const { return *(_node->_right.get()); }
 
    /// Returns a std::shared_ptr to the right input
-   [[nodiscard]] std::shared_ptr<Right> right_node() const { return _node->_right;}
+   [[nodiscard]] std::shared_ptr<Right> right_node() const {
+      return _node->_right;
+   }
 
    /// Returns whether the expression is evaluated
    [[nodiscard]] inline bool evaluated() const { return _node->_evaluated; }
@@ -536,7 +548,8 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
    /// Returns the the evaluated expression of type ten::scalar or ten::tensor
    [[nodiscard]] output_type &value() { return *(_node->_value.get()); }
 
-   /// Returns the the std::shared_ptr to the evaluated expression of type ten::scalar or ten::tensor
+   /// Returns the the std::shared_ptr to the evaluated expression of type
+   /// ten::scalar or ten::tensor
    [[nodiscard]] output_type &value_node() { return _node->_value; }
 
    /// Evaluate a binary expression
@@ -779,11 +792,11 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
             auto grad = _node->_right->value().grad();
             // Compute the gradient
             if constexpr (::ten::is_tensor_v<left_type>) {
-               _node->_func.value().gradient_right(_node->left(),
-                                                   _node->_right->value(), grad);
+               _node->_func.value().gradient_right(
+                   _node->left(), _node->_right->value(), grad);
             } else {
-               _node->_func.value().gradient_right(_node->_left->value(),
-                                                   _node->_right->value(), grad);
+               _node->_func.value().gradient_right(
+                   _node->_left->value(), _node->_right->value(), grad);
             }
             // Use the chain rule
             if (previous_grad.has_value()) {
@@ -796,11 +809,11 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
             auto grad = ::ten::like(_node->_right->value());
             // Compute the gradient
             if constexpr (::ten::is_tensor_v<left_type>) {
-               _node->_func.value().gradient_right(_node->left(),
-                                                   _node->_right->value(), grad);
+               _node->_func.value().gradient_right(
+                   _node->left(), _node->_right->value(), grad);
             } else {
-               _node->_func.value().gradient_right(_node->_left->value(),
-                                                   _node->_right->value(), grad);
+               _node->_func.value().gradient_right(
+                   _node->_left->value(), _node->_right->value(), grad);
             }
             // Use the chain rule
             if (previous_grad.has_value()) {
@@ -815,7 +828,8 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
 
    void backward(bool create_graph = false) noexcept {
       if (!_node->_value) {
-         std::cerr << "Called backward(create_graph = " << std::boolalpha << create_graph << ") without calling eval first\n";
+         std::cerr << "Called backward(create_graph = " << std::boolalpha
+                   << create_graph << ") without calling eval first\n";
          return;
       }
       using left_type = std::remove_cvref_t<Left>;
@@ -894,11 +908,11 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
             auto grad = _node->_right->value().grad();
             // Compute the gradient
             if constexpr (::ten::is_tensor_v<left_type>) {
-               _node->_func.value().gradient_right(_node->left(),
-                                                   _node->_right->value(), grad);
+               _node->_func.value().gradient_right(
+                   _node->left(), _node->_right->value(), grad);
             } else {
-               _node->_func.value().gradient_right(_node->_left->value(),
-                                                   _node->_right->value(), grad);
+               _node->_func.value().gradient_right(
+                   _node->_left->value(), _node->_right->value(), grad);
             }
             // Use the chain rule
             if (_node->_value->requires_grad()) {
