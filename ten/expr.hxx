@@ -154,6 +154,8 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
  public:
    unary_expr() {}
 
+   ~unary_expr() {}
+
    /// Construct a unary expr if the function doesn't take additional parameters
    unary_expr(Input &inp) noexcept
       requires(!::ten::functional::has_params<func_type>::value)
@@ -432,6 +434,8 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
 
  public:
    binary_expr() {}
+
+   ~binary_expr() {}
 
    /// Construct a binary expr if the function doesn't take additional
    /// parameters

@@ -1441,7 +1441,10 @@ struct relu : func<> {
    using output_type = Y;
 
    void operator()(const X &x, Y &y) {
-      for (size_t i = 0; i < x.size(); i++) {
+      if (x.size() != y.size()) {
+         std::cerr << "ten::functional::relu different sizes" << std::endl;
+      }
+      for (size_t i = 0; i < y.size(); i++) {
          if (x[i] >= 0) {
             y[i] = x[i];
          } else {
@@ -1456,7 +1459,10 @@ struct relu : func<> {
    }
 
    void gradient(const X &x, Y &y) {
-      for (size_t i = 0; i < x.size(); i++) {
+      if (x.size() != y.size()) {
+         std::cerr << "ten::functional::relu gradient different sizes" << std::endl;
+      }
+      for (size_t i = 0; i < y.size(); i++) {
          if (x[i] >= 0) {
             y[i] = 1;
          } else {
