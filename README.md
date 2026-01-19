@@ -28,7 +28,7 @@ An expression API class for representing unary and binary operations between ten
 
 - [x] Chain expressions
 
-- [x] Factory functions: fill, ones, zeros, range, rand
+- [x] Factory functions: fill, ones, zeros, range, linear, rand_norm, rand_unif
 
 - [] Compile to a shared library (support for up to 5d dynamic tensors)
 
