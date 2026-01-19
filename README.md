@@ -16,47 +16,51 @@ An expression API class for representing unary and binary operations between ten
 
 ## Features
 
--[x] Multi dimensional arrays
+- [x] Multi dimensional arrays
 
--[x] Support static, dynamic and mixed shape tensors
+- [x] Support static, dynamic and mixed shape tensors
 
--[x] Lazy evaluation of expressions
+- [x] Lazy evaluation of expressions
 
--[x] BLAS backend for high performance numerical linear algebra
+- [x] BLAS backend for high performance numerical linear algebra
 
--[x] Automatic differentiation
+- [x] Automatic differentiation
 
--[x] Chain expressions
+- [x] Chain expressions
 
--[x] Factory functions: fill, ones, zeros, range, rand
+- [x] Factory functions: fill, ones, zeros, range, rand
 
--[] Compile to a shared library (support for up to 5d dynamic tensors)
+- [] Compile to a shared library (support for up to 5d dynamic tensors)
 
--[] Tests for shared library
+- [] Tests for shared library
 
--[] Generate automatic python bindings
+- [x] Generate automatic python bindings
 
--[x] Match and fuse operations
+- [x] Python bindings ([tenseurpy](https://github.com/istmarc/tenseurpy))
 
--[x] Inplace operations
+- [x] Match and fuse operations
 
--[] Sparse tensors
+- [x] Inplace operations
 
--[] Python bindings ([tenseurpy](https://github.com/istmarc/tenseurpy))
+- [] Sparse tensors
+
 
 ## Todo
 
--[] Pythonizations
+- [] Pythonizations
 
--[] CI/CD with tests
+- [] CI/CD with tests
 
--[] More special matrices
+- [] More special matrices
 
--[] Python documentation
+- [] Python documentation
 
--[] C++ API documentation
+- [] C++ API documentation
+
+- [] Neural networks
 
 ## Requirements
+
 - Clang compiler with C++20 support
 - CMake
 - BLAS library (OpenBlas or BLIS)
