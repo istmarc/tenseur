@@ -1207,22 +1207,60 @@ struct mul<A, B, C> : ::ten::functional::func<> {
 };
 
 // matrix * matrix
-template <Matrix A, Matrix B, Matrix C> struct mul<A, B, C> : func<> {
+template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> : func<> {
 
    static constexpr std::string name() { return std::string("mul"); }
 
-   using output_type = C;
+   using output_type = Z;
 
-   static typename C::shape_type
-   output_shape(const typename A::shape_type &left,
-                const typename B::shape_type &right) {
+   static typename Z::shape_type
+   output_shape(const typename X::shape_type &left,
+                const typename Y::shape_type &right) {
       std::initializer_list<size_type> &&dims = {left.dim(0), right.dim(1)};
-      typename C::shape_type s(std::move(dims));
+      typename Z::shape_type s(std::move(dims));
       return s;
    }
 
-   void operator()(const A &left, const B &right, C &result) {
+   void operator()(const X &left, const Y &right, Z &result) {
       kernels::mul(left, right, result);
+   }
+
+   void gradient_left(const X & /*x*/, const Y &y, Z &z) {
+      if constexpr (Z::shape_type::is_dynamic()) {
+         auto rows = z.shape().dim(0);
+         auto cols = z.shape().dim(1);
+         for (size_t i = 0; i < cols; i++) {
+            z(0, i) = 0;
+            for (size_t j = 0; j < y.shape().dim(1); j++) {
+               z(0, i) += y(i, j);
+            }
+         }
+         for (size_t j = 0; j < cols; j++) {
+            for (size_t i = 1; i < rows; i++) {
+               z(i, j) = z(0, j);
+            }
+         }
+      }
+   }
+
+   void gradient_right(const X &x, const Y &/*y*/, Z &z) {
+      if constexpr (Z::shape_type::is_dynamic()) {
+         auto rows = z.shape().dim(0);
+         auto cols = z.shape().dim(1);
+         size_t j = 0;
+         for (size_t i = 0; i < rows; i++) {
+            z(i, 0) = 0;
+            for (size_t k = 0; k < x.shape().dim(0); k++) {
+               z(i, 0) += x(k, j);
+            }
+            j++;
+         }
+         for (size_t j = 1; j < cols; j++) {
+            for (size_t i = 0; i < rows; i++) {
+               z(i, j) = z(i, 0);
+            }
+         }
+      }
    }
 };
 
@@ -1460,7 +1498,8 @@ struct relu : func<> {
 
    void gradient(const X &x, Y &y) {
       if (x.size() != y.size()) {
-         std::cerr << "ten::functional::relu gradient different sizes" << std::endl;
+         std::cerr << "ten::functional::relu gradient different sizes"
+                   << std::endl;
       }
       for (size_t i = 0; i < y.size(); i++) {
          if (x[i] >= 0) {
