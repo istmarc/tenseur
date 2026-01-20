@@ -1396,6 +1396,15 @@ class ranked_tensor final
       _requires_grad = true;
    }
 
+   // Zero the gradient
+   void zero_grad() {
+      if (!_grad) {
+         for (size_t i = 0; i < size(); i++) {
+            (*_grad.get())[i] = 0;
+         }
+      }
+   }
+
    // copy
    auto copy(bool copy_grad = false) const {
       if constexpr (Shape::is_dynamic()) {
