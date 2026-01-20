@@ -1243,7 +1243,7 @@ template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> : func<> {
       }
    }
 
-   void gradient_right(const X &x, const Y &/*y*/, Z &z) {
+   void gradient_right(const X &x, const Y & /*y*/, Z &z) {
       if constexpr (Z::shape_type::is_dynamic()) {
          auto rows = z.shape().dim(0);
          auto cols = z.shape().dim(1);
@@ -1265,22 +1265,54 @@ template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> : func<> {
 };
 
 // matrix * vector
-template <Matrix A, Vector B, Vector C>
-struct mul<A, B, C> : ::ten::functional::func<> {
+template <Matrix X, Vector Y, Vector Z>
+struct mul<X, Y, Z> : ::ten::functional::func<> {
    static constexpr std::string name() { return std::string("mul"); }
 
-   using output_type = C;
+   using output_type = Z;
 
-   static typename C::shape_type
-   output_shape(const typename A::shape_type &left,
-                const typename B::shape_type &right) {
+   static typename Z::shape_type
+   output_shape(const typename X::shape_type &left,
+                const typename Y::shape_type &right) {
       std::initializer_list<size_type> &&dims = {left.dim(0)};
-      typename C::shape_type s(std::move(dims));
+      typename Z::shape_type s(std::move(dims));
       return s;
    }
 
-   void operator()(const A &left, const B &right, C &result) {
+   void operator()(const X &left, const Y &right, Z &result) {
       kernels::mul(left, right, result);
+   }
+
+   template <class GradientType>
+      requires(::ten::is_matrix_v<GradientType>)
+   void gradient_left(const X & /*x*/, const Y &y, GradientType &z) {
+      if constexpr (GradientType::shape_type::is_dynamic()) {
+         auto rows = z.shape().dim(0);
+         auto cols = z.shape().dim(1);
+         for (size_t i = 0; i < cols; i++) {
+            z(0, i) = y[i];
+         }
+         for (size_t j = 0; j < cols; j++) {
+            for (size_t i = 1; i < rows; i++) {
+               z(i, j) = z(0, j);
+            }
+         }
+      }
+   }
+
+   template <class GradientType>
+      requires(::ten::is_vector_v<GradientType>)
+   void gradient_right(const X &x, const Y & /*y*/, GradientType &z) {
+      if constexpr (GradientType::shape_type::is_dynamic()) {
+         size_t j = 0;
+         for (size_t i = 0; i < z.size(); i++) {
+            z[i] = 0;
+            for (size_t k = 0; k < x.shape().dim(0); k++) {
+               z[i] += x(k, j);
+            }
+            j++;
+         }
+      }
    }
 };
 
