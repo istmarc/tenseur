@@ -1,8 +1,6 @@
 #ifndef TENSEUR_EXPR_HXX
 #define TENSEUR_EXPR_HXX
 
-// #include <ios>
-#include <ios>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -106,8 +104,8 @@ namespace ten {
 template <class Input, class Output, template <typename...> class Func,
           typename... Args>
 struct unary_node {
-   using input_type = typename ::ten::details::input_type<Input>::type;
-   using output_type = typename ::ten::details::output_type<Output>::type;
+   using input_type = typename ::ten::details::output_type<Input>::type;
+   using output_type = Output;
    using func_type = Func<input_type, output_type>;
 
    bool _evaluated = false;
@@ -156,8 +154,8 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
    using input_ty = Input;
    using output_ty = Output;
 
-   using input_type = typename ::ten::details::input_type<Input>::type;
-   using output_type = typename ::ten::details::output_type<Output>::type;
+   using input_type = typename ::ten::details::output_type<Input>::type;
+   using output_type = Output;
 
    using func_type = Func<input_type, output_type>;
 
@@ -526,6 +524,14 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
       return _node->_right.requires_grad();
    }
 
+   // Retain gradient
+   void retain_grad() { _node->_retain_grad = true; }
+
+   /// Returns whether the node has retain_grad
+   [[nodiscard]] inline bool has_retain_grad() const {
+      return _node->_retain_grad;
+   }
+
    /// Returns the left input
    [[nodiscard]] Left &left() const { return *(_node->_left.get()); }
 
@@ -540,6 +546,24 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
    /// Returns a std::shared_ptr to the right input
    [[nodiscard]] std::shared_ptr<Right> right_node() const {
       return _node->_right;
+   }
+
+   // Left gradient
+   [[nodiscard]] auto left_grad() const {
+      if constexpr (::ten::is_tensor_v<Left> || ::ten::is_scalar_v<Left>) {
+         return _node->_left->grad();
+      } else {
+         return _node->_left->value().grad();
+      }
+   }
+
+   // Right gradient
+   [[nodiscard]] auto right_grad() const {
+      if constexpr (::ten::is_tensor_v<Right> || ::ten::is_scalar_v<Right>) {
+         return _node->_right->grad();
+      } else {
+         return _node->_right->value().grad();
+      }
    }
 
    /// Returns whether the expression is evaluated
@@ -578,7 +602,9 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
 
       // Allocate the output if it has not been allocated yet
       if (!_node->_value) {
-         if constexpr (Output::is_static()) {
+         if constexpr (::ten::is_scalar_v<Output>) {
+            _node->_value = std::make_shared<Output>();
+         } else if constexpr (Output::is_static()) {
             _node->_value = std::make_shared<Output>();
          } else if constexpr (::ten::is_unary_expr<Left>::value &&
                               ::ten::is_unary_expr<Right>::value) {
@@ -700,7 +726,7 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
    }
 
    template <class Gradient>
-   void backward_function(const std::optional<Gradient> &previous_grad) {
+   void backward_function(std::optional<Gradient> &previous_grad) {
       using left_type = std::remove_cvref_t<Left>;
       using right_type = std::remove_cvref_t<Right>;
       // Left is tensor
@@ -893,7 +919,7 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
                                                   _node->_right->value(), grad);
             }
             // Use the chain rule
-            if (_node->_value.requires_grad()) {
+            if (_node->_value->requires_grad()) {
                auto previous_grad = _node->_value->grad();
                backward_chain(grad, previous_grad);
             }
@@ -923,6 +949,7 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
          }
       } else {
          using Gradient = Output;
+         // auto output = _node->value();
          std::optional<Gradient> grad(std::nullopt);
          backward_function(grad);
       }
