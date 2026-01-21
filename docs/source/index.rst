@@ -19,6 +19,7 @@ Tenseur
    functions
    linear_algebra
    multilinear_algebra
+   neural
    advanced
    examples
    benchmarks
