@@ -2,9 +2,9 @@
 
 # Tenseur
 
-A header only C++23 tensor and mathematical library [WIP]
+A header only C++23 tensor, neural networks and mathematical library [WIP]
 
-Tenseur is a header only C++23 tensor library designed for high performance numerical computations, prioritizing speed above all else. It assume that the user will ensure the correctness of their program. Execptions handling and bounds checking are disabled to minimize overhead. This makes it ideal for applications where computational efficiency is the goal such as deep learning and scientific computing. It has also support for automatic differentiation.
+Tenseur is a header only C++23 tensor library designed for high performance numerical computations, prioritizing speed above all else. It assume that the user will ensure the correctness of their program. Execptions handling and bounds checking are disabled to minimize overhead. This makes it ideal for applications where computational efficiency is the goal such as deep learning and scientific computing. It has also support for automatic differentiation and basic neural networks.
 
 ## Tensor classes
 
@@ -44,6 +44,7 @@ An expression API class for representing unary and binary operations between ten
 
 - [] Sparse tensors
 
+- [x] Basic feed forward neural networks
 
 ## Todo
 
@@ -57,7 +58,8 @@ An expression API class for representing unary and binary operations between ten
 
 - [] C++ API documentation
 
-- [] Neural networks
+- [] Neural netowrks (Convolution, RNNs, LSTM, ...)
+
 
 ## Requirements
 
@@ -89,7 +91,7 @@ auto second_slice = x[index];
 second_slice = 2.0f;
 ```
 
-- Assignment, and rows and columns
+- Slicing, assignment, rows and columns
 
 ```c++
 ten::matrix<float> x({3, 3});
@@ -99,14 +101,8 @@ x = 1.0f;
 x.row(0) = 2.0f;
 x.col(0) = 3.0f;
 std::cout << x << std::endl;
-```
-
-- Slicing
-
-```c++
 using ten::seq;
 using ten::last;
-ten::smatrix<float, 3, 3> x;
 auto slice = x(seq(1, last), seq(0, 1));
 slice = 99.0f;
 std::cout << x << std::endl;
@@ -195,6 +191,9 @@ int main() {
     std::cout << df.select(ten::seq(0, 2), std::vector<std::string>{"x", "y"}) << std::endl;
 }
 ```
+
+- Neural networks
+See full example at [tenseur docs](https://tenseur.readthedocs.io/en/latest/examples.html).
 
 # Building tenseur
 
