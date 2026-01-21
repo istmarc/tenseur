@@ -452,6 +452,40 @@ struct max : func<> {
    }
 };
 
+/// Mean
+template <class X, class Y>
+   requires((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+             ::ten::is_row<X>::value) &&
+            ::ten::is_scalar<Y>::value)
+struct mean : func<> {
+   static constexpr std::string name() { return std::string("mean"); }
+
+   using output_type = Y;
+
+   void operator()(const X &x, Y &y) {
+      using type = typename Y::value_type;
+      type res = 0.;
+      for (size_t i = 0; i < x.size(); i++) {
+         res += static_cast<type>(x[i]);
+      }
+      y = res / x.size();
+   }
+
+   static typename Y::shape_type
+   output_shape(const typename Y::shape_type &right) {
+      return right;
+   }
+
+   template <class GradientType>
+      requires(::ten::is_tensor_v<GradientType>)
+   void gradient(const X &x, GradientType &grad) {
+      using T = X::value_type;
+      for (size_t i = 0; i < x.size(); i++) {
+         grad[i] = T(1) / T(x.size());
+      }
+   }
+};
+
 /// Sum
 template <class X, class Y>
    requires((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
@@ -476,9 +510,11 @@ struct sum : func<> {
       return right;
    }
 
-   void gradient(const X &x, X &y) {
+   template <class GradientType>
+      requires(::ten::is_tensor_v<GradientType>)
+   void gradient(const X &x, GradientType &grad) {
       for (size_t i = 0; i < x.size(); i++) {
-         y[i] = 1;
+         grad[i] = 1;
       }
    }
 };
@@ -638,7 +674,7 @@ struct cos : func<> {
    using output_type = Y;
 
    void operator()(const X &x, Y &y) {
-      if constexpr (::ten::is_scalar_v<X>) {
+      if constexpr (::ten::is_scalar_v<Y>) {
          y.value() = std::cos(x.value());
       }
       if constexpr (::ten::is_tensor_v<Y>) {
@@ -653,18 +689,29 @@ struct cos : func<> {
       return right;
    }
 
-   void gradient(const value_type &x, output_value_type &y) {
-      y = -std::sin(x);
+   template <class GradientType>
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<GradientType>)
+   void gradient(const X &x, GradientType &grad) {
+      if (x.size() != grad.size()) {
+         std::cerr << "ten::functional::cos gradient different sizes\n";
+      } else {
+         for (size_t i = 0; i < x.size(); i++) {
+            grad[i] = -std::sin(x[i]);
+         }
+      }
    }
 
-   void gradient(const X &x, Y &y) {
-      if constexpr (::ten::is_scalar_v<Y>) {
-         y.value() = -std::sin(x.value());
-      }
-      if constexpr (::ten::is_tensor_v<Y>) {
-         for (size_t i = 0; i < x.size(); i++) {
-            y[i] = -std::sin(x[i]);
-         }
+   template <class GradientType>
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<GradientType>)
+   void gradient(const X &x, GradientType &y) {
+      y.value() = -std::sin(x.value());
+   }
+
+   template <class GradientType>
+      requires(::ten::is_scalar_v<X> && ::ten::is_tensor_v<GradientType>)
+   void gradient(const X &x, GradientType &y) {
+      for (size_t i = 0; i < y.size(); i++) {
+         y[i] = -std::sin(x.value());
       }
    }
 };
@@ -1539,6 +1586,148 @@ struct relu : func<> {
          } else {
             y[i] = 0;
          }
+      }
+   }
+};
+
+/// Leaky relu
+template <class X, class Y>
+   requires(::ten::is_tensor<X>::value && ::ten::is_tensor<Y>::value)
+struct leaky_relu : func<> {
+   static constexpr std::string name() { return std::string("relu"); }
+   using value_type = X::value_type;
+   using output_type = Y;
+
+   void operator()(const X &x, Y &y) {
+      if (x.size() != y.size()) {
+         std::cerr << "ten::functional::relu different sizes" << std::endl;
+      }
+      for (size_t i = 0; i < y.size(); i++) {
+         if (x[i] <= 0) {
+            y[i] = value_type(0.01) * x[i];
+         } else {
+            y[i] = x[i];
+         }
+      }
+   }
+
+   static typename Y::shape_type
+   output_shape(const typename Y::shape_type &right) {
+      return right;
+   }
+
+   void gradient(const X &x, Y &y) {
+      if (x.size() != y.size()) {
+         std::cerr << "ten::functional::relu gradient different sizes"
+                   << std::endl;
+      }
+      for (size_t i = 0; i < y.size(); i++) {
+         if (x[i] < 0) {
+            y[i] = 0.01;
+         } else {
+            y[i] = 1;
+         }
+      }
+   }
+};
+
+/// Sigmoid
+template <class X, class Y>
+   requires(::ten::is_tensor<X>::value && ::ten::is_tensor<Y>::value)
+struct sigmoid : func<> {
+   static constexpr std::string name() { return std::string("relu"); }
+   using value_type = X::value_type;
+   using output_type = Y;
+
+   void operator()(const X &x, Y &y) {
+      if (x.size() != y.size()) {
+         std::cerr << "ten::functional::relu different sizes" << std::endl;
+      }
+      for (size_t i = 0; i < y.size(); i++) {
+         y[i] = value_type(1) / (value_type(1) + std::exp(-x[i]));
+      }
+   }
+
+   static typename Y::shape_type
+   output_shape(const typename Y::shape_type &right) {
+      return right;
+   }
+
+   void gradient(const X &x, Y &y) {
+      if (x.size() != y.size()) {
+         std::cerr << "ten::functional::relu gradient different sizes"
+                   << std::endl;
+      }
+      for (size_t i = 0; i < y.size(); i++) {
+         value_type e = std::exp(-x[i]);
+         y[i] = e / ((1 + e) * (1 + e));
+      }
+   }
+};
+
+/// MSE Loss
+template <class X, class Y, class Z>
+   requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Y> &&
+            ten::is_scalar_v<Z>)
+struct mse : func<> {
+   static constexpr std::string name() { return std::string("mse_loss"); }
+   using value_type = X::value_type;
+   using output_type = Y;
+
+   void operator()(const X &x, const Y &y, Z &z) {
+      if (x.size() != y.size()) {
+         std::cerr << "ten::functional::mse different input sizes" << std::endl;
+      }
+      value_type res = 0;
+      for (size_t i = 0; i < x.size(); i++) {
+         value_type diff = x[i] - y[i];
+         res += diff * diff;
+      }
+      z.value() = res / x.size();
+   }
+
+   /*
+   static typename Y::shape_type
+   output_shape(const typename Y::shape_type &right) {
+      return right;
+   }
+   */
+
+   // Compute dz/dx in grad
+   template <class GradientType>
+      requires(::ten::is_vector_v<GradientType> ||
+               ::ten::is_matrix_v<GradientType>)
+   void gradient_left(const X &x, const Y &y, GradientType &grad) {
+      if (x.size() != y.size()) {
+         std::cerr << "ten::functional::mse gradient different sizes"
+                   << std::endl;
+      }
+      if (x.size() != grad.size()) {
+         std::cerr << "ten::functional::mse gradient size should be equal to "
+                   << x.size() << std::endl;
+      }
+      using T = GradientType::value_type;
+      for (size_t i = 0; i < grad.size(); i++) {
+         grad[i] = 2 * (x[i] - y[i]) / T(grad.size());
+      }
+   }
+
+   // Compute dz/dy in grad
+   template <class GradientType>
+      requires(::ten::is_vector_v<GradientType> ||
+               ::ten::is_matrix_v<GradientType>)
+   void gradient_right(const X &x, const Y &y, GradientType &grad) {
+      if (x.size() != y.size()) {
+         std::cerr << "ten::functional::mse gradient different sizes"
+                   << std::endl;
+      }
+      if (x.size() != grad.size()) {
+         std::cerr << "ten::functional::mse gradient size should be equal to "
+                   << x.size() << std::endl;
+      }
+      using T = GradientType::value_type;
+      for (size_t i = 0; i < grad.size(); i++) {
+         grad[i] = -2 * (x[i] - y[i]) / T(grad.size());
       }
    }
 };

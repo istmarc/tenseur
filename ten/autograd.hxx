@@ -68,8 +68,85 @@ void backward_chain(GradientF &gradf, GradientG &gradg) {
                std::cerr << "backward_chain(matrix,vector) gradient cannot be "
                             "broadcasted\n";
             }
+         } else if constexpr (ten::is_matrix_v<ftype> &&
+                              ten::is_matrix_v<gtype>) {
+            size_t rowsf = gradf.shape().dim(0);
+            size_t colsf = gradf.shape().dim(1);
+            size_t rowsg = gradg.shape().dim(0);
+            size_t colsg = gradg.shape().dim(1);
+            bool same_values = true;
+            auto first_value = gradg[0];
+            for (size_t i = 0; i < gradg.size(); i++) {
+               if (std::abs(first_value - gradg[i]) > 1e-6) {
+                  same_values = false;
+                  break;
+               }
+            }
+            // The gradient has the same values
+            if (same_values) {
+               for (size_t i = 0; i < gradf.size(); i++) {
+                  gradf[i] *= first_value;
+               }
+               // [rows x 1] x [rows x 1]
+            } else if (rowsf == rowsg && colsf == 1 && colsg == 1) {
+               for (size_t i = 0; i < rowsf; i++) {
+                  gradf[i] *= gradg[i];
+               }
+               // [rowsf x 1] x [rowsg x 1] with rowsf > rowsg and rowsf % rowsg
+               // == 0
+            } else if (rowsf > rowsg && colsf == 1 && colsg == 1 &&
+                       (rowsf % rowsg == 0)) {
+               size_t j = 0;
+               for (size_t i = 0; i < rowsf; i++) {
+                  if (j >= rowsg) {
+                     j = 0;
+                  }
+                  gradf[i] *= gradg[j];
+                  j++;
+               }
+               // [rowsf x 1] x [rowsg x 1] with rowsf > rowsg and rowsf % rowsg
+               // != 0
+            } else if (rowsf > rowsg && colsf == 1 && colsg == 1 &&
+                       (rowsf % rowsg != 0)) {
+               size_t j = 0;
+               for (size_t i = 0; i < rowsf; i++) {
+                  if (j >= rowsg) {
+                     j = 0;
+                  }
+                  gradf[i] *= gradg[j];
+                  j++;
+               }
+
+               // [rows x colsf] x [rows x 1] with colsf > 1
+            } else if (rowsf == rowsg && colsf > 1 && colsg == 1) {
+               for (size_t i = 0; i < colsf; i++) {
+                  for (size_t j = 0; j < rowsf; j++) {
+                     gradf(j, i) *= gradg[j];
+                  }
+               }
+               // [rows x colsf] x [rows x colsg] with colsf < colsg
+            } else if (rowsf == rowsg && colsf < colsg) {
+               for (size_t i = 0; i < colsf; i++) {
+                  for (size_t j = 0; j < rowsf; j++) {
+                     gradf(j, i) *= gradg[j];
+                  }
+               }
+               // [rowsf x cols] x [rowsg x cols] with rowsf < rowsg
+            } else if (colsf == colsg && rowsf < rowsg) {
+               using value_type = gtype::value_type;
+               value_type mean = 0;
+               for (size_t i = 0; i < gradg.size(); i++) {
+                  mean += gradg[i];
+               }
+               mean /= value_type(gradg.size());
+               for (size_t i = 0; i < gradf.size(); i++) {
+                  gradf[i] *= mean;
+               }
+            } else {
+               std::cerr << "backward_chain(matrix, matrix) no implemented\n";
+            }
          } else {
-            std::cerr << "backward_chain gradient not implemented" << std::endl;
+            std::cerr << "backward_chain gradient not implemented\n";
          }
       }
    }

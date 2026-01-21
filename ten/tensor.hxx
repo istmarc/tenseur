@@ -4019,6 +4019,15 @@ template <Expr ExprType> auto max(ExprType &&expr) {
    return unary_expr<expr_type, output_type, functional::max>(expr);
 }
 
+/// \fn mean
+/// Return the mean of a tensor or an expression
+template <Expr ExprType> auto mean(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using value_type = typename expr_type::value_type;
+   using output_type = ten::scalar<value_type>;
+   return unary_expr<expr_type, output_type, functional::mean>(expr);
+}
+
 /// \fn sum
 /// Return the sum of a tensor or an expression
 template <Expr ExprType> auto sum(ExprType &&expr) {
@@ -4192,6 +4201,29 @@ template <Expr ExprType> auto relu(ExprType &&expr) {
    using expr_type = std::remove_cvref_t<ExprType>;
    using output_type = typename ::ten::details::output_type<expr_type>::type;
    return unary_expr<expr_type, output_type, functional::relu>(expr);
+}
+
+template <Expr ExprType> auto leaky_relu(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename ::ten::details::output_type<expr_type>::type;
+   return unary_expr<expr_type, output_type, functional::leaky_relu>(expr);
+}
+
+template <Expr ExprType> auto sigmoid(ExprType &&expr) {
+   using expr_type = std::remove_cvref_t<ExprType>;
+   using output_type = typename ::ten::details::output_type<expr_type>::type;
+   return unary_expr<expr_type, output_type, functional::sigmoid>(expr);
+}
+
+template<Expr LeftExpr, Expr RightExpr>
+auto mse(LeftExpr&& left, RightExpr&& right) {
+   using left_expr_type = std::remove_cvref_t<LeftExpr>;
+   using right_expr_type = std::remove_cvref_t<RightExpr>;
+   using left_value_type = left_expr_type::value_type;
+   using right_value_type = left_expr_type::value_type;
+   static_assert(std::is_same_v<left_value_type, right_value_type>);
+   using output_type = ten::scalar<left_value_type>;
+   return binary_expr<left_expr_type, right_expr_type, output_type, functional::mse>(left, right);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
