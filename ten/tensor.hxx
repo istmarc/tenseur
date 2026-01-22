@@ -223,18 +223,34 @@ auto operator/(LeftExpr &&left, RightExpr &&right) {
        left, right);
 }
 
-/*
-template <typename T,Expr E>
+template <typename T, Expr E>
+   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
+            std::is_integral_v<T>)
 auto operator/(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   return scalar<T>(scalar) / std::forward<R>(expr);
-}*/
-
-/*
-template <Expr E, typename T> auto operator/(E &&expr, T &&scalar) {
-   using R = std::remove_cvref_t<E>;
-   return std::forward<R>(expr) / ::ten::scalar<T>(scalar);
-}*/
+   using L = ::ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   auto s = ::ten::scalar<T>(scalar);
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::div>::func>(s, expr);
+}
+template <Expr E, typename T>
+   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
+            std::is_integral_v<T>)
+auto operator/(E &&expr, T &&scalar) {
+   using L = std::remove_cvref_t<E>;
+   using R = ::ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   auto s = ::ten::scalar<T>(scalar);
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::div>::func>(expr, s);
+}
 
 /// TODO AxpyOne
 /// A += B
