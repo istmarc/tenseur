@@ -206,6 +206,38 @@ int main() {
       std::cout << b.grad() << std::endl;
    }
 
+   {
+      f();
+      ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3}, 1.0f, true);
+      ten::matrix<float> y = ten::range<ten::matrix<float>>({3, 3}, 7.0f, true);
+      auto z = x * y;
+      auto t = ten::sum(z);
+      auto r = ten::cos(t);
+      r.eval();
+      std::cout << r.value() << std::endl;
+      r.backward();
+      std::cout << "The gradients\n";
+      std::cout << x.grad() << std::endl;
+      std::cout << y.grad() << std::endl;
+   }
+
+   {
+      f();
+      ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3}, 1.0f, true);
+      ten::matrix<float> y = ten::range<ten::matrix<float>>({3, 3}, 7.0f, true);
+      ten::matrix<float> b = ten::range<ten::matrix<float>>({2, 3}, 16.0f, true);
+      auto z = x * y + b;
+      auto t = ten::sum(z);
+      auto r = ten::cos(t);
+      r.eval();
+      std::cout << r.value() << std::endl;
+      r.backward();
+      std::cout << "The gradients\n";
+      std::cout << x.grad() << std::endl;
+      std::cout << y.grad() << std::endl;
+      std::cout << b.grad() << std::endl;
+   }
+
    /*
    {
       f();
