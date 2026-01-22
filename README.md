@@ -4,11 +4,11 @@
 
 A header only C++23 tensor, neural networks and mathematical library [WIP]
 
-Tenseur is a header only C++23 tensor library designed for high performance numerical computations, prioritizing speed above all else. It assume that the user will ensure the correctness of their program. Execptions handling and bounds checking are disabled to minimize overhead. This makes it ideal for applications where computational efficiency is the goal such as deep learning and scientific computing. It has also support for automatic differentiation and basic neural networks.
+Tenseur is a header only C++23 tensor library designed for high performance numerical computations, prioritizing speed above all else. It assume that the user will ensure the correctness of their program. Exception handling and bounds checking are disabled to minimize overhead. This makes it ideal for applications where computational efficiency is the goal such as deep learning and scientific computing. It has also support for automatic differentiation and basic neural networks.
 
 ## Tensor classes
 
-The library is build around a core tensor class `ranked_tensor<T, class Shape, storge_order order, class Storage, class Allocator>` that provide efficient storage (column major and row major) and manipulation of multidimentional arrays through operator overloading. Operations are implemented using techniques such as SIMD instructions and cache friendly memory access. Error handling is minimized, instead of throwing exceptions, the library relies on the user to validate inputs and manage potential issues. Some check are done at compile time for static tensors (tensors with static shape). Aliases such as `tensor<T, Shape>`, `matrix<T, Shape>`, `vector<T>`, `stensor<T, Dims...>`, `smatrix<T, Rows, Cols>`, and `svector<T, Size>` are defined.
+The library is build around a core tensor class `ranked_tensor<T, class Shape, storage_order order, class Storage, class Allocator>` that provide efficient storage (column major and row major) and manipulation of multidimentional arrays through operator overloading. Operations are implemented using techniques such as SIMD instructions and cache friendly memory access. Error handling is minimized, instead of throwing exceptions, the library relies on the user to validate inputs and manage potential issues. Some check are done at compile time for static tensors (tensors with static shape). Aliases such as `tensor<T, Shape>`, `matrix<T, Shape>`, `vector<T>`, `stensor<T, Dims...>`, `smatrix<T, Rows, Cols>`, and `svector<T, Size>` are defined.
 
 ## Expressions API
 
