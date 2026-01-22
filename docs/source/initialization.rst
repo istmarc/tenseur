@@ -19,7 +19,7 @@ zeros
 .. code-block:: cpp
 
    auto x = ten::zeros<ten::stensor<float, 2, 3, 4>>();
-   auto y = zeros<float, ten::shape<2, 3, 4>>();
+   auto y = ten::zeros<float, ten::shape<2, 3, 4>>();
 
 ones
 ----
@@ -41,6 +41,26 @@ ones
    auto x = ten::ones<ten::stensor<float, 2, 3, 4>>();
    auto y = ten::ones<float, ten::shape<2, 3, 4>>();
 
+fill
+-----
+
+- Create a tensor of filled with a single value
+
+.. code-block:: cpp
+
+   auto x = ten::fill<ten::tensor<float>>({2, 3, 4}, 1.0f);
+   auto y = ten::fill<ten::vector<float>>({10}, 1.0f);
+   auto z = ten::fill<float, ten::shape<ten::dynamic, ten::dynamic, ten::dynamic>>({2, 3, 4}, 1.0f);
+   constexpr size_t Rank = 3;
+   auto t = ten::fill<float, Rank>({2, 3, 4}, 1.0f);
+
+- Create a static tensor of filled with a single value
+
+.. code-block:: cpp
+
+   auto x = ten::fill<ten::stensor<float, 2, 3, 4>>(1.0f);
+   auto y = ten::fill<float, ten::shape<2, 3, 4>>(1.0f);
+
 range
 -----
 
@@ -50,7 +70,7 @@ range
 
    auto x = ten::range<ten::tensor<float>>({2, 3, 4});
    auto y = ten::range<ten::matrix<float>>({2, 3});
-   auto z = ten::range<ten::vector<float>>({10}, 0.);
+   auto z = ten::range<ten::vector<float>>({10});
    constexpr size_t Rank = 3;
    auto z = ten::range<float, Rank>({2, 3, 4});
 
@@ -68,11 +88,11 @@ linear
 
 .. code-block:: cpp
 
-   auto x = ten::linear<ten::tensor<float>>(0., 10., {2, 3, 4});
-   auto y = ten::linear<ten::matrix<float>>(0., 10., {2, 3});
-   auto z = ten::linear<ten::vector<float>>(0., 10., {10});
+   auto x = ten::linear<ten::tensor<float>>({2, 3, 4}, 0., 10.);
+   auto y = ten::linear<ten::matrix<float>>({2, 3}, 0., 10.);
+   auto z = ten::linear<ten::vector<float>>({10}, 0., 10.);
    constexpr size_t Rank = 3;
-   auto z = ten::range<float, Rank>(0., 10., {2, 3, 4});
+   auto z = ten::range<float, Rank>({2, 3, 4}, 0., 10.);
 
 - Create a static linear tensor
 
@@ -80,4 +100,11 @@ linear
 
    auto x = ten::range<ten::stensor<float, 2, 3, 4>>(0., 10.);
    auto y = ten::range<float, ten::shape<2, 3, 4>>(0., 10.);
+
+TODO
+----
+
+- Logarithmic
+
+- Geometric
 

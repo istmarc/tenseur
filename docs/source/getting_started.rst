@@ -95,37 +95,40 @@ Special matrices
 
    ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
    auto y = ten::transposed(x);
-   std::cout << y.is_transposed() << std::endl;
+   std::cout << std::boolalpha << y.is_transposed() << std::endl;
 
 - Symmetric
 
 .. code-block:: cpp
 
-   ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
+   ten::matrix<float> x({2, 2}, {1.0f, 0.0f, 0.0f, 1.0f});
    auto y = ten::symmetric(x);
-   std::cout << y.is_symmetric() << std::endl;
+   std::cout << std::boolalpha << y.is_symmetric() << std::endl;
 
 - Hermitian
 
 .. code-block:: cpp
 
-   ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
+   ten::matrix<std::complex<float>> x({2, 2}, {1.0f, 1.0f-1.0i, 1.0f + 1.0i, 2.0f});
    auto y = ten::hermitian(x);
-   std::cout << y.is_hermitian() << std::endl;
+   std::cout << std::boolalpha << y.is_hermitian() << std::endl;
+   std::cout << y << std::endl;
 
 - Lower triangular
 
 .. code-block:: cpp
 
-   ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
+   ten::matrix<float> x({2, 2}, {1.0f, 2.0f, 0.0f, 3.0f});
    auto y = ten::lower_tr(x);
-   std::cout << y.is_lower_tr() << std::endl;
+   std::cout << std::boolalpha << y.is_lower_tr() << std::endl;
+   std::cout << y << std::endl;
 
 - Upper triangular
 
 .. code-block:: cpp
 
-   ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
+   ten::matrix<float> x({2, 2}, {1.0f, 0.0f, 2.0f, 3.0f});
    auto y = ten::upper_tr(x);
-   std::cout << y.is_upper_tr() << std::endl;
+   std::cout << std::boolalpha << y.is_upper_tr() << std::endl;
+   std::cout << y << std::endl;
 
