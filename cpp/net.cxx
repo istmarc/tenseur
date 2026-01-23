@@ -5,13 +5,12 @@
 
 // Define a simple neural network for learning xor
 struct xor_net : ten::nn::net {
-   ten::nn::leaky_relu _leaky_relu;
    ten::nn::sigmoid _sigmoid;
    ten::nn::batched_dense<> _lin1;
    ten::nn::batched_dense<> _lin2;
 
    xor_net(size_t batch, size_t in_features, size_t out_features)
-       : _sigmoid(ten::nn::sigmoid()), _leaky_relu(ten::nn::leaky_relu()),
+       : _sigmoid(ten::nn::sigmoid()),
          _lin1(ten::nn::batched_dense<>(batch, in_features, 5)),
          _lin2(ten::nn::batched_dense<>(batch, 5, out_features)) {
       add_param("lin1_w", _lin1.weights());
@@ -24,7 +23,7 @@ struct xor_net : ten::nn::net {
       auto a = _lin1(x);
       auto b = _sigmoid(a);
       auto c = _lin2(b);
-      auto d = _leaky_relu(c);
+      auto d = _sigmoid(c);
       return d;
    }
 };
@@ -48,7 +47,7 @@ int main() {
    // Learning
    ten::optim::sgd<> optimizer(model.params(), 0.1f);
 
-   size_t epochs = 250;
+   size_t epochs = 400;
    for (size_t epoch = 0; epoch < epochs; epoch++) {
       // No need for optimizer.zero_grad();
       // Forward pass
