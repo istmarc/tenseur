@@ -25,11 +25,11 @@ template <class T = float> class linear_system {
    ls_options _options;
 
  public:
-   explicit linear_system(ls_options &&options)
-       : _options(std::move(options)) {}
+   explicit linear_system(const ls_options &options)
+       : _options(options) {}
 
    /// Solve Ax=b
-   void solve(const matrix<T> &A, const vector<T> &b) {
+   void solve(matrix<T> &A, vector<T> &b) {
       if (_options._method == ls_method::qr) {
          auto [q, r] = ::ten::linalg::qr(A);
          ::ten::vector<T> z = ::ten::transposed(q) * b;
@@ -71,7 +71,7 @@ requires(std::is_same_v<typename M::value_type, typename V::value_type>)
 auto solve(M&& A, V&& b, const ls_method method = ls_method::qr) -> decltype(auto) {
    using value_type = M::value_type;
    ls_options options(method);
-   ::ten::linalg::linear_system<value_type> ls(std::move(options));
+   ::ten::linalg::linear_system<value_type> ls(options);
    ls.solve(A, b);
    return ls.solution();
 }
