@@ -1724,7 +1724,7 @@ class ranked_tensor final
       return res;
    }
 
-   // Overload the >= operator for dynamic tensors
+   // Overload the == or eq operator for dynamic tensors
    ranked_tensor<bool, Shape, order>
    eq(const ranked_tensor &right) const noexcept
       requires(Shape::is_dynamic())

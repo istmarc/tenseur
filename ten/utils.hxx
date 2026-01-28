@@ -169,7 +169,7 @@ template <typename _d>
   }
 }*/
 
-/// \fn linearIndex
+/// \fn linear_index
 /// Compute the linear index from the stride and the indices
 template <class stride>
 [[nodiscard]] inline ::ten::size_type
@@ -181,7 +181,7 @@ linear_index(const stride &strides,
    return index;
 }
 
-/// \fn staticLinearIndex
+/// \fn static_linear_index
 /// Compute the linear index from the static strides and the indices
 template <class stride, size_type N = 0>
 [[nodiscard]] size_type
