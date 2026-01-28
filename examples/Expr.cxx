@@ -2,10 +2,8 @@
 #include <memory>
 #include <type_traits>
 
-#include <ten/expr.hxx>
-#include <ten/functional.hxx>
-#include <ten/shape.hxx>
-#include <ten/tensor.hxx>
+#include <ten/tensor>
+#include <ten/io>
 
 template <class T> void print_tensor(const T &val) {
    std::cout << "[";

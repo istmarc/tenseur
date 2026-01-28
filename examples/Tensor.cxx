@@ -3,6 +3,7 @@
 #include <type_traits>
 
 #include <ten/tensor>
+#include <ten/io>
 
 template <class T> void print_tensor(const T &val) {
    std::cout << "[";
@@ -456,14 +457,14 @@ int main() {
    {
       print_line();
       cout << "Uninitialized dynamic vector" << endl;
-      ten::vector<float> x(5);
+      ten::vector<float> x({5});
       print_tensor(x);
    }
 
    {
       print_line();
       cout << "Uninitialized dynamic matrix" << endl;
-      matrix<float> x(2, 3);
+      matrix<float> x({2, 3});
       print_tensor(x);
    }
 
