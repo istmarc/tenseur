@@ -74,17 +74,17 @@ An expression API class for representing unary and binary operations between ten
 ```c++
 // Dynamic uninitialized tensors
 ten::tensor<float, 3> x({2, 3, 4});
-// Static tensor with uninitialized memory (no allocations)
+// Static tensor with uninitialized memory
 ten::stensor<float, 2, 3, 4> y;
 // Access indices
 x(0, 1, 2) = 3.0f;
 std::cout << x(0, 1, 2) << std::endl;
-// Slicing using seq
+// Slicing using sequences ten::seq
 using ten::seq;
 auto slice = x(seq(0, last), seq(0, last), seq(1, 2));
 // Assign to slice
 slice = 1.0f;
-// Slicing using mdseq
+// Slicing using multidimensional sequences ten::mdseq
 using ten::mdseq;
 auto index = mdseq<3>(seq(0, last), seq(0, last), seq(0, 1));
 auto second_slice = x[index];
@@ -193,7 +193,8 @@ int main() {
 ```
 
 - Neural networks
-See full example at [tenseur docs](https://tenseur.readthedocs.io/en/latest/examples.html).
+
+See full example at [tenseur docs/examples](https://tenseur.readthedocs.io/en/latest/examples.html).
 
 # Building tenseur
 
@@ -232,5 +233,4 @@ cmake .. -DCMAKE_CXX_COMPILER=clang++ -DTENSEUR_PYTHON=ON
 cmake --build . --
 sudo make install
 ```
-
 
