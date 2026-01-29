@@ -30,10 +30,6 @@ An expression API class for representing unary and binary operations between ten
 
 - [x] Factory functions: fill, ones, zeros, range, linear, rand_norm, rand_unif
 
-- [] Compile to a shared library (support for up to 5d dynamic tensors)
-
-- [] Tests for shared library
-
 - [x] Generate automatic python bindings
 
 - [x] Python bindings ([tenseurpy](https://github.com/istmarc/tenseurpy))
@@ -46,9 +42,9 @@ An expression API class for representing unary and binary operations between ten
 
 - [x] Basic feed forward neural networks
 
-## Todo
+## Roadmap
 
-- [] Pythonizations
+- [] Python bindings for most used functions
 
 - [] CI/CD with tests
 
@@ -64,8 +60,12 @@ An expression API class for representing unary and binary operations between ten
 ## Requirements
 
 - Clang compiler with C++20 support
+
 - CMake
-- BLAS library (OpenBlas or BLIS)
+
+- [Optional] BLAS library (OpenBlas or BLIS)
+
+- [Optional] LAPACKE for linear algebra
 
 # Examples
 
