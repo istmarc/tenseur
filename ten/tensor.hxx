@@ -348,7 +348,6 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
       if (!_grad) {
          _grad = std::make_shared<T>();
       }
-      std::cout << *_grad.get() << std::endl;
       _requires_grad = true;
    }
 
@@ -962,14 +961,10 @@ class ranked_tensor final
       static_assert(Shape::static_size() == evaluated_type::static_size(),
                     "Expected equal shape size.");
       auto value = expr.eval();
-      auto format = value.format();
-      _format = format;
-      // auto shape = value.shape();
-      //_shape = shape;
-      auto stride = value.strides();
-      _stride = stride;
-      auto node = value.node();
-      _node = node;
+      _format = value.format();
+      _stride = value.strides();
+      _node = value.node();
+      _grad = value.grad_node();
    }
 
    /// Copy asignment from a dynamic expression
@@ -984,14 +979,11 @@ class ranked_tensor final
       static_assert(::ten::is_tensor<evaluated_type>::value,
                     "Evaluated type must be a tensor.");
       auto value = expr.eval();
-      auto format = value.format();
-      _format = format;
-      auto shape = value.shape();
-      _shape = shape;
-      auto stride = value.strides();
-      _stride = stride;
-      auto node = value.node();
-      _node = node;
+      _format = value.format();
+      _shape = value.shape();
+      _stride = value.strides();
+      _node = value.node();
+      _grad = value.grad_node();
    }
 
    /// Asignment from a static expression
@@ -1076,32 +1068,6 @@ class ranked_tensor final
              std::initializer_list<size_type>{rows, cols});
       }
    }
-
-   // COO Tensor
-   /*
-   explicit ranked_tensor(std::initializer_list<size_type>&& dims,
-   std::initializer_list<std::initializer_list<size_type>>&& indices,
-   std::initializer_list<T>&& values, ten::storage_format format =
-   ten::storage_format::coo ) noexcept requires(Shape::is_dynamic()) :
-   _shape(std::move(dims)), _stride(typename
-   base_type::stride_type(_shape.value())), _format(format) { if (format !=
-   ::ten::storage_format::coo && format != ::ten::storage_format::csc && format
-   != ::ten::storage_format::csr) { std::cerr << "Storage format must be sparse
-   coo, csc or csr.\n";
-      }
-      _format = format;
-      if (indices.size() != values.size()) {
-         std::cerr << "Indices and values must have the same size.\n";
-      }
-      auto value = values.begin();
-      for (auto idx = indices.begin(); idx != indices.end(); idx++, value++) {
-         (*this)(*idx) = *value;
-      }
-   }*/
-
-   // TODO CscMatrix
-
-   // TODO CsrMatrix
 
    /// Copy constructor
    ranked_tensor(const ranked_tensor &t) {
