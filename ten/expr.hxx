@@ -139,10 +139,7 @@ struct unary_node {
        : _input(std::make_shared<Input>(inp)),
          _func(func_type(std::forward<func_args>(fargs)...)) {}
 
-   ~unary_node() {
-      _input = nullptr;
-      _value = nullptr;
-   }
+   ~unary_node() {}
 };
 
 // \class unary_expr
@@ -240,39 +237,18 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
          }
       }
 
-      // Allocate output
-      if (!_node->_value) {
-         if constexpr (::ten::is_scalar<output_type>::value) {
-            _node->_value = std::make_shared<Output>(Output());
-         } else if constexpr (!::ten::is_scalar<output_type>::value &&
-                              Output::is_static()) {
-            _node->_value = std::make_shared<Output>();
-         } else {
-            if constexpr (ten::functional::has_shape<func_type>::value) {
-               _node->_value =
-                   std::make_shared<Output>(_node->_func.value().output_shape(
-                       ::ten::details::input_shape(_node->input())));
-            }
-            if constexpr (!ten::functional::has_shape<func_type>::value) {
-               _node->_value =
-                   std::make_shared<Output>(_node->_func.value().output_shape(
-                       ::ten::details::input_shape(_node->input())));
-            }
-         }
-      }
-
       // Evaluate
       if constexpr (::ten::is_scalar<input_type>::value ||
                     ::ten::is_tensor_v<input_type>) {
-         auto input = _node->input();
-         auto output = _node->value();
-         _node->_func.value()(input, output);
+         _node->_func.value()(_node->_input, _node->_value);
       }
+
       if constexpr (::ten::is_unary_expr_v<input_type> ||
                     ::ten::is_binary_expr_v<input_type>) {
-         auto input = _node->_input->value();
-         auto output = _node->value();
-         _node->_func.value()(input, output);
+         // auto input = _node->_input->value();
+         // auto output = _node->value();
+         //_node->_func.value()(input, output);
+         _node->_func.value()(_node->_input->value_node(), _node->value_node());
       }
 
       // This expression has been evaluated
@@ -601,6 +577,7 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
       }
 
       // Allocate the output if it has not been allocated yet
+      /*
       if (!_node->_value) {
          if constexpr (::ten::is_scalar_v<Output>) {
             _node->_value = std::make_shared<Output>();
@@ -713,6 +690,7 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
             }
          }
       }
+      */
 
       // Call the function
       _node->_func.value()(::ten::details::input_value(_node->left()),

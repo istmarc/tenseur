@@ -2,9 +2,7 @@
 #define TENSEUR_FUNCTIONAL_HXX
 
 #include <cmath>
-#include <functional>
 #include <initializer_list>
-// #include <iostream>
 #include <memory>
 #include <type_traits>
 
@@ -234,30 +232,36 @@ struct sqrt : func<> {
    using output_value_type = Y::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
       if constexpr (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
          y.value() = std::sqrt(x.value());
       }
       if constexpr (::ten::is_tensor_v<X> || ::ten::is_column_v<X> ||
                     ::ten::is_row_v<X>) {
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
          for (size_t i = 0; i < x.size(); i++) {
             y[i] = std::sqrt(static_cast<output_value_type>(x[i]));
          }
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
-   }
-
-   void gradient(const value_type &x, output_value_type &y) {
-      y = 1 / (2 * std::sqrt(x));
-   }
-
-   void gradient(const X &x, Y &y) {
-      for (size_t i = 0; i < x.size(); i++) {
-         y[i] = 1 / (2 * std::sqrt(x[i]));
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
+      if (x->shape() != grad->shape()) {
+         std::cerr << "ten::functional::sqrt gradient incompatible shapes\n";
+      } else {
+         for (size_t i = 0; i < x->size(); i++) {
+            (*grad.get())[i] = 1 / (2 * std::sqrt((*x.get())[i]));
+         }
       }
    }
 };
@@ -275,30 +279,49 @@ struct sqr : func<> {
    using output_value_type = Y::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
       if constexpr (::ten::is_scalar<X>::value) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
          y.value() = x.value() * x.value();
       }
       if constexpr (::ten::is_tensor_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
+         auto xarr = *x.get();
+         auto yarr = *y.get();
+         ten::kernels::mul(xarr, xarr, yarr);
+         /*
          for (size_t i = 0; i < x.size(); i++) {
             y[i] = static_cast<output_value_type>(x[i]) *
                    static_cast<output_value_type>(x[i]);
-         }
+         }*/
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+   template <class Gradient>
+      requires(::ten::is_scalar_v<Gradient> && ::ten::is_scalar_v<X>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>();
+      }
+      grad->value() = 2 * x->value();
    }
 
-   void gradient(const value_type &x, output_value_type &y) {
-      y = output_value_type(2) * x;
-   }
-
-   void gradient(const X &x, Y &y) {
-      for (size_t i = 0; i < x.size(); i++) {
-         y[i] = output_value_type(2) * x[i];
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient> && ::ten::is_tensor_v<X>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
+      if (x->size() != grad->size()) {
+         std::cerr << "ten::functional::sqr gradient incompatible sizes\n";
+      } else {
+         for (size_t i = 0; i < x->size(); i++) {
+            (*grad.get())[i] = 2 * (*x.get())[i];
+         }
       }
    }
 };
@@ -316,37 +339,51 @@ struct abs : func<> {
    using output_value_type = Y::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
-
-      if constexpr (::ten::is_scalar_v<X>) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if constexpr (::ten::is_scalar_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
          y.value() = std::abs(x.value());
       }
       if constexpr (::ten::is_tensor_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
          for (size_t i = 0; i < x.size(); i++) {
             y[i] = std::abs(static_cast<value_type>(x[i]));
          }
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
-   }
-
-   void gradient(const value_type &x, output_value_type &y) {
-      if (x >= 0) {
-         y = 1;
+   template <class Gradient>
+      requires(::ten::is_scalar_v<Gradient> && ::ten::is_scalar_v<X>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
+      if (x->value() >= 0) {
+         grad->value() = 1;
       } else {
-         y = -1;
+         grad->value() = -1;
       }
    }
 
-   void gradient(const X &x, Y &y) {
-      for (size_t i = 0; i < x.size(); i++) {
-         if (x[i] >= 0) {
-            y[i] = 1;
-         } else {
-            y[i] = -1;
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient> && ::ten::is_tensor_v<X>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
+      if (x->size() != grad->size()) {
+         std::cerr << "ten::functional::abs gradient incompatible sizes\n";
+      } else {
+         for (size_t i = 0; i < x->size(); i++) {
+            if ((*x.get())[i] >= 0) {
+               (*grad.get())[i] = 1;
+            } else {
+               (*grad.get())[i] = -1;
+            }
          }
       }
    }
@@ -371,32 +408,46 @@ struct pow : func<true> {
 
    explicit pow(double n) : _n(n) {}
 
-   void operator()(const X &x, Y &y) const {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) const {
       using value_type = typename Y::value_type;
-      if constexpr (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>) {
+      if constexpr (::ten::is_scalar_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
          y.value() = std::pow(x.value(), _n);
       }
-      if constexpr (::ten::is_tensor_v<X> || ::ten::is_column_v<X> ||
-                    ::ten::is_row_v<X>) {
+      if constexpr (::ten::is_tensor_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
          for (size_t i = 0; i < x.size(); i++) {
             y[i] = std::pow(static_cast<value_type>(x[i]), _n);
          }
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+   template <class Gradient>
+      requires(::ten::is_scalar_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>();
+      }
+      grad->value() =
+          static_cast<output_value_type>(_n) * std::pow(x->value(), _n - 1);
    }
 
-   void gradient(const X &x, Y &y) {
-      if constexpr (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>) {
-         y.value() =
-             static_cast<output_value_type>(_n) * std::pow(x.value(), _n - 1);
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient> && ::ten::is_tensor_v<X>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
       }
-      if constexpr (::ten::is_tensor_v<Y> && ::ten::is_tensor_v<X>) {
-         for (size_t i = 0; i < x.size(); i++) {
-            y[i] = static_cast<output_value_type>(_n) * std::pow(x[i], _n - 1);
+      if (x->size() != grad->size()) {
+         std::cerr << "ten::functional::pow gradient incompatible sizes\n";
+      } else {
+         for (size_t i = 0; i < x->size(); i++) {
+            (*grad.get())[i] = static_cast<output_value_type>(_n) *
+                               std::pow((*x.get())[i], _n - 1);
          }
       }
    }
@@ -412,18 +463,16 @@ struct min : func<> {
 
    using output_type = Y;
 
-   void operator()(const X &a, Y &b) {
-      using type = typename X::value_type;
-      type res = a[0];
-      for (size_t i = 1; i < a.size(); i++) {
-         res = std::min(static_cast<type>(a[i]), res);
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>();
       }
-      b = res;
-   }
-
-   static typename X::shape_type
-   output_shape(const typename X::shape_type &left) {
-      return left;
+      using type = typename X::value_type;
+      type res = x[0];
+      for (size_t i = 1; i < x.size(); i++) {
+         res = std::min(x[i], res);
+      }
+      y = res;
    }
 };
 
@@ -437,18 +486,16 @@ struct max : func<> {
 
    using output_type = Y;
 
-   void operator()(const X &a, Y &b) {
-      using type = typename Y::value_type;
-      type res = a[0];
-      for (size_t i = 1; i < a.size(); i++) {
-         res = std::max(static_cast<type>(a[i]), res);
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>();
       }
-      b = res;
-   }
-
-   static typename X::shape_type
-   output_shape(const typename X::shape_type &left) {
-      return left;
+      using type = typename Y::value_type;
+      type res = (*x.get())[0];
+      for (size_t i = 1; i < x->size(); i++) {
+         res = std::max(static_cast<type>((*x.get())[i]), res);
+      }
+      y->value() = res;
    }
 };
 
@@ -462,26 +509,27 @@ struct mean : func<> {
 
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>();
+      }
       using type = typename Y::value_type;
       type res = 0.;
-      for (size_t i = 0; i < x.size(); i++) {
-         res += static_cast<type>(x[i]);
+      for (size_t i = 0; i < x->size(); i++) {
+         res += static_cast<type>((*x.get())[i]);
       }
-      y = res / x.size();
+      y->value() = res / x.size();
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
-   }
-
-   template <class GradientType>
-      requires(::ten::is_tensor_v<GradientType>)
-   void gradient(const X &x, GradientType &grad) {
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
       using T = X::value_type;
-      for (size_t i = 0; i < x.size(); i++) {
-         grad[i] = T(1) / T(x.size());
+      for (size_t i = 0; i < x->size(); i++) {
+         (*grad.get())[i] = T(1) / T(x->size());
       }
    }
 };
@@ -496,25 +544,26 @@ struct sum : func<> {
 
    using output_type = Y;
 
-   void operator()(const X &a, Y &b) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>();
+      }
       using type = typename Y::value_type;
       type res = 0.;
-      for (size_t i = 0; i < a.size(); i++) {
-         res += static_cast<type>(a[i]);
+      for (size_t i = 0; i < x->size(); i++) {
+         res += static_cast<type>((*x.get())[i]);
       }
-      b = res;
+      y->value() = res;
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
-   }
-
-   template <class GradientType>
-      requires(::ten::is_tensor_v<GradientType>)
-   void gradient(const X &x, GradientType &grad) {
-      for (size_t i = 0; i < x.size(); i++) {
-         grad[i] = 1;
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
+      for (size_t i = 0; i < x->size(); i++) {
+         (*grad.get())[i] = 1;
       }
    }
 };
@@ -529,17 +578,17 @@ struct cum_sum : func<> {
 
    using output_type = Y;
 
-   void operator()(const X &a, Y &b) {
-      using type = typename Y::value_type;
-      b[0] = static_cast<type>(a[0]);
-      for (size_t i = 1; i < a.size(); i++) {
-         b[i] = static_cast<type>(a[i]) + b[i - 1];
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
       }
-   }
-
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+      using type = typename Y::value_type;
+      auto yarr = *(y.get());
+      auto xarr = *(x.get());
+      yarr[0] = static_cast<type>(xarr[0]);
+      for (size_t i = 1; i < x->size(); i++) {
+         yarr[i] = static_cast<type>(xarr[i]) + yarr[i - 1];
+      }
    }
 };
 
@@ -553,22 +602,18 @@ struct prod : func<> {
 
    using output_type = Y;
 
-   void operator()(const X &a, Y &b) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>();
+      }
       using type = typename Y::value_type;
       type res = 1.;
-      for (size_t i = 0; i < a.size(); i++) {
-         res *= static_cast<type>(a[i]);
+      for (size_t i = 0; i < x->size(); i++) {
+         res *= static_cast<type>((*x.get())[i]);
       }
-      b = res;
-   }
-
-   static typename X::shape_type
-   output_shape(const typename X::shape_type &left) {
-      return left;
+      y->value() = res;
    }
 };
-
-// TODO use simd for cos, sin and tan
 
 /// Sine
 template <class X, class Y>
@@ -583,33 +628,41 @@ struct sin : func<> {
    using value_type = X::value_type;
    using output_value_type = Y::value_type;
 
-   void operator()(const X &x, Y &y) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
       using type = typename Y::value_type;
       if constexpr (::ten::is_scalar_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
          y.value() = std::sin(x.value());
       }
       if constexpr (::ten::is_tensor_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
          for (size_t i = 0; i < x.size(); i++) {
             y[i] = std::sin(static_cast<type>(x[i]));
          }
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+   template <class Gradient>
+      requires(::ten::is_scalar_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>();
+      }
+      grad->value() = std::cos(x->value());
    }
 
-   void gradient(value_type &x, output_value_type &y) { y = std::cos(x); }
-
-   void gradient(const X &x, Y &y) {
-      if constexpr (::ten::is_scalar_v<Y>) {
-         y.value() = std::cos(x.value());
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
       }
-      if constexpr (::ten::is_tensor_v<Y>) {
-         for (size_t i = 0; i < x.size(); i++) {
-            y[i] = std::cos(x[i]);
-         }
+      for (size_t i = 0; i < x->size(); i++) {
+         (*grad.get())[i] = std::cos((*x.get())[i]);
       }
    }
 };
@@ -624,16 +677,14 @@ struct asin : func<> {
 
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
-      using type = typename Y::value_type;
-      for (size_t i = 0; i < x.size(); i++) {
-         y[i] = std::asin(static_cast<type>(x[i]));
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
       }
-   }
-
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+      using type = typename Y::value_type;
+      for (size_t i = 0; i < x->size(); i++) {
+         (*y.get())[i] = std::asin(static_cast<type>((*x.get())[i]));
+      }
    }
 };
 
@@ -647,16 +698,14 @@ struct sinh : func<> {
 
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
-      using type = typename Y::value_type;
-      for (size_t i = 0; i < x.size(); i++) {
-         y[i] = std::sinh(static_cast<type>(x[i]));
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
       }
-   }
-
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+      using type = typename Y::value_type;
+      for (size_t i = 0; i < x->size(); i++) {
+         (*y.get())[i] = std::sinh(static_cast<type>((*x.get())[i]));
+      }
    }
 };
 
@@ -673,45 +722,54 @@ struct cos : func<> {
    using output_value_type = Y::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
       if constexpr (::ten::is_scalar_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
          y.value() = std::cos(x.value());
       }
       if constexpr (::ten::is_tensor_v<Y>) {
-         for (size_t i = 0; i < x.size(); i++) {
-            y[i] = std::cos(static_cast<output_value_type>(x[i]));
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
+         for (size_t i = 0; i < x->size(); i++) {
+            (*y.get())[i] =
+                std::cos(static_cast<output_value_type>((*x.get())[i]));
          }
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+   template <class Gradient>
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>();
+      }
+      grad->value() = -std::sin(x->value());
    }
 
-   template <class GradientType>
-      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<GradientType>)
-   void gradient(const X &x, GradientType &grad) {
+   /*
+   template <class Gradient>
+      requires(::ten::is_scalar_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &y) {
+      for (size_t i = 0; i < y.size(); i++) {
+         y[i] = -std::sin(x.value());
+      }
+   }*/
+
+   template <class Gradient>
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
       if (x.size() != grad.size()) {
          std::cerr << "ten::functional::cos gradient different sizes\n";
       } else {
-         for (size_t i = 0; i < x.size(); i++) {
-            grad[i] = -std::sin(x[i]);
+         for (size_t i = 0; i < x->size(); i++) {
+            (*grad.get())[i] = -std::sin((*x.get())[i]);
          }
-      }
-   }
-
-   template <class GradientType>
-      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<GradientType>)
-   void gradient(const X &x, GradientType &y) {
-      y.value() = -std::sin(x.value());
-   }
-
-   template <class GradientType>
-      requires(::ten::is_scalar_v<X> && ::ten::is_tensor_v<GradientType>)
-   void gradient(const X &x, GradientType &y) {
-      for (size_t i = 0; i < y.size(); i++) {
-         y[i] = -std::sin(x.value());
       }
    }
 };
@@ -726,16 +784,14 @@ struct acos : func<> {
 
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
-      using type = typename Y::value_type;
-      for (size_t i = 0; i < x.size(); i++) {
-         y[i] = std::acos(static_cast<type>(x[i]));
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
       }
-   }
-
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+      using type = typename Y::value_type;
+      for (size_t i = 0; i < x->size(); i++) {
+         (*y.get())[i] = std::acos(static_cast<type>((*x.get())[i]));
+      }
    }
 };
 
@@ -749,16 +805,14 @@ struct cosh : func<> {
 
    using output_type = Y;
 
-   void operator()(const X &a, Y &b) {
-      using type = typename Y::value_type;
-      for (size_t i = 0; i < a.size(); i++) {
-         b[i] = std::cosh(static_cast<type>(a[i]));
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
       }
-   }
-
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+      using type = typename Y::value_type;
+      for (size_t i = 0; i < x->size(); i++) {
+         (*y.get())[i] = std::cosh(static_cast<type>((*x.get())[i]));
+      }
    }
 };
 
@@ -775,31 +829,43 @@ struct tan : func<> {
    using output_value_type = Y::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
-      if constexpr (::ten::is_scalar_v<X>) {
-         y.value() = std::tan(x.value());
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if constexpr (::ten::is_scalar_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
+         y->value() = std::tan(x->value());
       }
       if constexpr (::ten::is_tensor_v<Y>) {
-         for (size_t i = 0; i < x.size(); i++) {
-            y[i] = std::tan(static_cast<output_value_type>(x[i]));
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
+         for (size_t i = 0; i < x->size(); i++) {
+            (*y.get())[i] =
+                std::tan(static_cast<output_value_type>((*x.get())[i]));
          }
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+   template <class Gradient>
+      requires(::ten::is_scalar_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>();
+      }
+      value_type z = std::tan(x->value());
+      grad->value() = 1 + z * z;
    }
 
-   void gradient(const value_type &x, output_value_type &y) {
-      value_type z = std::tan(x);
-      y = 1 + z * z;
-   }
-
-   void gradient(const X &x, Y &y) {
-      for (size_t i = 0; i < x.size(); i++) {
-         value_type z = std::tan(x[i]);
-         y[i] = 1 + z * z;
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
+      for (size_t i = 0; i < x->size(); i++) {
+         value_type t = std::tan((*x.get())[i]);
+         (*grad.get())[i] = 1 + t * t;
       }
    }
 };
@@ -816,30 +882,38 @@ struct atan : func<> {
    using output_value_type = Y::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
       using type = typename Y::value_type;
       if constexpr (::ten::is_scalar_v<X>) {
-         y.value() = std::atan(static_cast<type>(x.value()));
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
+         y->value() = std::atan(static_cast<type>(x->value()));
       }
       if constexpr (::ten::is_tensor_v<Y>) {
-         for (size_t i = 0; i < x.size(); i++) {
-            y[i] = std::atan(static_cast<type>(x[i]));
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
+         for (size_t i = 0; i < x->size(); i++) {
+            (*y.get())[i] = std::atan(static_cast<type>((*x.get())[i]));
          }
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
+   template <class Gradient>
+      requires(::ten::is_scalar_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      y->value() = 1 / (1 + x->value() * x->value());
    }
 
-   void gradient(const value_type &x, output_value_type &y) {
-      y = 1 / (1 + x * x);
-   }
-
-   void gradient(const X &x, Y &y) {
-      for (size_t i = 0; i < x.size(); i++) {
-         y[i] = 1 / (1 + x[i] * x[i]);
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
+      for (size_t i = 0; i < x->size(); i++) {
+         (*grad.get())[i] = 1 / (1 + (*x.get())[i] * (*x.get())[i]);
       }
    }
 };
@@ -856,15 +930,190 @@ struct tanh : func<> {
    using output_value_type = Y::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
       using type = typename Y::value_type;
       if constexpr (::ten::is_scalar_v<X>) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
          y.value() = std::tanh(x.value());
       }
       if constexpr (::ten::is_tensor_v<Y>) {
-         for (size_t i = 0; i < x.size(); i++) {
-            y[i] = std::tanh(static_cast<type>(x[i]));
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
          }
+         for (size_t i = 0; i < x->size(); i++) {
+            (*y.get())[i] = std::tanh(static_cast<type>((*x.get())[i]));
+         }
+      }
+   }
+};
+
+/// Exponential
+template <class X, class Y>
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+struct exp : func<> {
+   static constexpr std::string name() { return std::string("exp"); }
+
+   using value_type = X::value_type;
+   using output_type = Y;
+
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      using type = typename Y::value_type;
+      if constexpr (::ten::is_scalar_v<X>) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
+         y->value() = std::exp(x->value());
+      }
+      if constexpr (::ten::is_tensor_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
+         for (size_t i = 0; i < x->size(); i++) {
+            (*y.get())[i] = std::exp(static_cast<type>((*x.get())[i]));
+         }
+      }
+   }
+
+   template <class Gradient>
+      requires(::ten::is_scalar_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>();
+      }
+      grad->value() = std::exp(x->value());
+   }
+
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
+      for (size_t i = 0; i < x->size(); i++) {
+         (*grad.get())[i] = std::exp((*x.get())[i]);
+      }
+   }
+};
+
+/// Natural logarithm
+template <class X, class Y>
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+struct log : func<> {
+   static constexpr std::string name() { return std::string("log"); }
+
+   using value_type = X::value_type;
+   using output_type = Y;
+
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      using type = typename Y::value_type;
+      if constexpr (::ten::is_scalar_v<X>) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
+         y->value() = std::log(x->value());
+      }
+      if constexpr (::ten::is_tensor_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
+         for (size_t i = 0; i < x->size(); i++) {
+            (*y.get())[i] = std::log(static_cast<type>((*x.get())[i]));
+         }
+      }
+   }
+
+   template <class Gradient>
+      requires(::ten::is_scalar_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      grad->value() = value_type(1) / x->value();
+   }
+
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
+      for (size_t i = 0; i < x->size(); i++) {
+         (*grad.get())[i] = value_type(1) / (*x.get())[i];
+      }
+   }
+};
+
+/// Logarithm
+template <class X, class Y>
+   requires(((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+              ::ten::is_row<X>::value) &&
+             ::ten::is_tensor<Y>::value) ||
+            (::ten::is_scalar_v<X> && ::ten::is_scalar_v<Y>))
+struct log10 : func<> {
+   static constexpr std::string name() { return std::string("log10"); }
+   using value_type = X::value_type;
+   using output_type = Y;
+
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      using type = typename Y::value_type;
+      if constexpr (::ten::is_scalar_v<X>) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
+         y->value() = std::log10(x->value());
+      }
+      if constexpr (::ten::is_tensor_v<Y>) {
+         if (!y) {
+            y = std::make_shared<Y>(x->shape());
+         }
+         for (size_t i = 0; i < x->size(); i++) {
+            (*y.get())[i] = std::log10(static_cast<type>((*x.get())[i]));
+         }
+      }
+   }
+
+   template <class Gradient>
+      requires(::ten::is_scalar_v<Gradient>)
+   void gradient(std::shared_ptr<Gradient> &x,
+                 std::shared_ptr<Gradient> &grad) {
+      grad->value() = value_type(1) / (x->value() * std::log(value_type(10)));
+   }
+
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Gradient>(x->shape());
+      }
+      for (size_t i = 0; i < x->size(); i++) {
+         (*grad.get())[i] =
+             value_type(1) / ((*x.get())[i] * std::log(value_type(10)));
+      }
+   }
+};
+
+/// Floor
+template <class X, class Y>
+   requires((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+             ::ten::is_row<X>::value) &&
+            ::ten::is_tensor<Y>::value)
+struct floor : func<> {
+   static constexpr std::string name() { return std::string("floor"); }
+
+   using output_type = Y;
+
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
+      }
+      using type = typename Y::value_type;
+      for (size_t i = 0; i < x->size(); i++) {
+         (*y.get())[i] = std::floor(static_cast<type>((*x.get())[i]));
       }
    }
 
@@ -874,164 +1123,24 @@ struct tanh : func<> {
    }
 };
 
-/// Exponential
-template <class A, class B>
-   requires(((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-              ::ten::is_row<A>::value) &&
-             ::ten::is_tensor<B>::value) ||
-            (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
-struct exp : func<> {
-   static constexpr std::string name() { return std::string("exp"); }
-
-   using value_type = A::value_type;
-   using output_type = B;
-
-   void operator()(const A &a, B &b) {
-      using type = typename B::value_type;
-      if constexpr (::ten::is_scalar_v<A>) {
-         b.value() = std::exp(a.value());
-      }
-      if constexpr (::ten::is_tensor_v<B>) {
-         for (size_t i = 0; i < a.size(); i++) {
-            b[i] = std::exp(static_cast<type>(a[i]));
-         }
-      }
-   }
-
-   static typename B::shape_type
-   output_shape(const typename B::shape_type &right) {
-      return right;
-   }
-
-   void gradient(const value_type &x, value_type &y) { y = std::exp(x); }
-
-   void gradient(const A &a, B &b) {
-      for (size_t i = 0; i < a.size(); i++) {
-         b[i] = std::exp(a[i]);
-      }
-   }
-};
-
-/// Natural logarithm
-template <class A, class B>
-   requires(((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-              ::ten::is_row<A>::value) &&
-             ::ten::is_tensor<B>::value) ||
-            (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
-struct log : func<> {
-   static constexpr std::string name() { return std::string("log"); }
-
-   using value_type = A::value_type;
-   using output_type = B;
-
-   void operator()(const A &a, B &b) {
-      using type = typename B::value_type;
-      if constexpr (::ten::is_scalar_v<A>) {
-         b.value() = std::log(a.value());
-      }
-      if constexpr (::ten::is_tensor_v<B>) {
-         for (size_t i = 0; i < a.size(); i++) {
-            b[i] = std::log(static_cast<type>(a[i]));
-         }
-      }
-   }
-
-   static typename B::shape_type
-   output_shape(const typename B::shape_type &right) {
-      return right;
-   }
-
-   void gradient(const value_type &x, value_type &y) { y = value_type(1) / x; }
-
-   void gradient(const A &a, B &b) {
-      for (size_t i = 0; i < a.size(); i++) {
-         b[i] = value_type(1) / a[i];
-      }
-   }
-};
-
-/// Logarithm
-template <class A, class B>
-   requires(((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-              ::ten::is_row<A>::value) &&
-             ::ten::is_tensor<B>::value) ||
-            (::ten::is_scalar_v<A> && ::ten::is_scalar_v<B>))
-struct log10 : func<> {
-   static constexpr std::string name() { return std::string("log10"); }
-   using value_type = A::value_type;
-   using output_type = B;
-
-   void operator()(const A &a, B &b) {
-      using type = typename B::value_type;
-      if constexpr (::ten::is_scalar_v<A>) {
-         b.value() = std::log10(a.value());
-      }
-      if constexpr (::ten::is_tensor_v<B>) {
-         for (size_t i = 0; i < a.size(); i++) {
-            b[i] = std::log10(static_cast<type>(a[i]));
-         }
-      }
-   }
-
-   static typename B::shape_type
-   output_shape(const typename B::shape_type &right) {
-      return right;
-   }
-
-   void gradient(const value_type &x, value_type &y) {
-      y = value_type(1) / (x * std::log(value_type(10)));
-   }
-
-   void gradient(const A &a, B &b) {
-      for (size_t i = 0; i < a.size(); i++) {
-         b[i] = value_type(1) / (a[i] * std::log(value_type(10)));
-      }
-   }
-};
-
-/// Floor
-template <class A, class B>
-   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-             ::ten::is_row<A>::value) &&
-            ::ten::is_tensor<B>::value)
-struct floor : func<> {
-   static constexpr std::string name() { return std::string("floor"); }
-
-   using output_type = B;
-
-   void operator()(const A &a, B &b) {
-      using type = typename B::value_type;
-      for (size_t i = 0; i < a.size(); i++) {
-         b[i] = std::floor(static_cast<type>(a[i]));
-      }
-   }
-
-   static typename B::shape_type
-   output_shape(const typename B::shape_type &right) {
-      return right;
-   }
-};
-
 /// Ceil
-template <class A, class B>
-   requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-             ::ten::is_row<A>::value) &&
-            ::ten::is_tensor<B>::value)
+template <class X, class Y>
+   requires((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+             ::ten::is_row<X>::value) &&
+            ::ten::is_tensor<Y>::value)
 struct ceil : func<> {
    static constexpr std::string name() { return std::string("ceil"); }
 
-   using output_type = B;
+   using output_type = Y;
 
-   void operator()(const A &a, B &b) {
-      using type = typename B::value_type;
-      for (size_t i = 0; i < a.size(); i++) {
-         b[i] = std::ceil(static_cast<type>(a[i]));
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
       }
-   }
-
-   static typename B::shape_type
-   output_shape(const typename B::shape_type &right) {
-      return right;
+      using type = typename Y::value_type;
+      for (size_t i = 0; i < x->size(); i++) {
+         (*y.get())[i] = std::ceil(static_cast<type>((*x.get())[i]));
+      }
    }
 };
 
@@ -1068,8 +1177,20 @@ template <::ten::binary_operation Kind> struct binary_func {
          return s;
       }
 
-      void operator()(const X &left, const Y &right, Z &result) {
-         ::ten::kernels::binary_ops<Kind>(left, right, result);
+      void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
+                      std::shared_ptr<Z> &z) {
+         if (x->shape() != y->shape()) {
+            std::cerr << "ten::functional::binary_func<" << name()
+                      << ">, input have different shapes\n";
+         } else {
+            if (!z) {
+               z = std::make_shared<Z>(x->shape());
+            }
+            auto xarr = *x.get();
+            auto yarr = *y.get();
+            auto zarr = *z.get();
+            ::ten::kernels::binary_ops<Kind>(xarr, yarr, zarr);
+         }
       }
 
       void gradient_left(const X & /*x*/, const Y &y, Z &z) {
@@ -1116,10 +1237,10 @@ template <::ten::binary_operation Kind> struct binary_func {
    };
 };
 
-/// Binary function with scalar
+/// Yinary function with scalar
 template <::ten::binary_operation Kind> struct scalar_left_binary_func {
 
-   template <Scalar A, class B, class C>
+   template <Scalar X, class Y, class Z>
    struct func : ::ten::functional::func<> {
       static constexpr std::string name() {
          if constexpr (Kind == ::ten::binary_operation::add) {
@@ -1136,34 +1257,25 @@ template <::ten::binary_operation Kind> struct scalar_left_binary_func {
          }
       }
 
-      using output_type = C;
+      using output_type = Z;
 
-      static constexpr typename C::shape_type
-      output_shape( // const typename A::shape_type &left,
-          const typename B::shape_type &right) {
-         // FIXME Maybe check that left == right
-         typename C::shape_type s(right);
-         return s;
-      }
-
-      static auto output_shape(/*const A &a, */ const B &b) {
-         return b.shape();
-      }
-
-      void operator()(const A &left, const B &right, C &result) {
+      void operator()(const X &x, const Y &y, Z &z) {
+         if (!z) {
+            z = std::make_shared<Z>(y->shape());
+         }
          /// FIXME use broadcast
-         if constexpr (B::is_static()) {
-            B x;
-            for (size_t i = 0; i < x.size(); i++) {
-               x[i] = left.value();
+         if constexpr (Y::is_static()) {
+            Y xarr;
+            for (size_t i = 0; i < y->size(); i++) {
+               xarr[i] = x->value();
             }
-            ::ten::kernels::binary_ops<Kind>(x, right, result);
+            ::ten::kernels::binary_ops<Kind>(xarr, *y.get(), *z.get());
          } else {
-            B x(right.shape());
-            for (size_t i = 0; i < x.size(); i++) {
-               x[i] = left.value();
+            Y xarr(y->shape());
+            for (size_t i = 0; i < y->size(); i++) {
+               xarr[i] = x->value();
             }
-            ::ten::kernels::binary_ops<Kind>(x, right, result);
+            ::ten::kernels::binary_ops<Kind>(xarr, *y.get(), *z.get());
          }
       }
    };
@@ -1172,7 +1284,7 @@ template <::ten::binary_operation Kind> struct scalar_left_binary_func {
 /// Binary function with scalar right type
 template <::ten::binary_operation Kind> struct scalar_right_binary_func {
 
-   template <class A, Scalar B, class C>
+   template <class X, Scalar Y, class Z>
    struct func : ::ten::functional::func<> {
       static constexpr std::string name() {
          if constexpr (Kind == ::ten::binary_operation::add) {
@@ -1189,30 +1301,26 @@ template <::ten::binary_operation Kind> struct scalar_right_binary_func {
          }
       }
 
-      using output_type = C;
+      using output_type = Z;
 
-      static constexpr typename C::shape_type
-      output_shape(const typename A::shape_type &left) {
-         typename C::shape_type s(left);
-         return s;
-      }
-
-      static auto output_shape(const A &a) { return a.shape(); }
-
-      void operator()(const A &left, const B &right, C &result) {
+      void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
+                      std::shared_ptr<Z> &z) {
+         if (!z) {
+            z = std::make_shared<Z>(x->shape());
+         }
          /// FIXME use broadcast
-         if constexpr (A::is_static()) {
-            A x;
-            for (size_t i = 0; i < x.size(); i++) {
-               x[i] = right.value();
+         if constexpr (X::is_static()) {
+            X yarr;
+            for (size_t i = 0; i < x->size(); i++) {
+               yarr[i] = y->value();
             }
-            ::ten::kernels::binary_ops<Kind>(left, x, result);
+            ::ten::kernels::binary_ops<Kind>(*x.get(), yarr, *z.get());
          } else {
-            A x(left.shape());
-            for (size_t i = 0; i < x.size(); i++) {
-               x[i] = right.value();
+            X yarr(x->shape());
+            for (size_t i = 0; i < x->size(); i++) {
+               yarr[i] = y->value();
             }
-            ::ten::kernels::binary_ops<Kind>(left, x, result);
+            ::ten::kernels::binary_ops<Kind>(*x.get(), yarr, *z.get());
          }
       }
    };
@@ -1221,32 +1329,35 @@ template <::ten::binary_operation Kind> struct scalar_right_binary_func {
 template <class A, class B, class C> struct mul : func<> {};
 
 // vector * vector
-template <Vector A, Vector B, Vector C>
-struct mul<A, B, C> : ::ten::functional::func<> {
+template <Vector X, Vector Y, Vector Z>
+struct mul<X, Y, Z> : ::ten::functional::func<> {
    static constexpr std::string name() { return std::string("mul"); }
 
-   using output_type = C;
+   using output_type = Z;
 
-   static constexpr typename C::shape_type
-   output_shape(const typename A::shape_type &left,
-                const typename B::shape_type &right) {
-      // FIXME Maybe check that left == right
-      typename C::shape_type s(right);
-      return s;
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
+                   std::shared_ptr<Z> &z) {
+      if (x->shape() != y->shape()) {
+         std::cerr << "ten::functional::mul, different input shapes\n";
+      } else {
+         if (!z) {
+            z = std::make_shared<Z>(x->shape());
+         }
+         auto xarr = *(x.get());
+         auto yarr = *(y.get());
+         auto zarr = *(z.get());
+         ::ten::kernels::binary_ops<::ten::binary_operation::mul>(xarr, yarr,
+                                                                  zarr);
+      }
    }
 
-   void operator()(const A &left, const B &right, C &result) {
-      ::ten::kernels::binary_ops<::ten::binary_operation::mul>(left, right,
-                                                               result);
-   }
-
-   void gradient_left(const A & /*x*/, const B &y, C &z) {
+   void gradient_left(const X & /*x*/, const Y &y, Z &z) {
       for (size_t i = 0; i < z.size(); i++) {
          z[i] = y[i];
       }
    }
 
-   void gradient_right(const A &x, const B & /*y*/, C &z) {
+   void gradient_right(const X &x, const Y & /*y*/, Z &z) {
       for (size_t i = 0; i < z.size(); i++) {
          z[i] = x[i];
       }
@@ -1260,16 +1371,23 @@ template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> : func<> {
 
    using output_type = Z;
 
-   static typename Z::shape_type
-   output_shape(const typename X::shape_type &left,
-                const typename Y::shape_type &right) {
-      std::initializer_list<size_type> &&dims = {left.dim(0), right.dim(1)};
-      typename Z::shape_type s(std::move(dims));
-      return s;
-   }
-
-   void operator()(const X &left, const Y &right, Z &result) {
-      kernels::mul(left, right, result);
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
+                   std::shared_ptr<Z> &z) {
+      if (x->shape().dim(1) != y->shape().dim(0)) {
+         std::cerr
+             << "ten::functional::mul, incompatibles input matrices sizes\n";
+      } else {
+         if (!z) {
+            std::initializer_list<size_type> &&dims = {x->shape().dim(0),
+                                                       x->shape().dim(1)};
+            typename Z::shape_type zshape(std::move(dims));
+            z = std::make_shared<Z>(zshape);
+         }
+         auto xarr = *x.get();
+         auto yarr = *y.get();
+         auto zarr = *z.get();
+         kernels::mul(xarr, yarr, zarr);
+      }
    }
 
    void gradient_left(const X & /*x*/, const Y &y, Z &z) {
@@ -1318,22 +1436,28 @@ struct mul<X, Y, Z> : ::ten::functional::func<> {
 
    using output_type = Z;
 
-   static typename Z::shape_type
-   output_shape(const typename X::shape_type &left,
-                const typename Y::shape_type &right) {
-      std::initializer_list<size_type> &&dims = {left.dim(0)};
-      typename Z::shape_type s(std::move(dims));
-      return s;
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
+                   std::shared_ptr<Z> &z) {
+      if (x->shape().dim(1) != y->shape().dim(0)) {
+         std::cerr << "ten::functional::mul matrix vector incompatible input "
+                      "shapes\n";
+      } else {
+         if (!z) {
+            std::initializer_list<size_type> &&dims = {x->shape().dim(0)};
+            typename Z::shape_type zshape(std::move(dims));
+            z = std::make_shared<Z>(zshape);
+         }
+         auto xarr = *x.get();
+         auto yarr = *y.get();
+         auto zarr = *z.get();
+         kernels::mul(xarr, yarr, zarr);
+      }
    }
 
-   void operator()(const X &left, const Y &right, Z &result) {
-      kernels::mul(left, right, result);
-   }
-
-   template <class GradientType>
-      requires(::ten::is_matrix_v<GradientType>)
-   void gradient_left(const X & /*x*/, const Y &y, GradientType &z) {
-      if constexpr (GradientType::shape_type::is_dynamic()) {
+   template <class Gradient>
+      requires(::ten::is_matrix_v<Gradient>)
+   void gradient_left(const X & /*x*/, const Y &y, Gradient &z) {
+      if constexpr (Gradient::shape_type::is_dynamic()) {
          auto rows = z.shape().dim(0);
          auto cols = z.shape().dim(1);
          for (size_t i = 0; i < cols; i++) {
@@ -1347,10 +1471,10 @@ struct mul<X, Y, Z> : ::ten::functional::func<> {
       }
    }
 
-   template <class GradientType>
-      requires(::ten::is_vector_v<GradientType>)
-   void gradient_right(const X &x, const Y & /*y*/, GradientType &z) {
-      if constexpr (GradientType::shape_type::is_dynamic()) {
+   template <class Gradient>
+      requires(::ten::is_vector_v<Gradient>)
+   void gradient_right(const X &x, const Y & /*y*/, Gradient &z) {
+      if constexpr (Gradient::shape_type::is_dynamic()) {
          size_t j = 0;
          for (size_t i = 0; i < z.size(); i++) {
             z[i] = 0;
@@ -1364,56 +1488,27 @@ struct mul<X, Y, Z> : ::ten::functional::func<> {
 };
 
 // scalar * tensor
-template <Scalar A, Tensor B, Tensor C> struct mul<A, B, C> : func<> {
+template <Scalar X, Tensor Y, Tensor Z> struct mul<X, Y, Z> : func<> {
 
    static constexpr std::string name() { return std::string("mul"); }
 
-   using output_type = C;
+   using output_type = Z;
 
-   static typename C::shape_type
-   output_shape(const typename B::shape_type &right) {
-      return right;
-   }
-
-   void operator()(const A &left, const B &right, C &result) {
-      // TODO Broadcasting
-      size_t n = result.size();
-      using value_type = typename C::value_type;
-      for (size_t i = 0; i < n; i++) {
-         result[i] = static_cast<value_type>(left.value()) *
-                     static_cast<value_type>(right[i]);
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
+                   std::shared_ptr<Z> &z) {
+      if (!z) {
+         z = std::make_shared<Z>(y->shape());
       }
+      // FIXME Implement with broadcasting
+      Y xarr(y->shape());
+      for (size_t i = 0; i < xarr.size(); i++) {
+         xarr[i] = x->value();
+      }
+      auto yarr = *y.get();
+      auto zarr = *z.get();
+      ten::kernels::mul(xarr, yarr, zarr);
    }
 };
-
-/*
-// UnaryExpr * matrix
-template <UnaryExpr X, Matrix Y, Matrix Z>
-// FIXME REquire X::output_type to be a matrix
-struct mul<X, Y, Z>  {
-   // using evaluated_type = std::remove_cvref_t<X>::output_type;
-   //  matrix * matrix
-   template <Matrix A, Matrix B, Matrix C>
-   using func = mul<A, B, C>::template func<A, B, C>;
-};
-
-// BinaryExpr * matrix
-template <BinaryExpr X, Matrix Y, Matrix Z>
-// FIXME REquire X::output_type to be a matrix
-struct mul<X, Y, Z> {
-   // using evaluated_type = std::remove_cvref_t<X>::output_type;
-   //  matrix * matrix
-   template <Matrix A, Matrix B, Matrix C>
-   using func = mul<A, B, C>::template func<A, B, C>;
-};*/
-
-// UnaryExpr * tensor
-/*template <UnaryExpr X, Tensor Y, Tensor  Z>
-struct mul<X, Y, Z> {
-   using evaluated_type = std::remove_cvref_t<X>::evaluated_type::node_type;
-   template <Scalar A, Tensor B, Tensor C>
-   using func = mul<A, B, C>::template func<A, B, C>;
-};*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // Reshape
@@ -1424,19 +1519,19 @@ template <class Shape> struct static_reshape {
 
    static_assert(Shape::is_static(), "Shape must be static");
 
-   template <class A, class B>
-      requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-                ::ten::is_row<A>::value) &&
-               ::ten::is_tensor<B>::value)
-   struct func : ::ten::functional::func<> {
-      static_assert(A::is_static(),
-                    "A must be static tensor or static column or static row.");
+   template <class X, class Y>
+      requires((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+                ::ten::is_row<X>::value) &&
+               ::ten::is_tensor<Y>::value)
+   struct func : ::ten::functional::func<false, false> {
+      static_assert(X::is_static(),
+                    "X must be static tensor or static column or static row.");
 
-      using output_type = B;
+      using output_type = Y;
 
-      void operator()(const A &left, B &right) {
+      void operator()(std::shared_ptr<X> &left, std::shared_ptr<Y> &right) {
          // Does not copy the data
-         right = B(left.node(), left.format());
+         right = std::make_shared<Y>(Y(left->node(), left->format()));
       }
    };
 };
@@ -1448,15 +1543,15 @@ using dims_static_reshape = static_reshape<::ten::shape<__dims...>>;
 // Shape is the target shape type
 template <class Shape> struct dynamic_reshape {
 
-   template <class A, class B>
-      requires((::ten::is_tensor<A>::value || ::ten::is_column<A>::value ||
-                ::ten::is_row<A>::value) &&
-               ::ten::is_tensor<B>::value)
+   template <class X, class Y>
+      requires((::ten::is_tensor<X>::value || ::ten::is_column<X>::value ||
+                ::ten::is_row<X>::value) &&
+               ::ten::is_tensor<Y>::value)
    struct func : ::ten::functional::func<true, true> {
       static constexpr std::string name() { return std::string("reshape"); }
 
     public:
-      using output_type = B;
+      using output_type = Y;
 
     private:
       Shape _shape;
@@ -1465,13 +1560,9 @@ template <class Shape> struct dynamic_reshape {
       func(const Shape &s) : _shape(s) {}
       func(Shape &&s) : _shape(std::move(s)) {}
 
-      typename B::shape_type output_shape(const typename A::shape_type &) {
-         return _shape;
-      }
-
-      void operator()(const A &left, B &right) {
+      void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
          // Does not copy the data
-         right = B(left.node(), _shape, left.format());
+         y = std::make_shared<Y>(x->node(), _shape, x->format());
       }
    };
 };
@@ -1484,25 +1575,28 @@ template <class Shape> struct static_transpose {
    static_assert(Shape::is_static(), "Shape must be static.");
    static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
-   template <class A, class B> struct func : ::ten::functional::func<> {
+   template <class X, class Y> struct func : ::ten::functional::func<> {
       static constexpr std::string name() {
          return std::string("static_transpose");
       }
 
-      using output_type = B;
+      using output_type = Y;
 
-      void operator()(const A &left, B &right) {
-         using shape_type = B::shape_type;
+      void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+         if (!y) {
+            y = std::make_shared<Y>();
+         }
+         using shape_type = Y::shape_type;
          // FIXME use auto storage =
          // std::make_shared<storage_type>(storage_type());
-         // right = B(storage);
-         // right = B();
+         // right = Y(storage);
+         // right = Y();
          // copy transposed data
-         size_type m = A::shape_type::template static_dim<0>();
-         size_type n = A::shape_type::template static_dim<1>();
+         size_type m = X::shape_type::template static_dim<0>();
+         size_type n = X::shape_type::template static_dim<1>();
          for (size_type i = 0; i < n; i++) {
             for (size_type j = 0; j < m; j++) {
-               right(i, j) = left(j, i);
+               (*y.get())(i, j) = (*x.get())(j, i);
             }
          }
       }
@@ -1516,30 +1610,26 @@ using DimsStaticTranspose = StaticTranspose<::ten::Shape<cols, rows>>;*/
 // Dynamic transpose
 template <class Shape> struct dynamic_transpose {
 
-   template <class A, class B> struct func : ::ten::functional::func<true> {
+   template <class X, class Y> struct func : ::ten::functional::func<true> {
       static_assert(Shape::is_dynamic(), "Shape must be dynamic");
       // FIXME Currently defined only for matrices
       static_assert(Shape::rank() == 2, "Shape rank must be 2.");
 
       static constexpr std::string name() { return std::string("transpose"); }
 
-      using output_type = B;
+      using output_type = Y;
 
-      typename B::shape_type output_shape(const typename A::shape_type &s) {
-         typename B::shape_type res({s.dim(1), s.dim(0)});
-         return res;
-      }
-
-      void operator()(const A &left, B &right) {
-         using shape_type = B::shape_type;
-
-         size_type m = left.dim(0);
-         size_type n = left.dim(1);
-         // shape_type s({left.dim(1), left.dim(0)});
-         //
+      void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+         if (!y) {
+            typename Y::shape_type yshape(
+                {x->shape().dim(1), x->shape().dim(0)});
+            y = std::make_shared<Y>(yshape);
+         }
+         size_type m = x->shape().dim(0);
+         size_type n = x->shape().dim(1);
          for (size_type i = 0; i < n; i++) {
             for (size_type j = 0; j < m; j++) {
-               right(i, j) = left(j, i);
+               (*y.get())(i, j) = (*x.get())(j, i);
             }
          }
       }
@@ -1557,34 +1647,41 @@ struct relu : func<> {
    using value_type = X::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
-      if (x.size() != y.size()) {
-         std::cerr << "ten::functional::relu different sizes" << std::endl;
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
       }
-      for (size_t i = 0; i < y.size(); i++) {
-         if (x[i] >= 0) {
-            y[i] = x[i];
-         } else {
-            y[i] = 0;
+      if (x->size() != y->size()) {
+         std::cerr << "ten::functional::relu different sizes" << std::endl;
+      } else {
+         auto xarr = *x.get();
+         auto yarr = *y.get();
+         for (size_t i = 0; i < y->size(); i++) {
+            if (xarr[i] >= 0) {
+               yarr[i] = xarr[i];
+            } else {
+               yarr[i] = 0;
+            }
          }
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
-   }
-
-   void gradient(const X &x, Y &y) {
-      if (x.size() != y.size()) {
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Y> &grad) {
+      if (!grad) {
+         grad = std::make_shared<grad>(x->shape());
+      }
+      if (x->size() != grad->size()) {
          std::cerr << "ten::functional::relu gradient different sizes"
                    << std::endl;
-      }
-      for (size_t i = 0; i < y.size(); i++) {
-         if (x[i] >= 0) {
-            y[i] = 1;
-         } else {
-            y[i] = 0;
+      } else {
+         auto xarr = *x.get();
+         auto gradarr = *grad.get();
+         for (size_t i = 0; i < grad->size(); i++) {
+            if (xarr[i] >= 0) {
+               gradarr[i] = 1;
+            } else {
+               gradarr[i] = 0;
+            }
          }
       }
    }
@@ -1598,34 +1695,41 @@ struct leaky_relu : func<> {
    using value_type = X::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
-      if (x.size() != y.size()) {
-         std::cerr << "ten::functional::relu different sizes" << std::endl;
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
       }
-      for (size_t i = 0; i < y.size(); i++) {
-         if (x[i] <= 0) {
-            y[i] = value_type(0.01) * x[i];
-         } else {
-            y[i] = x[i];
+      if (x->size() != y->size()) {
+         std::cerr << "ten::functional::relu different sizes" << std::endl;
+      } else {
+         auto xarr = *x.get();
+         auto yarr = *y.get();
+         for (size_t i = 0; i < y->size(); i++) {
+            if (xarr[i] <= 0) {
+               yarr[i] = value_type(0.01) * xarr[i];
+            } else {
+               yarr[i] = xarr[i];
+            }
          }
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
-   }
-
-   void gradient(const X &x, Y &y) {
-      if (x.size() != y.size()) {
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Y> &grad) {
+      if (!grad) {
+         grad = std::make_shared<Y>(x->shape());
+      }
+      if (x.size() != grad.size()) {
          std::cerr << "ten::functional::relu gradient different sizes"
                    << std::endl;
-      }
-      for (size_t i = 0; i < y.size(); i++) {
-         if (x[i] < 0) {
-            y[i] = 0.01;
-         } else {
-            y[i] = 1;
+      } else {
+         auto xarr = *x.get();
+         auto gradarr = *grad.get();
+         for (size_t i = 0; i < grad->size(); i++) {
+            if (xarr[i] < 0) {
+               gradarr[i] = 0.01;
+            } else {
+               gradarr[i] = 1;
+            }
          }
       }
    }
@@ -1639,28 +1743,35 @@ struct sigmoid : func<> {
    using value_type = X::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, Y &y) {
-      if (x.size() != y.size()) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
+      }
+      if (x->size() != y->size()) {
          std::cerr << "ten::functional::relu different sizes" << std::endl;
-      }
-      for (size_t i = 0; i < y.size(); i++) {
-         y[i] = value_type(1) / (value_type(1) + std::exp(-x[i]));
+      } else {
+         auto xarr = *x.get();
+         auto yarr = *y.get();
+         for (size_t i = 0; i < y.size(); i++) {
+            yarr[i] = value_type(1) / (value_type(1) + std::exp(-xarr[i]));
+         }
       }
    }
 
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
-   }
-
-   void gradient(const X &x, Y &y) {
-      if (x.size() != y.size()) {
+   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
+      if (!y) {
+         y = std::make_shared<Y>(x->shape());
+      }
+      if (x->size() != y->size()) {
          std::cerr << "ten::functional::relu gradient different sizes"
                    << std::endl;
-      }
-      for (size_t i = 0; i < y.size(); i++) {
-         value_type e = std::exp(-x[i]);
-         y[i] = e / ((1 + e) * (1 + e));
+      } else {
+         auto xarr = *x.get();
+         auto yarr = *y.get();
+         for (size_t i = 0; i < x->size(); i++) {
+            value_type e = std::exp(-xarr[i]);
+            yarr[i] = e / ((1 + e) * (1 + e));
+         }
       }
    }
 };
@@ -1674,60 +1785,69 @@ struct mse : func<> {
    using value_type = X::value_type;
    using output_type = Y;
 
-   void operator()(const X &x, const Y &y, Z &z) {
+   void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
+                   std::shared_ptr<Z> &z) {
       if (x.size() != y.size()) {
          std::cerr << "ten::functional::mse different input sizes" << std::endl;
+      } else {
+         value_type res = 0;
+         for (size_t i = 0; i < x.size(); i++) {
+            value_type diff = (*x.get())[i] - (*y.get())[i];
+            res += diff * diff;
+         }
+         z->value() = res / x->size();
       }
-      value_type res = 0;
-      for (size_t i = 0; i < x.size(); i++) {
-         value_type diff = x[i] - y[i];
-         res += diff * diff;
-      }
-      z.value() = res / x.size();
    }
-
-   /*
-   static typename Y::shape_type
-   output_shape(const typename Y::shape_type &right) {
-      return right;
-   }
-   */
 
    // Compute dz/dx in grad
-   template <class GradientType>
-      requires(::ten::is_vector_v<GradientType> ||
-               ::ten::is_matrix_v<GradientType>)
-   void gradient_left(const X &x, const Y &y, GradientType &grad) {
-      if (x.size() != y.size()) {
+   // FIXME Support static vector and static matrix
+   template <class Gradient>
+      requires(::ten::is_vector_v<Gradient> || ::ten::is_matrix_v<Gradient>)
+   void gradient_left(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
+                      std::shared_ptr<Gradient> &grad) {
+      if (x->size() != y->size()) {
          std::cerr << "ten::functional::mse gradient different sizes"
                    << std::endl;
-      }
-      if (x.size() != grad.size()) {
-         std::cerr << "ten::functional::mse gradient size should be equal to "
-                   << x.size() << std::endl;
-      }
-      using T = GradientType::value_type;
-      for (size_t i = 0; i < grad.size(); i++) {
-         grad[i] = 2 * (x[i] - y[i]) / T(grad.size());
+      } else {
+         if (x->size() != grad->size()) {
+            std::cerr
+                << "ten::functional::mse gradient size should be equal to "
+                << x->size() << std::endl;
+         }
+         if (!grad) {
+            grad = std::make_shared<Gradient>(x->shape());
+         }
+         using T = Gradient::value_type;
+         auto xarr = *x.get();
+         auto yarr = *y.get();
+         for (size_t i = 0; i < grad->size(); i++) {
+            (*grad.get())[i] = 2 * (xarr[i] - yarr[i]) / T(grad->size());
+         }
       }
    }
 
    // Compute dz/dy in grad
-   template <class GradientType>
-      requires(::ten::is_vector_v<GradientType> ||
-               ::ten::is_matrix_v<GradientType>)
-   void gradient_right(const X &x, const Y &y, GradientType &grad) {
-      if (x.size() != y.size()) {
+   // FIXME Support static vector and static matrix
+   template <class Gradient>
+      requires(::ten::is_vector_v<Gradient> || ::ten::is_matrix_v<Gradient>)
+   void gradient_right(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
+                       std::shared_ptr<Gradient> &grad) {
+      if (x->size() != y->size()) {
          std::cerr << "ten::functional::mse gradient different sizes"
                    << std::endl;
-      }
-      if (x.size() != grad.size()) {
-         std::cerr << "ten::functional::mse gradient size should be equal to "
-                   << x.size() << std::endl;
-      }
-      using T = GradientType::value_type;
-      for (size_t i = 0; i < grad.size(); i++) {
-         grad[i] = -2 * (x[i] - y[i]) / T(grad.size());
+      } else {
+         if (x->size() != grad->size()) {
+            std::cerr
+                << "ten::functional::mse gradient size should be equal to "
+                << x->size() << std::endl;
+         } else {
+            using T = Gradient::value_type;
+            auto xarr = *x.get();
+            auto yarr = *y.get();
+            for (size_t i = 0; i < grad->size(); i++) {
+               (*grad.get())[i] = -2 * (xarr[i] - yarr[i]) / T(grad->size());
+            }
+         }
       }
    }
 };

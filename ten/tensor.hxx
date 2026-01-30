@@ -1111,8 +1111,6 @@ class ranked_tensor final
       return *this;
    }
 
-   // TODO Iterators
-
    /// Get the dimension at index
    /// FIXME Requires only for dynamic dim
    [[nodiscard]] size_type dim(size_type index) const {
@@ -1196,7 +1194,6 @@ class ranked_tensor final
 
    // Returns the shared ptr to the node
    [[nodiscard]] std::shared_ptr<node_type> node() const { return _node; }
-
    /// Get the data
    [[nodiscard]] const T *data() const { return _node.get()->data(); }
 
@@ -4197,15 +4194,16 @@ template <Expr ExprType> auto sigmoid(ExprType &&expr) {
    return unary_expr<expr_type, output_type, functional::sigmoid>(expr);
 }
 
-template<Expr LeftExpr, Expr RightExpr>
-auto mse(LeftExpr&& left, RightExpr&& right) {
+template <Expr LeftExpr, Expr RightExpr>
+auto mse(LeftExpr &&left, RightExpr &&right) {
    using left_expr_type = std::remove_cvref_t<LeftExpr>;
    using right_expr_type = std::remove_cvref_t<RightExpr>;
    using left_value_type = left_expr_type::value_type;
    using right_value_type = left_expr_type::value_type;
    static_assert(std::is_same_v<left_value_type, right_value_type>);
    using output_type = ten::scalar<left_value_type>;
-   return binary_expr<left_expr_type, right_expr_type, output_type, functional::mse>(left, right);
+   return binary_expr<left_expr_type, right_expr_type, output_type,
+                      functional::mse>(left, right);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
