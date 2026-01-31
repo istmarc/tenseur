@@ -1169,14 +1169,6 @@ template <::ten::binary_operation Kind> struct binary_func {
 
       using output_type = Z;
 
-      static constexpr typename Z::shape_type
-      output_shape(const typename X::shape_type & /*left*/,
-                   const typename Y::shape_type &right) {
-         // FIXME Maybe check that left == right
-         typename Z::shape_type s(right);
-         return s;
-      }
-
       void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
                       std::shared_ptr<Z> &z) {
          if (x->shape() != y->shape()) {
@@ -1237,7 +1229,7 @@ template <::ten::binary_operation Kind> struct binary_func {
    };
 };
 
-/// Yinary function with scalar
+/// Binary function with scalar
 template <::ten::binary_operation Kind> struct scalar_left_binary_func {
 
    template <Scalar X, class Y, class Z>
@@ -1259,7 +1251,8 @@ template <::ten::binary_operation Kind> struct scalar_left_binary_func {
 
       using output_type = Z;
 
-      void operator()(const X &x, const Y &y, Z &z) {
+      void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
+                      std::shared_ptr<Z> &z) {
          if (!z) {
             z = std::make_shared<Z>(y->shape());
          }
@@ -1383,10 +1376,7 @@ template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> : func<> {
             typename Z::shape_type zshape(std::move(dims));
             z = std::make_shared<Z>(zshape);
          }
-         auto xarr = *x.get();
-         auto yarr = *y.get();
-         auto zarr = *z.get();
-         kernels::mul(xarr, yarr, zarr);
+         kernels::mul(*x.get(), *y.get(), *z.get());
       }
    }
 
