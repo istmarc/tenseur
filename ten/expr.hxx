@@ -96,6 +96,25 @@ template <BinaryExpr ExprType> static inline auto input_value(ExprType &expr) {
    return expr.value();
 }
 
+// Input node
+template <Scalar T> static inline auto input_node(std::shared_ptr<T> &t) {
+   return t;
+}
+
+template <Tensor T> static inline auto input_node(std::shared_ptr<T> &t) {
+   return t;
+}
+
+template <UnaryExpr ExprType>
+static inline auto input_node(std::shared_ptr<ExprType> &expr) {
+   return expr->value_node();
+}
+
+template <BinaryExpr ExprType>
+static inline auto input_node(std::shared_ptr<ExprType> &expr) {
+   return expr->value_node();
+}
+
 } // namespace ten::details
 
 namespace ten {
@@ -215,7 +234,7 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
 
    /// Return the node to the evaluated expression of type ten::scalar or
    /// ten::tensor
-   [[nodiscard]] inline std::shared_ptr<Output> value_node() {
+   [[nodiscard]] inline std::shared_ptr<Output> &value_node() {
       return _node->_value;
    }
 
@@ -245,10 +264,8 @@ class unary_expr : ten::expr<unary_expr<Input, Output, Func, Args...>> {
 
       if constexpr (::ten::is_unary_expr_v<input_type> ||
                     ::ten::is_binary_expr_v<input_type>) {
-         // auto input = _node->_input->value();
-         // auto output = _node->value();
-         //_node->_func.value()(input, output);
-         _node->_func.value()(_node->_input->value_node(), _node->value_node());
+         auto input_node = _node->input_ > value_node();
+         _node->_func.value()(input_node, _node->_value);
       }
 
       // This expression has been evaluated
@@ -415,7 +432,7 @@ struct binary_node {
    [[nodiscard]] Output &value() const { return *_value.get(); }
 
    /// return a std::shared_ptr to the output
-   [[nodiscard]] std::shared_ptr<Output> value_node() const { return _value; }
+   [[nodiscard]] std::shared_ptr<Output> &value_node() const { return _value; }
 
    /// Construct a binary noe if the function doesn't take additional
    /// parameters
@@ -550,7 +567,7 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
 
    /// Returns the the std::shared_ptr to the evaluated expression of type
    /// ten::scalar or ten::tensor
-   [[nodiscard]] output_type &value_node() { return _node->_value; }
+   [[nodiscard]] std::shared_ptr<Output> value_node() { return _node->_value; }
 
    /// Evaluate a binary expression
    /// If the input expression has not been evaluated, it will evaluate it
@@ -576,126 +593,10 @@ class binary_expr : ten::expr<binary_expr<Left, Right, Output, Func, Args...>> {
          }
       }
 
-      // Allocate the output if it has not been allocated yet
-      /*
-      if (!_node->_value) {
-         if constexpr (::ten::is_scalar_v<Output>) {
-            _node->_value = std::make_shared<Output>();
-         } else if constexpr (Output::is_static()) {
-            _node->_value = std::make_shared<Output>();
-         } else if constexpr (::ten::is_unary_expr<Left>::value &&
-                              ::ten::is_unary_expr<Right>::value) {
-            // Left and Right are unary_expr
-            // They can't be both scalars
-            if constexpr (::ten::is_scalar<left_type>::value &&
-                          !::ten::is_scalar<right_type>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->right())));
-            }
-            if constexpr (!::ten::is_scalar<left_type>::value &&
-                          ::ten::is_scalar<right_type>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left())));
-            }
-            if constexpr (!::ten::is_scalar<left_type>::value &&
-                          !::ten::is_scalar<right_type>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left()),
-                   ::ten::details::input_shape(_node->right())));
-            }
-         } else if constexpr (::ten::is_binary_expr<Left>::value &&
-                              ::ten::is_binary_expr<Right>::value) {
-            // Left and Right are binary_expr
-            if constexpr (::ten::is_scalar<left_type>::value &&
-                          !::ten::is_scalar<right_type>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->right())));
-            }
-            if constexpr (!::ten::is_scalar<left_type>::value &&
-                          ::ten::is_scalar<right_type>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left())));
-            }
-            if constexpr (!::ten::is_scalar<left_type>::value &&
-                          !::ten::is_scalar<right_type>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left()),
-                   ::ten::details::input_shape(_node->right())));
-            }
-         } else if constexpr (::ten::is_unary_expr<Left>::value &&
-                              !::ten::is_unary_expr<Right>::value &&
-                              !::ten::is_binary_expr<Right>::value) {
-            // Left is unary expr and right is tensor or scalar
-            if constexpr (::ten::is_scalar<left_type>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->right())));
-            } else {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left()),
-                   ::ten::details::input_shape(_node->right())));
-            }
-         } else if constexpr (::ten::is_binary_expr_v<Left> &&
-                              !ten::is_unary_expr_v<Right> &&
-                              !::ten::is_binary_expr_v<Right>) {
-            // Left is binary expr and right is tensor or scalar
-            if constexpr (::ten::is_scalar<left_type>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->right())));
-            } else {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left()),
-                   ::ten::details::input_shape(_node->right())));
-            }
-         } else if constexpr (!::ten::is_unary_expr<Left>::value &&
-                              !::ten::is_binary_expr<Left>::value &&
-                              ::ten::is_unary_expr<Right>::value) {
-            // Left is tensor or scalar and Right is unary_expr
-            if constexpr (::ten::is_scalar<right_type>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left())));
-            } else {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left()),
-                   ::ten::details::input_shape(_node->right())));
-            }
-         } else if constexpr (!::ten::is_unary_expr<Left>::value &&
-                              !::ten::is_binary_expr<Left>::value &&
-                              ten::is_binary_expr<Right>::value) {
-            // Left is tensor or scalar and right is binary_expr
-            if constexpr (::ten::is_scalar<right_type>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left())));
-            } else {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left()),
-                   ::ten::details::input_shape(_node->right())));
-            }
-         } else {
-            // Left and right are both tensor or scalar
-            if constexpr (!::ten::is_scalar<Left>::value &&
-                          !::ten::is_scalar<Right>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left()),
-                   ::ten::details::input_shape(_node->right())));
-            }
-            if constexpr (::ten::is_scalar<Left>::value &&
-                          !::ten::is_scalar<Right>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->right())));
-            }
-            if constexpr (!::ten::is_scalar<Left>::value &&
-                          ::ten::is_scalar<Right>::value) {
-               _node->_value = std::make_shared<Output>(func_type::output_shape(
-                   ::ten::details::input_shape(_node->left())));
-            }
-         }
-      }
-      */
-
       // Call the function
-      _node->_func.value()(::ten::details::input_value(_node->left()),
-                           ::ten::details::input_value(_node->right()),
-                           _node->value());
+      auto left_node = ::ten::details::input_node(_node->_left);
+      auto right_node = ::ten::details::input_node(_node->_right);
+      _node->_func.value()(left_node, right_node, _node->_value);
 
       // This expression has been evaluated
       _node->_evaluated = true;
