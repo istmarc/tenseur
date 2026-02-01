@@ -1331,17 +1331,26 @@ struct mul<X, Y, Z> : ::ten::functional::func<> {
 
    void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
                    std::shared_ptr<Z> &z) {
-      if (x->shape() != y->shape()) {
-         std::cerr << "ten::functional::mul, different input shapes\n";
-      } else {
-         if (!z) {
-            z = std::make_shared<Z>(x->shape());
+      if constexpr (Z::is_dynamic()) {
+         if (x->shape() != y->shape()) {
+            std::cerr << "ten::functional::mul, different input shapes\n";
+         } else {
+            if (!z) {
+               z = std::make_shared<Z>(x->shape());
+            }
+            ::ten::kernels::binary_ops<::ten::binary_operation::mul>(
+                *x.get(), *y.get(), *z.get());
          }
-         auto xarr = *(x.get());
-         auto yarr = *(y.get());
-         auto zarr = *(z.get());
-         ::ten::kernels::binary_ops<::ten::binary_operation::mul>(xarr, yarr,
-                                                                  zarr);
+      } else {
+         if (!std::is_same_v<typename X::shape_type, typename Y::shape_type>) {
+            std::cerr << "ten::functional::mul, different input shapes\n";
+         } else {
+            if (!z) {
+               z = std::make_shared<Z>();
+            }
+            ::ten::kernels::binary_ops<::ten::binary_operation::mul>(
+                *x.get(), *y.get(), *z.get());
+         }
       }
    }
 
@@ -1371,6 +1380,7 @@ struct mul<X, Y, Z> : ::ten::functional::func<> {
 };
 
 // matrix * matrix
+// FIXME Support Multiplication between static matrices
 template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> : func<> {
 
    static constexpr std::string name() { return std::string("mul"); }

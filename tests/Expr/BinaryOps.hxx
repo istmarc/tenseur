@@ -87,7 +87,7 @@ TEST(Div, Vector_Vector) {
 
 TEST(Div, StaticVector_StaticVector) {
    constexpr size_t size = 10;
-   ten::svector<float, size> a = range<ten::svector<float, size>>();
+   ten::svector<float, size> a = range<ten::svector<float, size>>(1.);
    ten::svector<float, size> b;
    for (size_t i = 0; i < size; i++) {
       b[i] = i + 1;
