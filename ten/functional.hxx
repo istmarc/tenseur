@@ -242,7 +242,11 @@ struct sqrt : func<> {
       if constexpr (::ten::is_tensor_v<X> || ::ten::is_column_v<X> ||
                     ::ten::is_row_v<X>) {
          if (!y) {
-            y = std::make_shared<Y>(x->shape());
+            if constexpr (Y::is_dynamic()) {
+               y = std::make_shared<Y>(x->shape());
+            } else {
+               y = std::make_shared<Y>();
+            }
          }
          for (size_t i = 0; i < x->size(); i++) {
             (*y.get())[i] =
@@ -343,8 +347,8 @@ struct abs : func<> {
          if (!y) {
             y = std::make_shared<Y>(x->shape());
          }
-         for (size_t i = 0; i < x.size(); i++) {
-            y[i] = std::abs(static_cast<value_type>(x[i]));
+         for (size_t i = 0; i < x->size(); i++) {
+            (*y.get())[i] = std::abs(static_cast<value_type>((*x.get())[i]));
          }
       }
    }
@@ -449,11 +453,11 @@ struct min : func<> {
          y = std::make_shared<Y>();
       }
       using type = typename X::value_type;
-      type res = x[0];
-      for (size_t i = 1; i < x.size(); i++) {
-         res = std::min(x[i], res);
+      type res = (*x.get())[0];
+      for (size_t i = 1; i < x->size(); i++) {
+         res = std::min((*x.get())[i], res);
       }
-      y = res;
+      y->value() = res;
    }
 };
 
@@ -1139,17 +1143,30 @@ template <::ten::binary_operation Kind> struct binary_func {
 
       void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
                       std::shared_ptr<Z> &z) {
-         if (x->shape() != y->shape()) {
-            std::cerr << "ten::functional::binary_func<" << name()
-                      << ">, input have different shapes\n";
-         } else {
-            if (!z) {
-               z = std::make_shared<Z>(x->shape());
+         if constexpr (Z::is_dynamic()) {
+            if (x->shape() != y->shape()) {
+               std::cerr << "ten::functional::binary_func<" << name()
+                         << ">, input have different shapes\n";
+            } else {
+               if (!z) {
+                  z = std::make_shared<Z>(x->shape());
+               }
+               auto xarr = *x.get();
+               auto yarr = *y.get();
+               auto zarr = *z.get();
+               ::ten::kernels::binary_ops<Kind>(xarr, yarr, zarr);
             }
-            auto xarr = *x.get();
-            auto yarr = *y.get();
-            auto zarr = *z.get();
-            ::ten::kernels::binary_ops<Kind>(xarr, yarr, zarr);
+         } else {
+            if (!std::is_same_v<typename X::shape_type,
+                                typename Y::shape_type>) {
+               std::cerr << "ten::functional::binary_func<" << name()
+                         << ">, input have different shapes\n";
+            } else {
+               if (!z) {
+                  z = std::make_shared<Z>();
+               }
+               ::ten::kernels::binary_ops<Kind>(*y.get(), *y.get(), *z.get());
+            }
          }
       }
 
@@ -1756,7 +1773,7 @@ struct sigmoid : func<> {
       } else {
          auto xarr = *x.get();
          auto yarr = *y.get();
-         for (size_t i = 0; i < y.size(); i++) {
+         for (size_t i = 0; i < y->size(); i++) {
             yarr[i] = value_type(1) / (value_type(1) + std::exp(-xarr[i]));
          }
       }
@@ -1768,11 +1785,9 @@ struct sigmoid : func<> {
       if (x.shape() != grad.shape()) {
          std::cerr << "ten::functional::relu gradient different shapes.\n";
       } else {
-         auto xarr = *x.get();
-         auto gradarr = *grad.get();
          for (size_t i = 0; i < x.size(); i++) {
-            value_type e = std::exp(-xarr[i]);
-            gradarr[i] = e / ((1 + e) * (1 + e));
+            value_type e = std::exp(-x[i]);
+            grad[i] = e / ((1 + e) * (1 + e));
          }
       }
    }
@@ -1789,11 +1804,14 @@ struct mse : func<> {
 
    void operator()(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
                    std::shared_ptr<Z> &z) {
-      if (x.size() != y.size()) {
-         std::cerr << "ten::functional::mse different input sizes" << std::endl;
+      if (x->size() != y->size()) {
+         std::cerr << "ten::functional::mse different input sizes.\n";
       } else {
+         if (!z) {
+            z = std::make_shared<Z>();
+         }
          value_type res = 0;
-         for (size_t i = 0; i < x.size(); i++) {
+         for (size_t i = 0; i < x->size(); i++) {
             value_type diff = (*x.get())[i] - (*y.get())[i];
             res += diff * diff;
          }
@@ -1806,7 +1824,7 @@ struct mse : func<> {
    template <class Gradient>
       requires(::ten::is_vector_v<Gradient> || ::ten::is_matrix_v<Gradient>)
    void gradient_left(X &x, Y &y, Gradient &grad) {
-      if (x->size() != y->size()) {
+      if (x.size() != y.size()) {
          std::cerr << "ten::functional::mse gradient different sizes.\n";
       } else {
          if (x.size() != grad.size()) {
@@ -1826,7 +1844,7 @@ struct mse : func<> {
    template <class Gradient>
       requires(::ten::is_vector_v<Gradient> || ::ten::is_matrix_v<Gradient>)
    void gradient_right(X &x, Y &y, Gradient &grad) {
-      if (x->size() != y.size()) {
+      if (x.size() != y.size()) {
          std::cerr << "ten::functional::mse gradient different sizes.\n";
       } else {
          if (x.size() != grad.size()) {
@@ -1835,7 +1853,7 @@ struct mse : func<> {
                 << x.size() << "\n";
          } else {
             using T = Gradient::value_type;
-            for (size_t i = 0; i < grad->size(); i++) {
+            for (size_t i = 0; i < grad.size(); i++) {
                grad[i] = -2 * (x[i] - y[i]) / T(grad.size());
             }
          }

@@ -108,15 +108,15 @@ void backward_chain(GradientF &gradf, GradientG &gradg) {
                // != 0
             } else if (rowsf > rowsg && colsf == 1 && colsg == 1 &&
                        (rowsf % rowsg != 0)) {
-               size_t j = 0;
-               for (size_t i = 0; i < rowsf; i++) {
-                  if (j >= rowsg) {
-                     j = 0;
-                  }
-                  gradf[i] *= gradg[j];
-                  j++;
+               using value_type = gtype::value_type;
+               value_type mean = 0;
+               for (size_t i = 0; i < gradg.size(); i++) {
+                  mean += gradg[i];
                }
-
+               mean /= value_type(gradg.size());
+               for (size_t i = 0; i < gradf.size(); i++) {
+                  gradf[i] *= mean;
+               }
                // [rows x colsf] x [rows x 1] with colsf > 1
             } else if (rowsf == rowsg && colsf > 1 && colsg == 1) {
                for (size_t i = 0; i < colsf; i++) {

@@ -435,7 +435,7 @@ struct binary_node {
    [[nodiscard]] Output &value() const { return *_value.get(); }
 
    /// return a std::shared_ptr to the output
-   [[nodiscard]] std::shared_ptr<Output> &value_node() const { return _value; }
+   [[nodiscard]] std::shared_ptr<Output> value_node() const { return _value; }
 
    /// Construct a binary noe if the function doesn't take additional
    /// parameters
