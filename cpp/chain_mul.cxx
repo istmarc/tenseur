@@ -15,4 +15,8 @@ int main() {
    auto a = m * x;
    std::cout << a.eval() << std::endl;
 
+   ten::scalar<float> n = ten::max(x);
+   auto b = n + x;
+   std::cout << b.eval() << std::endl;
 }
+
