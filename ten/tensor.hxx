@@ -77,6 +77,8 @@ template <typename Derived> class expr {
 
 // Add two expr
 template <Expr LeftExpr, Expr RightExpr>
+   requires(!ten::is_scalar_v<std::remove_cvref_t<LeftExpr>> &&
+            !ten::is_scalar_v<std::remove_cvref<RightExpr>>)
 auto operator+(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
@@ -91,37 +93,102 @@ auto operator+(LeftExpr &&left, RightExpr &&right) {
 }
 
 template <typename T, Expr E>
-   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
-            std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<std::remove_cvref_t<T>> ||
+            ten::is_complex<std::remove_cvref_t<T>>::value ||
+            std::is_integral_v<std::remove_cvref_t<T>>)
 auto operator+(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   using L = ::ten::scalar<T>;
+   using L = ::ten::scalar<std::remove_cvref_t<T>>;
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   auto s = ::ten::scalar<T>(scalar);
+   auto s = L(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_left_binary_func<
                                  ::ten::binary_operation::add>::func>(s, expr);
 }
 
 template <Expr E, typename T>
-   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
-            std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<std::remove_cvref_t<T>> ||
+            ten::is_complex<std::remove_cvref_t<T>>::value ||
+            std::is_integral_v<std::remove_cvref_t<T>>)
 auto operator+(E &&expr, T &&scalar) {
    using L = std::remove_cvref_t<E>;
-   using R = ::ten::scalar<T>;
+   using R = ::ten::scalar<std::remove_cvref_t<T>>;
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   auto s = ::ten::scalar<T>(scalar);
+   auto s = R(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_right_binary_func<
                                  ::ten::binary_operation::add>::func>(expr, s);
 }
 
+// Add an expression an a ten::scalar
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator+(ten::scalar<T> &scalar, E &&expr) {
+   using R = std::remove_cvref_t<E>;
+   using L = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::add>::func>(scalar,
+                                                                      expr);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator+(ten::scalar<T> &&scalar, E &&expr) {
+   using R = std::remove_cvref_t<E>;
+   using L = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::add>::func>(scalar,
+                                                                      expr);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator+(E &&expr, ten::scalar<T> &scalar) {
+   using L = std::remove_cvref_t<E>;
+   using R = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::add>::func>(expr,
+                                                                      scalar);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator+(E &&expr, ten::scalar<T> &&scalar) {
+   using L = std::remove_cvref_t<E>;
+   using R = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::add>::func>(expr,
+                                                                      scalar);
+}
+
 // Substract two expressions
 template <Expr LeftExpr, Expr RightExpr>
+   requires(!::ten::is_scalar_v<std::remove_cvref_t<LeftExpr>> &&
+            !::ten::is_scalar_v<std::remove_cvref_t<RightExpr>>)
 auto operator-(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
@@ -136,37 +203,102 @@ auto operator-(LeftExpr &&left, RightExpr &&right) {
 }
 
 template <typename T, Expr E>
-   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
-            std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<std::remove_cvref_t<T>> ||
+            ten::is_complex<std::remove_cvref_t<T>>::value ||
+            std::is_integral_v<std::remove_cvref_t<T>>)
 auto operator-(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   using L = ::ten::scalar<T>;
+   using L = ::ten::scalar<std::remove_cvref_t<T>>;
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   auto s = ::ten::scalar<T>(scalar);
+   auto s = L(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_left_binary_func<
                                  ::ten::binary_operation::sub>::func>(s, expr);
 }
 
 template <Expr E, typename T>
-   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
-            std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<std::remove_cvref_t<T>> ||
+            ten::is_complex<std::remove_cvref_t<T>>::value ||
+            std::is_integral_v<std::remove_cvref_t<T>>)
 auto operator-(E &&expr, T &&scalar) {
    using L = std::remove_cvref_t<E>;
-   using R = ::ten::scalar<T>;
+   using R = ::ten::scalar<std::remove_cvref_t<T>>;
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   auto s = ::ten::scalar<T>(scalar);
+   auto s = R(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_right_binary_func<
                                  ::ten::binary_operation::sub>::func>(expr, s);
 }
 
+// Substract an expression an a ten::scalar
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator-(ten::scalar<T> &scalar, E &&expr) {
+   using R = std::remove_cvref_t<E>;
+   using L = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::sub>::func>(scalar,
+                                                                      expr);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator-(ten::scalar<T> &&scalar, E &&expr) {
+   using R = std::remove_cvref_t<E>;
+   using L = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::sub>::func>(scalar,
+                                                                      expr);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator-(E &&expr, ten::scalar<T> &scalar) {
+   using L = std::remove_cvref_t<E>;
+   using R = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::sub>::func>(expr,
+                                                                      scalar);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator-(E &&expr, ten::scalar<T> &&scalar) {
+   using L = std::remove_cvref_t<E>;
+   using R = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::sub>::func>(expr,
+                                                                      scalar);
+}
+
 // Multiply two expressions
 template <Expr LeftExpr, Expr RightExpr>
+   requires(!::ten::is_scalar_v<std::remove_cvref_t<LeftExpr>> &&
+            !::ten::is_scalar_v<std::remove_cvref_t<RightExpr>>)
 auto operator*(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
@@ -180,36 +312,101 @@ auto operator*(LeftExpr &&left, RightExpr &&right) {
 }
 
 template <typename T, Expr E>
-   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
-            std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<std::remove_cvref_t<T>> ||
+            ten::is_complex<std::remove_cvref_t<T>>::value ||
+            std::is_integral_v<std::remove_cvref_t<T>>)
 auto operator*(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   using L = ::ten::scalar<T>;
+   using L = ::ten::scalar<std::remove_cvref_t<T>>;
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   auto s = ::ten::scalar<T>(scalar);
+   auto s = L(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_left_binary_func<
                                  ::ten::binary_operation::mul>::func>(s, expr);
 }
 template <Expr E, typename T>
-   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
-            std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<std::remove_cvref_t<T>> ||
+            ten::is_complex<std::remove_cvref_t<T>>::value ||
+            std::is_integral_v<std::remove_cvref_t<T>>)
 auto operator*(E &&expr, T &&scalar) {
    using L = std::remove_cvref_t<E>;
-   using R = ::ten::scalar<T>;
+   using R = ::ten::scalar<std::remove_cvref_t<T>>;
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   auto s = ::ten::scalar<T>(scalar);
+   auto s = R(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_right_binary_func<
                                  ::ten::binary_operation::mul>::func>(expr, s);
 }
 
+// Multiplyan expression an a ten::scalar
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator*(ten::scalar<T> &scalar, E &&expr) {
+   using R = std::remove_cvref_t<E>;
+   using L = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::mul>::func>(scalar,
+                                                                      expr);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator*(ten::scalar<T> &&scalar, E &&expr) {
+   using R = std::remove_cvref_t<E>;
+   using L = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::mul>::func>(scalar,
+                                                                      expr);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator*(E &&expr, ten::scalar<T> &scalar) {
+   using L = std::remove_cvref_t<E>;
+   using R = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::mul>::func>(expr,
+                                                                      scalar);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator*(E &&expr, ten::scalar<T> &&scalar) {
+   using L = std::remove_cvref_t<E>;
+   using R = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::mul>::func>(expr,
+                                                                      scalar);
+}
+
 // Divide two expressions
 template <Expr LeftExpr, Expr RightExpr>
+   requires(!::ten::is_scalar_v<std::remove_cvref_t<LeftExpr>> &&
+            !::ten::is_scalar_v<std::remove_cvref_t<RightExpr>>)
 auto operator/(LeftExpr &&left, RightExpr &&right) {
    using L = std::remove_cvref_t<LeftExpr>;
    using R = std::remove_cvref_t<RightExpr>;
@@ -224,32 +421,95 @@ auto operator/(LeftExpr &&left, RightExpr &&right) {
 }
 
 template <typename T, Expr E>
-   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
-            std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<std::remove_cvref_t<T>> ||
+            ten::is_complex<std::remove_cvref_t<T>>::value ||
+            std::is_integral_v<std::remove_cvref_t<T>>)
 auto operator/(T &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
-   using L = ::ten::scalar<T>;
+   using L = ::ten::scalar<std::remove_cvref_t<T>>;
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   auto s = ::ten::scalar<T>(scalar);
+   auto s = L(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_left_binary_func<
                                  ::ten::binary_operation::div>::func>(s, expr);
 }
 template <Expr E, typename T>
-   requires(::std::is_floating_point_v<T> || ten::is_complex<T>::value ||
-            std::is_integral_v<T>)
+   requires(::std::is_floating_point_v<std::remove_cvref_t<T>> ||
+            ten::is_complex<std::remove_cvref_t<T>>::value ||
+            std::is_integral_v<std::remove_cvref_t<T>>)
 auto operator/(E &&expr, T &&scalar) {
    using L = std::remove_cvref_t<E>;
-   using R = ::ten::scalar<T>;
+   using R = ::ten::scalar<std::remove_cvref_t<T>>;
    using left_input = ::ten::details::output_type<L>::type;
    using right_input = ::ten::details::output_type<R>::type;
    using output_type = ::ten::details::common_type_t<left_input, right_input>;
-   auto s = ::ten::scalar<T>(scalar);
+   auto s = R(scalar);
    return ::ten::binary_expr<L, R, output_type,
                              ::ten::functional::scalar_right_binary_func<
                                  ::ten::binary_operation::div>::func>(expr, s);
+}
+
+// Divide an expression an a ten::scalar
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator/(ten::scalar<T> &scalar, E &&expr) {
+   using R = std::remove_cvref_t<E>;
+   using L = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::div>::func>(scalar,
+                                                                      expr);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator/(ten::scalar<T> &&scalar, E &&expr) {
+   using R = std::remove_cvref_t<E>;
+   using L = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_left_binary_func<
+                                 ::ten::binary_operation::div>::func>(scalar,
+                                                                      expr);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator/(E &&expr, ten::scalar<T> &scalar) {
+   using L = std::remove_cvref_t<E>;
+   using R = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::div>::func>(expr,
+                                                                      scalar);
+}
+
+template <typename T, Expr E>
+   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+            ::std::is_integral_v<T>)
+auto operator/(E &&expr, ten::scalar<T> &&scalar) {
+   using L = std::remove_cvref_t<E>;
+   using R = ten::scalar<T>;
+   using left_input = ::ten::details::output_type<L>::type;
+   using right_input = ::ten::details::output_type<R>::type;
+   using output_type = ::ten::details::common_type_t<left_input, right_input>;
+   return ::ten::binary_expr<L, R, output_type,
+                             ::ten::functional::scalar_right_binary_func<
+                                 ::ten::binary_operation::div>::func>(expr,
+                                                                      scalar);
 }
 
 /// TODO AxpyOne
@@ -319,23 +579,31 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
    }
 
    /// Asignment from an expression
-   /*template <class Expr>
+   template <class Expr>
       requires(::ten::is_unary_expr<std::remove_cvref_t<Expr>>::value ||
                ::ten::is_binary_expr<std::remove_cvref_t<Expr>>::value)
    scalar(Expr &&expr) {
-      _node = expr.eval();
-   }*/
+      static_assert(::ten::is_scalar_v<typename Expr::output_type>,
+                    "Output type must be a scalar");
+      auto value = expr.eval();
+      _requires_grad = value.requires_grad();
+      _value = value.value_node();
+      _grad = value.grad_node();
+   }
 
    /// Get or set  the value
    T &value() { return *_value.get(); }
    const T &value() const { return *_value.get(); }
+
+   // Get tje node to the value
+   [[nodiscard]] std::shared_ptr<T> value_node() const { return _value; }
 
    // Get or set the gradient value
    T &grad_value() { return *_grad.get(); }
    const T &grad_value() const { return *_grad.get(); }
 
    // Returns the node to the gradient
-   std::shared_ptr<T> grad_node() { return _grad; }
+   [[nodiscard]] std::shared_ptr<T> grad_node() { return _grad; }
 
    // Returns the gradient in a scalar
    scalar<T> grad() const { return scalar<T>(_grad, false); }
@@ -1111,8 +1379,6 @@ class ranked_tensor final
       return *this;
    }
 
-   // TODO Iterators
-
    /// Get the dimension at index
    /// FIXME Requires only for dynamic dim
    [[nodiscard]] size_type dim(size_type index) const {
@@ -1196,7 +1462,6 @@ class ranked_tensor final
 
    // Returns the shared ptr to the node
    [[nodiscard]] std::shared_ptr<node_type> node() const { return _node; }
-
    /// Get the data
    [[nodiscard]] const T *data() const { return _node.get()->data(); }
 
@@ -4197,15 +4462,16 @@ template <Expr ExprType> auto sigmoid(ExprType &&expr) {
    return unary_expr<expr_type, output_type, functional::sigmoid>(expr);
 }
 
-template<Expr LeftExpr, Expr RightExpr>
-auto mse(LeftExpr&& left, RightExpr&& right) {
+template <Expr LeftExpr, Expr RightExpr>
+auto mse(LeftExpr &&left, RightExpr &&right) {
    using left_expr_type = std::remove_cvref_t<LeftExpr>;
    using right_expr_type = std::remove_cvref_t<RightExpr>;
    using left_value_type = left_expr_type::value_type;
    using right_value_type = left_expr_type::value_type;
    static_assert(std::is_same_v<left_value_type, right_value_type>);
    using output_type = ten::scalar<left_value_type>;
-   return binary_expr<left_expr_type, right_expr_type, output_type, functional::mse>(left, right);
+   return binary_expr<left_expr_type, right_expr_type, output_type,
+                      functional::mse>(left, right);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
