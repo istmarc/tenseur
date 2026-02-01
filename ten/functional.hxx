@@ -244,23 +244,21 @@ struct sqrt : func<> {
          if (!y) {
             y = std::make_shared<Y>(x->shape());
          }
-         for (size_t i = 0; i < x.size(); i++) {
-            y[i] = std::sqrt(static_cast<output_value_type>(x[i]));
+         for (size_t i = 0; i < x->size(); i++) {
+            (*y.get())[i] =
+                std::sqrt(static_cast<output_value_type>((*x.get())[i]));
          }
       }
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      if (x->shape() != grad->shape()) {
+      requires(::ten::is_tensor_v<X>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
          std::cerr << "ten::functional::sqrt gradient incompatible shapes\n";
       } else {
-         for (size_t i = 0; i < x->size(); i++) {
-            (*grad.get())[i] = 1 / (2 * std::sqrt((*x.get())[i]));
+         for (size_t i = 0; i < x.size(); i++) {
+            grad[i] = 1 / (2 * std::sqrt(x[i]));
          }
       }
    }
@@ -292,7 +290,8 @@ struct sqr : func<> {
          }
          auto xarr = *x.get();
          auto yarr = *y.get();
-         ten::kernels::mul(xarr, xarr, yarr);
+         ::ten::kernels::binary_ops<::ten::binary_operation::mul>(xarr, xarr,
+                                                                  yarr);
          /*
          for (size_t i = 0; i < x.size(); i++) {
             y[i] = static_cast<output_value_type>(x[i]) *
@@ -302,25 +301,19 @@ struct sqr : func<> {
    }
 
    template <class Gradient>
-      requires(::ten::is_scalar_v<Gradient> && ::ten::is_scalar_v<X>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>();
-      }
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
       grad->value() = 2 * x->value();
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient> && ::ten::is_tensor_v<X>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      if (x->size() != grad->size()) {
-         std::cerr << "ten::functional::sqr gradient incompatible sizes\n";
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::sqr gradient incompatible shapes.\n";
       } else {
-         for (size_t i = 0; i < x->size(); i++) {
-            (*grad.get())[i] = 2 * (*x.get())[i];
+         for (size_t i = 0; i < x.size(); i++) {
+            grad[i] = 2 * x[i];
          }
       }
    }
@@ -357,32 +350,26 @@ struct abs : func<> {
    }
 
    template <class Gradient>
-      requires(::ten::is_scalar_v<Gradient> && ::ten::is_scalar_v<X>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      if (x->value() >= 0) {
-         grad->value() = 1;
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.value() >= 0) {
+         grad.value() = 1;
       } else {
-         grad->value() = -1;
+         grad.value() = -1;
       }
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient> && ::ten::is_tensor_v<X>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      if (x->size() != grad->size()) {
-         std::cerr << "ten::functional::abs gradient incompatible sizes\n";
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::abs gradient incompatible shape\n";
       } else {
-         for (size_t i = 0; i < x->size(); i++) {
-            if ((*x.get())[i] >= 0) {
-               (*grad.get())[i] = 1;
+         for (size_t i = 0; i < x.size(); i++) {
+            if (x[i] >= 0) {
+               grad[i] = 1;
             } else {
-               (*grad.get())[i] = -1;
+               grad[i] = -1;
             }
          }
       }
@@ -427,27 +414,21 @@ struct pow : func<true> {
    }
 
    template <class Gradient>
-      requires(::ten::is_scalar_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>();
-      }
-      grad->value() =
-          static_cast<output_value_type>(_n) * std::pow(x->value(), _n - 1);
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      grad.value() =
+          static_cast<output_value_type>(_n) * std::pow(x.value(), _n - 1);
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient> && ::ten::is_tensor_v<X>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      if (x->size() != grad->size()) {
-         std::cerr << "ten::functional::pow gradient incompatible sizes\n";
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::pow gradient incompatible shapes.\n";
       } else {
-         for (size_t i = 0; i < x->size(); i++) {
-            (*grad.get())[i] = static_cast<output_value_type>(_n) *
-                               std::pow((*x.get())[i], _n - 1);
+         for (size_t i = 0; i < x.size(); i++) {
+            grad[i] =
+                static_cast<output_value_type>(_n) * std::pow(x[i], _n - 1);
          }
       }
    }
@@ -522,14 +503,11 @@ struct mean : func<> {
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
       using T = X::value_type;
-      for (size_t i = 0; i < x->size(); i++) {
-         (*grad.get())[i] = T(1) / T(x->size());
+      for (size_t i = 0; i < x.size(); i++) {
+         grad[i] = T(1) / T(x.size());
       }
    }
 };
@@ -557,13 +535,14 @@ struct sum : func<> {
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      for (size_t i = 0; i < x->size(); i++) {
-         (*grad.get())[i] = 1;
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::fucntional::sum gradient incompatible shapes.\n";
+      } else {
+         for (size_t i = 0; i < x.size(); i++) {
+            grad[i] = 1;
+         }
       }
    }
 };
@@ -634,35 +613,33 @@ struct sin : func<> {
          if (!y) {
             y = std::make_shared<Y>();
          }
-         y.value() = std::sin(x.value());
+         y->value() = std::sin(x->value());
       }
       if constexpr (::ten::is_tensor_v<Y>) {
          if (!y) {
             y = std::make_shared<Y>(x->shape());
          }
-         for (size_t i = 0; i < x.size(); i++) {
-            y[i] = std::sin(static_cast<type>(x[i]));
+         for (size_t i = 0; i < x->size(); i++) {
+            (*y.get())[i] = std::sin(static_cast<type>((*x.get())[i]));
          }
       }
    }
 
    template <class Gradient>
-      requires(::ten::is_scalar_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>();
-      }
-      grad->value() = std::cos(x->value());
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      grad.value() = std::cos(x.value());
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      for (size_t i = 0; i < x->size(); i++) {
-         (*grad.get())[i] = std::cos((*x.get())[i]);
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::sin gradient different shapes.\n";
+      } else {
+         for (size_t i = 0; i < x.size(); i++) {
+            grad[i] = std::cos(x[i]);
+         }
       }
    }
 };
@@ -727,7 +704,7 @@ struct cos : func<> {
          if (!y) {
             y = std::make_shared<Y>();
          }
-         y.value() = std::cos(x.value());
+         y->value() = std::cos(x->value());
       }
       if constexpr (::ten::is_tensor_v<Y>) {
          if (!y) {
@@ -742,16 +719,13 @@ struct cos : func<> {
 
    template <class Gradient>
       requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>();
-      }
-      grad->value() = -std::sin(x->value());
+   void gradient(X &x, Gradient &grad) {
+      grad.value() = -std::sin(x.value());
    }
 
    /*
    template <class Gradient>
-      requires(::ten::is_scalar_v<X> && ::ten::is_tensor_v<Gradient>)
+      requires(::ten::is_scalar_v<X>)
    void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &y) {
       for (size_t i = 0; i < y.size(); i++) {
          y[i] = -std::sin(x.value());
@@ -760,15 +734,12 @@ struct cos : func<> {
 
    template <class Gradient>
       requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      if (x.size() != grad.size()) {
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
          std::cerr << "ten::functional::cos gradient different sizes\n";
       } else {
-         for (size_t i = 0; i < x->size(); i++) {
-            (*grad.get())[i] = -std::sin((*x.get())[i]);
+         for (size_t i = 0; i < x.size(); i++) {
+            grad[i] = -std::sin(x[i]);
          }
       }
    }
@@ -848,24 +819,22 @@ struct tan : func<> {
    }
 
    template <class Gradient>
-      requires(::ten::is_scalar_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>();
-      }
-      value_type z = std::tan(x->value());
-      grad->value() = 1 + z * z;
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      value_type z = std::tan(x.value());
+      grad.value() = 1 + z * z;
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      for (size_t i = 0; i < x->size(); i++) {
-         value_type t = std::tan((*x.get())[i]);
-         (*grad.get())[i] = 1 + t * t;
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::tan gradient different shapes.\n";
+      } else {
+         for (size_t i = 0; i < x.size(); i++) {
+            value_type t = std::tan(x[i]);
+            grad[i] = 1 + t * t;
+         }
       }
    }
 };
@@ -901,19 +870,20 @@ struct atan : func<> {
    }
 
    template <class Gradient>
-      requires(::ten::is_scalar_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
-      y->value() = 1 / (1 + x->value() * x->value());
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      grad.value() = 1 / (1 + x.value() * x.value());
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      for (size_t i = 0; i < x->size(); i++) {
-         (*grad.get())[i] = 1 / (1 + (*x.get())[i] * (*x.get())[i]);
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::atan gradient different shapes.\n";
+      } else {
+         for (size_t i = 0; i < x->size(); i++) {
+            grad[i] = 1 / (1 + x[i] * x[i]);
+         }
       }
    }
 };
@@ -980,22 +950,20 @@ struct exp : func<> {
    }
 
    template <class Gradient>
-      requires(::ten::is_scalar_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>();
-      }
-      grad->value() = std::exp(x->value());
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      grad.value() = std::exp(x.value());
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      for (size_t i = 0; i < x->size(); i++) {
-         (*grad.get())[i] = std::exp((*x.get())[i]);
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::exp gradient different shapes.\n";
+      } else {
+         for (size_t i = 0; i < x.size(); i++) {
+            grad[i] = std::exp(x[i]);
+         }
       }
    }
 };
@@ -1031,19 +999,20 @@ struct log : func<> {
    }
 
    template <class Gradient>
-      requires(::ten::is_scalar_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      grad->value() = value_type(1) / x->value();
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      grad.value() = value_type(1) / x.value();
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      for (size_t i = 0; i < x->size(); i++) {
-         (*grad.get())[i] = value_type(1) / (*x.get())[i];
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::log gradient different sizes.\n";
+      } else {
+         for (size_t i = 0; i < x->size(); i++) {
+            grad[i] = value_type(1) / x[i];
+         }
       }
    }
 };
@@ -1078,21 +1047,20 @@ struct log10 : func<> {
    }
 
    template <class Gradient>
-      requires(::ten::is_scalar_v<Gradient>)
-   void gradient(std::shared_ptr<Gradient> &x,
-                 std::shared_ptr<Gradient> &grad) {
-      grad->value() = value_type(1) / (x->value() * std::log(value_type(10)));
+      requires(::ten::is_scalar_v<X> && ::ten::is_scalar_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      grad.value() = value_type(1) / (x.value() * std::log(value_type(10)));
    }
 
    template <class Gradient>
-      requires(::ten::is_tensor_v<Gradient>)
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Gradient> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Gradient>(x->shape());
-      }
-      for (size_t i = 0; i < x->size(); i++) {
-         (*grad.get())[i] =
-             value_type(1) / ((*x.get())[i] * std::log(value_type(10)));
+      requires(::ten::is_tensor_v<X> && ::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::log10 gradient different shapes.\n";
+      } else {
+         for (size_t i = 0; i < x->size(); i++) {
+            grad[i] = value_type(1) / (x[i] * std::log(value_type(10)));
+         }
       }
    }
 };
@@ -1185,44 +1153,60 @@ template <::ten::binary_operation Kind> struct binary_func {
          }
       }
 
-      void gradient_left(const X & /*x*/, const Y &y, Z &z) {
-         if constexpr ((Kind == ::ten::binary_operation::add) ||
-                       (Kind == ::ten::binary_operation::sub)) {
-            for (size_t i = 0; i < z.size(); i++) {
-               z[i] = 1;
+      template <class Gradient>
+         requires(::ten::is_tensor_v<Gradient>)
+      void gradient_left(const X & /*x*/, const Y &y, Gradient &grad) {
+         if (y.shape() != grad.shape()) {
+            std::cerr << "ten::functional::binary_func<" << name()
+                      << "> gradient ";
+            std::cerr << "different shapes.\n";
+         } else {
+            if constexpr ((Kind == ::ten::binary_operation::add) ||
+                          (Kind == ::ten::binary_operation::sub)) {
+               for (size_t i = 0; i < grad.size(); i++) {
+                  grad[i] = 1;
+               }
             }
-         }
-         if (Kind == ::ten::binary_operation::mul) {
-            for (size_t i = 0; i < z.size(); i++) {
-               z[i] = y[i];
+            if (Kind == ::ten::binary_operation::mul) {
+               for (size_t i = 0; i < grad.size(); i++) {
+                  grad[i] = y[i];
+               }
             }
-         }
-         if (Kind == ::ten::binary_operation::div) {
-            for (size_t i = 0; i < z.size(); i++) {
-               z[i] = 1 / y[i];
+            if (Kind == ::ten::binary_operation::div) {
+               for (size_t i = 0; i < grad.size(); i++) {
+                  grad[i] = 1 / y[i];
+               }
             }
          }
       }
 
-      void gradient_right(const X &x, const Y &y, Z &z) {
-         if constexpr (Kind == ::ten::binary_operation::add) {
-            for (size_t i = 0; i < z.size(); i++) {
-               z[i] = 1;
+      template <class Gradient>
+         requires(::ten::is_tensor_v<Gradient>)
+      void gradient_right(const X &x, const Y &y, Gradient &grad) {
+         if ((x.shape() != grad.shape()) || (y.shape() != grad.shape())) {
+            std::cerr << "ten::functional::binary_func<" << name()
+                      << "> gradient ";
+            std::cerr << "different shapes.\n";
+         } else {
+            if constexpr (Kind == ::ten::binary_operation::add) {
+               for (size_t i = 0; i < grad.size(); i++) {
+                  grad[i] = 1;
+               }
             }
-         }
-         if constexpr (Kind == ::ten::binary_operation::sub) {
-            for (size_t i = 0; i < z.size(); i++) {
-               z[i] = -1;
+            if constexpr (Kind == ::ten::binary_operation::sub) {
+               for (size_t i = 0; i < grad.size(); i++) {
+                  grad[i] = -1;
+               }
             }
-         }
-         if (Kind == ::ten::binary_operation::mul) {
-            for (size_t i = 0; i < z.size(); i++) {
-               z[i] = x[i];
+            if (Kind == ::ten::binary_operation::mul) {
+               for (size_t i = 0; i < grad.size(); i++) {
+                  grad[i] = x[i];
+               }
             }
-         }
-         if (Kind == ::ten::binary_operation::div) {
-            for (size_t i = 0; i < z.size(); i++) {
-               z[i] = -x[i] / (y[i] * y[i]);
+            if (Kind == ::ten::binary_operation::div) {
+               for (size_t i = 0; i < grad.size(); i++) {
+                  grad[i] = -x[i] / (y[i] * y[i]);
+               }
             }
          }
       }
@@ -1344,15 +1328,27 @@ struct mul<X, Y, Z> : ::ten::functional::func<> {
       }
    }
 
-   void gradient_left(const X & /*x*/, const Y &y, Z &z) {
-      for (size_t i = 0; i < z.size(); i++) {
-         z[i] = y[i];
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient_left(const X &x, const Y &y, Gradient &grad) {
+      if ((x.shape() != grad.shape()) || (y.shape() != grad.shape())) {
+         std::cerr << "ten::functional::mul gradient - different shapes.\n";
+      } else {
+         for (size_t i = 0; i < grad.size(); i++) {
+            grad[i] = y[i];
+         }
       }
    }
 
-   void gradient_right(const X &x, const Y & /*y*/, Z &z) {
-      for (size_t i = 0; i < z.size(); i++) {
-         z[i] = x[i];
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient_right(const X &x, const Y &y, Gradient &grad) {
+      if ((x.shape() != grad.shape()) || (y.shape() != grad.shape())) {
+         std::cerr << "ten::functional::mul gradient - different shapes.\n";
+      } else {
+         for (size_t i = 0; i < grad.size(); i++) {
+            grad[i] = x[i];
+         }
       }
    }
 };
@@ -1368,11 +1364,11 @@ template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> : func<> {
                    std::shared_ptr<Z> &z) {
       if (x->shape().dim(1) != y->shape().dim(0)) {
          std::cerr
-             << "ten::functional::mul, incompatibles input matrices sizes\n";
+             << "ten::functional::mul - incompatibles input matrices shapes.\n";
       } else {
          if (!z) {
             std::initializer_list<size_type> &&dims = {x->shape().dim(0),
-                                                       x->shape().dim(1)};
+                                                       y->shape().dim(1)};
             typename Z::shape_type zshape(std::move(dims));
             z = std::make_shared<Z>(zshape);
          }
@@ -1380,39 +1376,62 @@ template <Matrix X, Matrix Y, Matrix Z> struct mul<X, Y, Z> : func<> {
       }
    }
 
-   void gradient_left(const X & /*x*/, const Y &y, Z &z) {
-      if constexpr (Z::shape_type::is_dynamic()) {
-         auto rows = z.shape().dim(0);
-         auto cols = z.shape().dim(1);
-         for (size_t i = 0; i < cols; i++) {
-            z(0, i) = 0;
-            for (size_t j = 0; j < y.shape().dim(1); j++) {
-               z(0, i) += y(i, j);
+   // FIXME Static shapes gradient
+   template <class Gradient>
+      requires(::ten::is_matrix_v<X> && ::ten::is_matrix_v<Y> &&
+               ::ten::is_matrix_v<Gradient>)
+   void gradient_left(const X &x, const Y &y, Gradient &grad) {
+      if (x.shape().dim(1) != y.shape().dim(0)) {
+         std::cerr << "ten::functional::mul gradient - incompatible shapes.\n";
+      } else if ((x.shape().dim(0) != grad.shape().dim(0)) ||
+                 (x.shape().dim(1) != grad.shape().dim(1))) {
+         std::cerr
+             << "ten::functional::mul gradient - incompatible output shape.\n";
+      } else {
+         if constexpr (Gradient::shape_type::is_dynamic()) {
+            auto rows = grad.shape().dim(0);
+            auto cols = grad.shape().dim(1);
+            for (size_t i = 0; i < cols; i++) {
+               grad(0, i) = 0;
+               for (size_t j = 0; j < y.shape().dim(1); j++) {
+                  grad(0, i) += y(i, j);
+               }
             }
-         }
-         for (size_t j = 0; j < cols; j++) {
-            for (size_t i = 1; i < rows; i++) {
-               z(i, j) = z(0, j);
+            for (size_t j = 0; j < cols; j++) {
+               for (size_t i = 1; i < rows; i++) {
+                  grad(i, j) = grad(0, j);
+               }
             }
          }
       }
    }
 
-   void gradient_right(const X &x, const Y & /*y*/, Z &z) {
-      if constexpr (Z::shape_type::is_dynamic()) {
-         auto rows = z.shape().dim(0);
-         auto cols = z.shape().dim(1);
-         size_t j = 0;
-         for (size_t i = 0; i < rows; i++) {
-            z(i, 0) = 0;
-            for (size_t k = 0; k < x.shape().dim(0); k++) {
-               z(i, 0) += x(k, j);
-            }
-            j++;
-         }
-         for (size_t j = 1; j < cols; j++) {
+   template <class Gradient>
+      requires(::ten::is_matrix_v<X> && ::ten::is_matrix_v<Y> &&
+               ::ten::is_matrix_v<Gradient>)
+   void gradient_right(const X &x, const Y &y, Gradient &grad) {
+      if (x.shape().dim(1) != y.shape().dim(0)) {
+         std::cerr << "ten::functional::mul gradient incompatible shapes.\n";
+      } else if ((y.shape().dim(0) != grad.shape().dim(0)) ||
+                 (y.shape().dim(1) != grad.shape().dim(1))) {
+         std::cerr
+             << "ten::functional::mul gradient incompatible output shape.\n";
+      } else {
+         if constexpr (Gradient::shape_type::is_dynamic()) {
+            auto rows = grad.shape().dim(0);
+            auto cols = grad.shape().dim(1);
+            size_t j = 0;
             for (size_t i = 0; i < rows; i++) {
-               z(i, j) = z(i, 0);
+               grad(i, 0) = 0;
+               for (size_t k = 0; k < x.shape().dim(0); k++) {
+                  grad(i, 0) += x(k, j);
+               }
+               j++;
+            }
+            for (size_t j = 1; j < cols; j++) {
+               for (size_t i = 0; i < rows; i++) {
+                  grad(i, j) = grad(i, 0);
+               }
             }
          }
       }
@@ -1446,16 +1465,16 @@ struct mul<X, Y, Z> : ::ten::functional::func<> {
 
    template <class Gradient>
       requires(::ten::is_matrix_v<Gradient>)
-   void gradient_left(const X & /*x*/, const Y &y, Gradient &z) {
+   void gradient_left(const X & /*x*/, const Y &y, Gradient &grad) {
       if constexpr (Gradient::shape_type::is_dynamic()) {
-         auto rows = z.shape().dim(0);
-         auto cols = z.shape().dim(1);
+         auto rows = grad.shape().dim(0);
+         auto cols = grad.shape().dim(1);
          for (size_t i = 0; i < cols; i++) {
-            z(0, i) = y[i];
+            grad(0, i) = y[i];
          }
          for (size_t j = 0; j < cols; j++) {
             for (size_t i = 1; i < rows; i++) {
-               z(i, j) = z(0, j);
+               grad(i, j) = grad(0, j);
             }
          }
       }
@@ -1463,13 +1482,13 @@ struct mul<X, Y, Z> : ::ten::functional::func<> {
 
    template <class Gradient>
       requires(::ten::is_vector_v<Gradient>)
-   void gradient_right(const X &x, const Y & /*y*/, Gradient &z) {
+   void gradient_right(const X &x, const Y & /*y*/, Gradient &grad) {
       if constexpr (Gradient::shape_type::is_dynamic()) {
          size_t j = 0;
-         for (size_t i = 0; i < z.size(); i++) {
-            z[i] = 0;
+         for (size_t i = 0; i < grad.size(); i++) {
+            grad[i] = 0;
             for (size_t k = 0; k < x.shape().dim(0); k++) {
-               z[i] += x(k, j);
+               grad[i] += x(k, j);
             }
             j++;
          }
@@ -1656,13 +1675,9 @@ struct relu : func<> {
       }
    }
 
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Y> &grad) {
-      if (!grad) {
-         grad = std::make_shared<grad>(x->shape());
-      }
-      if (x->size() != grad->size()) {
-         std::cerr << "ten::functional::relu gradient different sizes"
-                   << std::endl;
+   template <class Gradient> void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::relu gradient different shapes.\n";
       } else {
          auto xarr = *x.get();
          auto gradarr = *grad.get();
@@ -1704,12 +1719,11 @@ struct leaky_relu : func<> {
       }
    }
 
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Y> &grad) {
-      if (!grad) {
-         grad = std::make_shared<Y>(x->shape());
-      }
-      if (x.size() != grad.size()) {
-         std::cerr << "ten::functional::relu gradient different sizes"
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::relu gradient different shapes"
                    << std::endl;
       } else {
          auto xarr = *x.get();
@@ -1748,19 +1762,17 @@ struct sigmoid : func<> {
       }
    }
 
-   void gradient(std::shared_ptr<X> &x, std::shared_ptr<Y> &y) {
-      if (!y) {
-         y = std::make_shared<Y>(x->shape());
-      }
-      if (x->size() != y->size()) {
-         std::cerr << "ten::functional::relu gradient different sizes"
-                   << std::endl;
+   template <class Gradient>
+      requires(::ten::is_tensor_v<Gradient>)
+   void gradient(X &x, Gradient &grad) {
+      if (x.shape() != grad.shape()) {
+         std::cerr << "ten::functional::relu gradient different shapes.\n";
       } else {
          auto xarr = *x.get();
-         auto yarr = *y.get();
-         for (size_t i = 0; i < x->size(); i++) {
+         auto gradarr = *grad.get();
+         for (size_t i = 0; i < x.size(); i++) {
             value_type e = std::exp(-xarr[i]);
-            yarr[i] = e / ((1 + e) * (1 + e));
+            gradarr[i] = e / ((1 + e) * (1 + e));
          }
       }
    }
@@ -1793,25 +1805,18 @@ struct mse : func<> {
    // FIXME Support static vector and static matrix
    template <class Gradient>
       requires(::ten::is_vector_v<Gradient> || ::ten::is_matrix_v<Gradient>)
-   void gradient_left(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
-                      std::shared_ptr<Gradient> &grad) {
+   void gradient_left(X &x, Y &y, Gradient &grad) {
       if (x->size() != y->size()) {
-         std::cerr << "ten::functional::mse gradient different sizes"
-                   << std::endl;
+         std::cerr << "ten::functional::mse gradient different sizes.\n";
       } else {
-         if (x->size() != grad->size()) {
+         if (x.size() != grad.size()) {
             std::cerr
                 << "ten::functional::mse gradient size should be equal to "
-                << x->size() << std::endl;
-         }
-         if (!grad) {
-            grad = std::make_shared<Gradient>(x->shape());
+                << x.size() << "\n";
          }
          using T = Gradient::value_type;
-         auto xarr = *x.get();
-         auto yarr = *y.get();
-         for (size_t i = 0; i < grad->size(); i++) {
-            (*grad.get())[i] = 2 * (xarr[i] - yarr[i]) / T(grad->size());
+         for (size_t i = 0; i < grad.size(); i++) {
+            grad[i] = 2 * (x[i] - y[i]) / T(grad.size());
          }
       }
    }
@@ -1820,22 +1825,18 @@ struct mse : func<> {
    // FIXME Support static vector and static matrix
    template <class Gradient>
       requires(::ten::is_vector_v<Gradient> || ::ten::is_matrix_v<Gradient>)
-   void gradient_right(std::shared_ptr<X> &x, std::shared_ptr<Y> &y,
-                       std::shared_ptr<Gradient> &grad) {
-      if (x->size() != y->size()) {
-         std::cerr << "ten::functional::mse gradient different sizes"
-                   << std::endl;
+   void gradient_right(X &x, Y &y, Gradient &grad) {
+      if (x->size() != y.size()) {
+         std::cerr << "ten::functional::mse gradient different sizes.\n";
       } else {
-         if (x->size() != grad->size()) {
+         if (x.size() != grad.size()) {
             std::cerr
                 << "ten::functional::mse gradient size should be equal to "
-                << x->size() << std::endl;
+                << x.size() << "\n";
          } else {
             using T = Gradient::value_type;
-            auto xarr = *x.get();
-            auto yarr = *y.get();
             for (size_t i = 0; i < grad->size(); i++) {
-               (*grad.get())[i] = -2 * (xarr[i] - yarr[i]) / T(grad->size());
+               grad[i] = -2 * (x[i] - y[i]) / T(grad.size());
             }
          }
       }
