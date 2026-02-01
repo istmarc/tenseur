@@ -244,6 +244,8 @@ struct is_svector<ranked_tensor<T, shape, order, storage, allocator>> {
    static constexpr bool value = shape::is_static() && shape::rank() == 1;
 };
 
+template <typename T> static constexpr bool is_svector_v = is_svector<T>::value;
+
 /// Concept Vector dense
 template <class T>
 concept Vector = is_vector<std::remove_cvref_t<T>>::value;
