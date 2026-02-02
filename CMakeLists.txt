@@ -15,23 +15,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -march=native")
 
-# Build shared library
-option(TENSEUR_SHAREDLIB "Build shared Library." OFF)
-
-if (TENSEUR_SHAREDLIB)
-   add_library(tenseur SHARED ${PROJECT_SOURCE_DIR}/ten/tensor.cxx)
-   set_target_properties(tenseur PROPERTIES POSITION_INDEPENDANT_CODE ON)
-   target_include_directories(tenseur PRIVATE ${PROJECT_SOURCE_DIR})
-else()
-   add_library(tenseur INTERFACE)
-   target_include_directories(
-     tenseur
-     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ten>
-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-   )
-   # Compiler features
-   target_compile_features(tenseur INTERFACE cxx_std_23)
-endif()
+add_library(tenseur INTERFACE)
+target_include_directories(
+  tenseur
+  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ten>
+			$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+# Compiler features
+target_compile_features(tenseur INTERFACE cxx_std_23)
 
 # Target paths
 install(TARGETS tenseur
