@@ -498,14 +498,13 @@ class dataframe {
             _node->_indices[i] = i;
          }
       } else if (_node->_rows != size) {
-         std::cout << "tenseur dataframe: Vector of different size"
-                   << std::endl;
+         std::cout << "ten::dataframe: Vector of different size.\n";
          return;
       }
       vector_type data({size});
       // Copy data into std::vector<cell_type>
       for (size_t i = 0; i < size; i++) {
-         data[i] = cell_type(v[i]);
+         data[i] = cell_type(T(v[i]));
       }
       auto ptr = std::make_shared<vector_type>(data);
       // Set the column name
@@ -568,7 +567,12 @@ class dataframe {
                    << std::endl;
          return;
       }
-      std::shared_ptr<vector_type> ptr = std::make_shared<vector_type>(v);
+      vector_type data({size});
+      // Copy data into std::vector<cell_type>
+      for (size_t i = 0; i < size; i++) {
+         data[i] = cell_type(v[i]);
+      }
+      std::shared_ptr<vector_type> ptr = std::make_shared<vector_type>(std::move(data));
       // Set the column name
       _node->_names.push_back(name);
       // Set the type

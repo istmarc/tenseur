@@ -93,9 +93,9 @@ dataframe read_csv(const std::string& filename, const csv_options& options = csv
          for (size_t i = 0; i < cols; i++) {
             long next_pos = line.find(options.sep, pos+1);
             if (next_pos == -1) {
-               names[i] = line.substr(pos, line.size());
+               names[i] = std::string(line.substr(pos, line.size()));
             } else {
-               names[i] = line.substr(pos, next_pos - pos + 1);
+               names[i] = std::string(line.substr(pos, next_pos - pos + 1));
             }
          }
       } else {
@@ -135,7 +135,7 @@ dataframe read_csv(const std::string& filename, const csv_options& options = csv
                double x = std::stod(s);
                data[j].push_back(x);
             } else if (types[j] == data_type::string) {
-            data[j].push_back(s);
+            data[j].push_back(std::string(s));
             }
          pos = sep_pos + 1;
          }
