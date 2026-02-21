@@ -62,9 +62,9 @@ template <Expr ExprType, Matrix C>
             ::ten::is_double<typename C::value_type>::value)
 void fuse_gemm(ExprType &&expr, C &x) {
    using expr_type = std::remove_cvref_t<ExprType>;
-   if constexpr (ten::is_expr<expr_type>::value) {
+   if constexpr (ten::is_binary_expr_v<expr_type>) {
       auto left = expr.left();
-      if constexpr (ten::is_expr<decltype(left)>::value) {
+      if constexpr (ten::is_binary_expr_v<decltype(left)>) {
          auto A = left.left();
          auto B = left.right();
          using T = C::value_type;
@@ -75,8 +75,8 @@ void fuse_gemm(ExprType &&expr, C &x) {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Match GEMM C <- alpha * A * B + C
-// C = binary_expr(binary_expr(binary_expr(alpha, A), B), func:mul), C,
-// func:add)
+// C = binary_expr(binary_expr(binary_expr(alpha, A, Output, mul), B, Output,
+// mul), C, Output, func:add)
 template <Expr ExprType, Matrix C>
 bool match_gemm_alpha_nobeta(ExprType &&expr, const C &x) {
    using expr_type = std::remove_cvref_t<ExprType>;
@@ -112,27 +112,27 @@ bool match_gemm_alpha_nobeta(ExprType &&expr, const C &x) {
                return false;
             }
          }
-      }
-      // Right of left must be a matrix
-      using right_left_type = left_type::right_ty;
-      if constexpr (!::ten::is_matrix_v<right_left_type> &&
-                    !::ten::is_smatrix_v<right_left_type>) {
-         return false;
-      }
-      // Right type must be a matrix or static matrix, equal to c
-      using right_type = expr_type::right_ty;
-      if constexpr (!::ten::is_matrix<right_type>::value &&
-                    !::ten::is_smatrix<right_type>::value) {
-         return false;
-      } else {
-         // Right type and output (x) must be of the same type
-         if (!std::is_same_v<right_type, C>) {
+         // Right of left must be a matrix
+         using right_left_type = left_type::right_ty;
+         if constexpr (!::ten::is_matrix_v<right_left_type> &&
+                       !::ten::is_smatrix_v<right_left_type>) {
             return false;
          }
-         // They must also be equal
-         auto right = expr.right();
-         if (right != x) {
+         // Right type must be a matrix or static matrix, equal to c
+         using right_type = expr_type::right_ty;
+         if constexpr (!::ten::is_matrix<right_type>::value &&
+                       !::ten::is_smatrix<right_type>::value) {
             return false;
+         } else {
+            // Right type and output (x) must be of the same type
+            if (!std::is_same_v<right_type, C>) {
+               return false;
+            }
+            // They must also be equal
+            auto right = expr.right();
+            if (right != x) {
+               return false;
+            }
          }
       }
       // The function must be elementwise add
@@ -295,42 +295,42 @@ bool match_gemm_alpha_beta(ExprType &&expr, const C &x) {
                return false;
             }
          }
-      }
-      // Right of left must be a matrix
-      using right_left_type = left_type::right_ty;
-      if constexpr (!::ten::is_matrix_v<right_left_type> &&
-                    !::ten::is_smatrix_v<right_left_type>) {
-         return false;
-      }
-      // Right type must be an expression binary_expr(beta, C)
-      using right_type = expr_type::right_ty;
-      if constexpr (!::ten::is_binary_expr_v<right_type>) {
-         return false;
-      } else {
-         // Left or right type must be an scalar
-         using left_right = right_type::left_ty;
-         if (!ten::is_scalar<left_right>::value) {
+         // Right of left must be a matrix
+         using right_left_type = left_type::right_ty;
+         if constexpr (!::ten::is_matrix_v<right_left_type> &&
+                       !::ten::is_smatrix_v<right_left_type>) {
             return false;
          }
-         // right of right type must be a matrix
-         using right_right_type = right_type::right_ty;
-         if (!::ten::is_matrix<right_right_type>::value &&
-             !::ten::is_smatrix<right_right_type>::value) {
+         // Right type must be an expression binary_expr(beta, C)
+         using right_type = expr_type::right_ty;
+         if constexpr (!::ten::is_binary_expr_v<right_type>) {
             return false;
-         }
-         // Right type and output (x) must be of the same type
-         if (!std::is_same_v<right_right_type, C>) {
-            return false;
-         }
-         // They must also be equal
-         auto right_right = expr.right().right();
-         if (right_right != x) {
-            return false;
-         }
-         // The function of right must be elementwise mul
-         using right_func_type = right_type::func_type;
-         if (!::ten::is_mul<right_func_type>::value) {
-            return false;
+         } else {
+            // Left or right type must be an scalar
+            using left_right = right_type::left_ty;
+            if (!ten::is_scalar<left_right>::value) {
+               return false;
+            }
+            // right of right type must be a matrix
+            using right_right_type = right_type::right_ty;
+            if (!::ten::is_matrix<right_right_type>::value &&
+                !::ten::is_smatrix<right_right_type>::value) {
+               return false;
+            }
+            // Right type and output (x) must be of the same type
+            if (!std::is_same_v<right_right_type, C>) {
+               return false;
+            }
+            // They must also be equal
+            auto right_right = expr.right().right();
+            if (right_right != x) {
+               return false;
+            }
+            // The function of right must be elementwise mul
+            using right_func_type = right_type::func_type;
+            if (!::ten::is_mul<right_func_type>::value) {
+               return false;
+            }
          }
       }
       // The function must be elementwise add
