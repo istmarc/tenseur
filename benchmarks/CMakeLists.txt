@@ -10,3 +10,4 @@ FetchContent_MakeAvailable(nanobench)
 
 add_subdirectory(tenseur)
 add_subdirectory(eigen)
+add_subdirectory(torch)
