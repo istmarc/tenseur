@@ -18,6 +18,8 @@ int main(int argc, char **argv) {
    std::vector<size_t> sizes = {64, 128, 256, 512, 1024, 2048, 4096};
 
    for (auto N : sizes) {
+      std::cout << "Benchmark for size = " << N << std::endl;
+
       MatrixXf a(N, N);
       MatrixXf b(N, N);
       MatrixXf c = MatrixXf::Zero(N, N);
@@ -44,6 +46,8 @@ int main(int argc, char **argv) {
 
       bench.run("Mul", [&] { c = a.array() * b.array(); });
       bench.run("Mul2", [&] { MatrixXf d = a.array() * b.array(); });
+
+      bench.run("Chained", [&]{MatrixXf d = a*a*a*a*a;});
    }
 
    std::ofstream file(file_name + ".csv");

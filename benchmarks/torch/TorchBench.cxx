@@ -27,6 +27,13 @@ int main(int argc, char **argv) {
          ankerl::nanobench::doNotOptimizeAway(d);
       });
 
+      bench.run("Chained", [&] {
+         torch::Tensor d = torch::matmul(torch::matmul(torch::matmul(torch::matmul(a, a), a), a), a);
+         ankerl::nanobench::doNotOptimizeAway(d);
+      });
+
+
+
       // sum
       bench.run("Sum", [&] { c = a + b; });
       bench.run("Sum2", [&] {

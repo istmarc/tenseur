@@ -19,12 +19,19 @@ int main(int argc, char **argv) {
    std::vector<size_t> sizes = {64, 128, 256, 512, 1024, 2048, 4096};
 
    for (auto N : sizes) {
+      std::cout << "Benchmarks for size = " << N << std::endl;
+
       auto a = range<matrix<float>>({N, N});
       auto b = range<matrix<float>>({N, N});
       auto c = zeros<matrix<float>>({N, N});
       bench.run("Gemm", [&] { c = a * b; });
       bench.run("Gemm2", [&] {
          matrix<float> d = a * b;
+         ankerl::nanobench::doNotOptimizeAway(d);
+      });
+
+      bench.run("Chained", [&] {
+         matrix<float> d = a * a * a * a * a;
          ankerl::nanobench::doNotOptimizeAway(d);
       });
 
