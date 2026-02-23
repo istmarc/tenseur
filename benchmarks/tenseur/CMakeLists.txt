@@ -1,4 +1,9 @@
-find_package(BLAS REQUIRED)
+if (DEFINED BLAS_LIBRARIES)
+	message(STATUS "Custom specified BLAS Libraries.")
+else()
+	message(STATUS "Using default BLAS libraries.")
+	find_package(BLAS REQUIRED)
+endif()
 
 add_executable(TenseurBench TenseurBench.cxx)
 target_include_directories(TenseurBench PRIVATE ${PROJECT_SOURCE_DIR})
