@@ -10,7 +10,7 @@ namespace ten::nn {
 ///   - w of shape {in_features x out_features}
 ///   - b of shape {out_features} and
 ///   - x of shape {out_features}
-template <class T = float> struct dense {
+template <class T = float, bool has_bias = true> struct dense {
    using MatrixType = ten::matrix<T>;
    using VectorType = ten::vector<T>;
    std::shared_ptr<MatrixType> _w = nullptr;
@@ -29,16 +29,22 @@ template <class T = float> struct dense {
       for (size_t i = 0; i < _w->size(); i++) {
          (*_w.get())[i] = unif.sample();
       }
-      auto bshape = ten::shape<0>({out_features});
-      _b = std::make_shared<VectorType>(bshape, true);
-      // Initialize with Uniform[-sqrt(k), sqrt(k)] where k = 1 / in_features
-      for (size_t i = 0; i < _b->size(); i++) {
-         (*_b.get())[i] = unif.sample();
+      if constexpr (has_bias) {
+         auto bshape = ten::shape<0>({out_features});
+         _b = std::make_shared<VectorType>(bshape, true);
+         // Initialize with Uniform[-sqrt(k), sqrt(k)] where k = 1 / in_features
+         for (size_t i = 0; i < _b->size(); i++) {
+            (*_b.get())[i] = unif.sample();
+         }
       }
    }
 
    template <Expr ExprType> auto operator()(ExprType &x) {
-      return (*_w.get()) * x + (*_b.get());
+      if constexpr (has_bias) {
+         return (*_w.get()) * x + (*_b.get());
+      } else {
+         return (*_w.get()) * x;
+      }
    }
 
    template <Expr ExprType> auto forward(ExprType &x) { return (*this)(x); }
@@ -51,7 +57,7 @@ template <class T = float> struct dense {
 /// - W of shape {in_features x out_features}
 /// - B of shape {batch x out_features}
 /// - Y of shape {batch x out_features}
-template <class T = float> struct batched_dense {
+template <class T = float, bool has_bias = true> struct batched_dense {
    using MatrixType = ten::matrix<T>;
    std::shared_ptr<MatrixType> _w = nullptr;
    std::shared_ptr<MatrixType> _b = nullptr;
@@ -69,16 +75,22 @@ template <class T = float> struct batched_dense {
       for (size_t i = 0; i < _w->size(); i++) {
          (*_w.get())[i] = unif.sample();
       }
-      auto bshape = ten::shape<0, 0>({batch, out_features});
-      _b = std::make_shared<MatrixType>(bshape, true);
-      // Initialize with Uniform[-sqrt(k), sqrt(k)] where k = 1 / in_features
-      for (size_t i = 0; i < _b->size(); i++) {
-         (*_b.get())[i] = unif.sample();
+      if constexpr (has_bias) {
+         auto bshape = ten::shape<0, 0>({batch, out_features});
+         _b = std::make_shared<MatrixType>(bshape, true);
+         // Initialize with Uniform[-sqrt(k), sqrt(k)] where k = 1 / in_features
+         for (size_t i = 0; i < _b->size(); i++) {
+            (*_b.get())[i] = unif.sample();
+         }
       }
    }
 
    template <Expr ExprType> auto operator()(ExprType &x) {
-      return x * (*_w.get()) + (*_b.get());
+      if constexpr (has_bias) {
+         return x * (*_w.get()) + (*_b.get());
+      } else {
+         return x * (*_w.get());
+      }
    }
 
    template <Expr ExprType> auto forward(ExprType &x) { return (*this)(x); }
