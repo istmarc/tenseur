@@ -1,8 +1,8 @@
 #ifndef TRENCH_LEASTSQUARES_LINEAR
 #define TRENCH_LEASTSQUARES_LINEAR
 
-#include <ten/linear_algebra/factorization.hxx>
-#include <ten/linear_algebra/subtitution.hxx>
+#include <ten/linalgebra/factorization.hxx>
+#include <ten/linalgebra/subtitution.hxx>
 #include <ten/types.hxx>
 #include <type_traits>
 

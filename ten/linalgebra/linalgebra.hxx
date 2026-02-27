@@ -3,7 +3,7 @@
 
 #include <ten/kernels/blas_api.hxx>
 #include <ten/kernels/lapack_api.hxx>
-#include <ten/linear_algebra/factorization.hxx>
+#include <ten/linalgebra/factorization.hxx>
 #include <ten/types.hxx>
 
 namespace ten::linalg {
@@ -185,7 +185,6 @@ typename M::value_type det(const M &m) {
    if (n % 2 == 1) {
       d = -1;
    }
-   std::cout << "det P  = " << d << std::endl;
    // Multiply by det(l) and det(u)
    for (size_t i = 0; i < m.dim(0); i++) {
       d *= l(i, i) * u(i, i);

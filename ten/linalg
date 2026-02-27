@@ -4,8 +4,8 @@
 // Lapack API
 #include <ten/kernels/lapack_api.hxx>
 // Linear Algebra
-#include <ten/linear_algebra/linear_algebra.hxx>
-#include <ten/linear_algebra/factorization.hxx>
-#include <ten/linear_algebra/least_squares.hxx>
+#include <ten/linalgebra/linalgebra.hxx>
+#include <ten/linalgebra/factorization.hxx>
+#include <ten/linalgebra/least_squares.hxx>
 
 #endif
