@@ -43,6 +43,12 @@ static void qr_fact(storage_order layout, size_t m, size_t n, float *a,
    LAPACKE_sgeqrf(cast(layout), m, n, a, lda, tau);
 };
 
+template <>
+static void qr_fact(storage_order layout, size_t m, size_t n, double *a,
+                    size_t lda, double *tau) {
+   LAPACKE_dgeqrf(cast(layout), m, n, a, lda, tau);
+};
+
 template <typename T>
 static void qr_factq(storage_order layout, size_t m, size_t n, size_t k, T *a,
                      size_t lda, T *tau);
@@ -51,6 +57,12 @@ template <>
 static void qr_factq(storage_order layout, size_t m, size_t n, size_t k,
                      float *a, size_t lda, float *tau) {
    LAPACKE_sorgqr(cast(layout), m, n, k, a, lda, tau);
+}
+
+template <>
+static void qr_factq(storage_order layout, size_t m, size_t n, size_t k,
+                     double *a, size_t lda, double *tau) {
+   LAPACKE_dorgqr(cast(layout), m, n, k, a, lda, tau);
 }
 
 // LU factorization
@@ -64,6 +76,12 @@ static void lu_fact(storage_order layout, size_t m, size_t n, float *a,
    LAPACKE_sgetrf(cast(layout), m, n, a, lda, ipiv);
 }
 
+template <>
+static void lu_fact(storage_order layout, size_t m, size_t n, double *a,
+                    size_t lda, int *ipiv) {
+   LAPACKE_dgetrf(cast(layout), m, n, a, lda, ipiv);
+}
+
 // Cholesky factorization
 template <typename T>
 static void cholesky_fact(storage_order layout, char uplo, size_t n, T *a,
@@ -73,6 +91,12 @@ template <>
 static void cholesky_fact(storage_order layout, char uplo, size_t n, float *a,
                           size_t lda) {
    LAPACKE_spotrf(cast(layout), uplo, n, a, lda);
+}
+
+template <>
+static void cholesky_fact(storage_order layout, char uplo, size_t n, double *a,
+                          size_t lda) {
+   LAPACKE_dpotrf(cast(layout), uplo, n, a, lda);
 }
 
 // SVD decomposition
@@ -89,6 +113,14 @@ static void svd_fact(storage_order layout, char jobu, char jobvt, size_t m,
                   work);
 }
 
+template <>
+static void svd_fact(storage_order layout, char jobu, char jobvt, size_t m,
+                     size_t n, double *a, size_t lda, double *s, double *u,
+                     size_t ldu, double *vt, size_t ldvt, double *work) {
+   LAPACKE_dgesvd(cast(layout), jobu, jobvt, m, n, a, lda, s, u, ldu, vt, ldvt,
+                  work);
+}
+
 // Inverse of a matrix
 template<typename T>
 static void inv(storage_order layout, size_t n, T* a, size_t lda, int32_t* ipiv);
@@ -97,6 +129,12 @@ template<>
 static void inv(storage_order layout, size_t n, float* a, size_t lda, int32_t* ipiv) {
    LAPACKE_sgetrf(cast(layout), n, n, a, lda, ipiv);
    LAPACKE_sgetri(cast(layout), n, a, lda, ipiv);
+}
+
+template<>
+static void inv(storage_order layout, size_t n, double* a, size_t lda, int32_t* ipiv) {
+   LAPACKE_dgetrf(cast(layout), n, n, a, lda, ipiv);
+   LAPACKE_dgetri(cast(layout), n, a, lda, ipiv);
 }
 
 } // namespace ten::kernels::lapack

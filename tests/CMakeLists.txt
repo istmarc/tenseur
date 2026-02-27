@@ -15,7 +15,9 @@ message("BLAS linker flags : ${BLAS_LINKER_FLAGS}")
 message("BLAS libraries : ${BLAS_LIBRARIES}")
 message("BLAS vendor : ${BLA_VENDOR}")
 
+set(LAPACKE -llapacke)
+
 # Tests
 add_subdirectory(Tensor)
 add_subdirectory(Expr)
-
+add_subdirectory(LinearAlgebra)
