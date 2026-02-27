@@ -14,10 +14,8 @@ int main() {
    std::cout << l << std::endl;
    std::cout << u << std::endl;
 
-   std::cout << "LU" << std::endl;
-   std::cout << (l * u).eval() << std::endl;
-
-   ::ten::matrix<float> v = (l*u).eval() - a;
+   ten::matrix<float> lu = l*u;
+   ten::matrix<float> v = lu - a;
    std::cout << std::boolalpha << ten::all_close(v, 1e-3) << std::endl;
 
 }

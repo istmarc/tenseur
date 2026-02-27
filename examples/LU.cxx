@@ -9,15 +9,12 @@ int main() {
 
    auto [p, l, u] = ten::linalg::lu(a);
 
+   std::cout << p << std::endl;
    std::cout << l << std::endl;
    std::cout << u << std::endl;
 
-   std::cout << "LU" << std::endl;
-   std::cout << (l * u).eval() << std::endl;
-
    std::cout << "PLU" << std::endl;
-   // FIXME bad optional access
-   matrix<float> x = (p * l).eval() * u;
+   matrix<float> x = p * l * u;
    std::cout << x << std::endl;
 
    std::cout << linalg::det(a) << std::endl;

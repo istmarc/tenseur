@@ -21,11 +21,6 @@ int main() {
 
    std::cout << sigma << std::endl;
 
-   auto y = (u * sigma).eval();
-   auto z = y * vt;
-   std::cout << z.eval() << std::endl;
-
-   //::ten::matrix<float> v = (l*u).eval() - a;
-   //std::cout << ten::all_close(v) << std::endl;
-
+   matrix<float> z = u * sigma * vt;
+   std::cout << z << std::endl;
 }

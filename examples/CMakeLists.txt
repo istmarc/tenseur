@@ -29,3 +29,23 @@ target_link_libraries(SolveLinearSystem ${BLAS_LIBRARIES})
 target_link_libraries(SolveLinearSystem ${LAPACK_LIBRARIES} -llapacke)
 target_include_directories(SolveLinearSystem PRIVATE ${PROJECT_SOURCE_DIR})
 
+# QR
+add_executable(QR QR.cxx)
+target_link_libraries(QR ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} -llapacke)
+target_include_directories(QR PRIVATE ${PROJECT_SOURCE_DIR})
+
+# LU
+add_executable(LU LU.cxx)
+target_link_libraries(LU ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} -llapacke)
+target_include_directories(LU PRIVATE ${PROJECT_SOURCE_DIR})
+
+# Cholesky
+add_executable(Cholesky Cholesky.cxx)
+target_link_libraries(Cholesky ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} -llapacke)
+target_include_directories(Cholesky PRIVATE ${PROJECT_SOURCE_DIR})
+
+# SVD
+add_executable(SVD SVD.cxx)
+target_link_libraries(SVD ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} -llapacke)
+target_include_directories(SVD PRIVATE ${PROJECT_SOURCE_DIR})
+
