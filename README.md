@@ -59,7 +59,7 @@ An expression API class for representing unary and binary operations between ten
 
 ## Requirements
 
-- Clang compiler with C++20 support
+- Clang compiler with C++23 support
 
 - CMake
 
