@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.2)
 
 cmake_policy(SET CMP0135 NEW)
 
-project(tenseur VERSION 1.0.0
-                DESCRIPTION "A header only C++20 tensor library."
+project(tenseur VERSION 0.1.1
+                DESCRIPTION "A header only C++23 tensor library."
                 HOMEPAGE_URL "https://github.com/istmarc/tenseur")
 
 include(GNUInstallDirs)
