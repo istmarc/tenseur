@@ -126,7 +126,7 @@ auto operator+(E &&expr, T &&scalar) {
 
 // Add an expression an a ten::scalar
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator+(ten::scalar<T> &scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
@@ -141,7 +141,7 @@ auto operator+(ten::scalar<T> &scalar, E &&expr) {
 }
 
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator+(ten::scalar<T> &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
@@ -236,7 +236,7 @@ auto operator-(E &&expr, T &&scalar) {
 
 // Substract an expression an a ten::scalar
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator-(ten::scalar<T> &scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
@@ -251,7 +251,7 @@ auto operator-(ten::scalar<T> &scalar, E &&expr) {
 }
 
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator-(ten::scalar<T> &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
@@ -266,7 +266,7 @@ auto operator-(ten::scalar<T> &&scalar, E &&expr) {
 }
 
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator-(E &&expr, ten::scalar<T> &scalar) {
    using L = std::remove_cvref_t<E>;
@@ -281,7 +281,7 @@ auto operator-(E &&expr, ten::scalar<T> &scalar) {
 }
 
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator-(E &&expr, ten::scalar<T> &&scalar) {
    using L = std::remove_cvref_t<E>;
@@ -344,7 +344,7 @@ auto operator*(E &&expr, T &&scalar) {
 
 // Multiplyan expression an a ten::scalar
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator*(ten::scalar<T> &scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
@@ -359,7 +359,7 @@ auto operator*(ten::scalar<T> &scalar, E &&expr) {
 }
 
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator*(ten::scalar<T> &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
@@ -374,7 +374,7 @@ auto operator*(ten::scalar<T> &&scalar, E &&expr) {
 }
 
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator*(E &&expr, ten::scalar<T> &scalar) {
    using L = std::remove_cvref_t<E>;
@@ -389,7 +389,7 @@ auto operator*(E &&expr, ten::scalar<T> &scalar) {
 }
 
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator*(E &&expr, ten::scalar<T> &&scalar) {
    using L = std::remove_cvref_t<E>;
@@ -453,7 +453,7 @@ auto operator/(E &&expr, T &&scalar) {
 
 // Divide an expression an a ten::scalar
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator/(ten::scalar<T> &scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
@@ -468,7 +468,7 @@ auto operator/(ten::scalar<T> &scalar, E &&expr) {
 }
 
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator/(ten::scalar<T> &&scalar, E &&expr) {
    using R = std::remove_cvref_t<E>;
@@ -483,7 +483,7 @@ auto operator/(ten::scalar<T> &&scalar, E &&expr) {
 }
 
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator/(E &&expr, ten::scalar<T> &scalar) {
    using L = std::remove_cvref_t<E>;
@@ -498,7 +498,7 @@ auto operator/(E &&expr, ten::scalar<T> &scalar) {
 }
 
 template <typename T, Expr E>
-   requires(::ten::is_float<T>::value || ::ten::is_complex<T>::value ||
+   requires(::ten::is_float<T>::value || ::ten::is_double<T>::value || ::ten::is_complex<T>::value ||
             ::std::is_integral_v<T>)
 auto operator/(E &&expr, ten::scalar<T> &&scalar) {
    using L = std::remove_cvref_t<E>;

@@ -1,5 +1,3 @@
-#include "expr.hxx"
-#include "learning/histogram.hxx"
 #include <cmath>
 #include <initializer_list>
 #include <iostream>
@@ -407,52 +405,52 @@ using mul_matrix_double_vector_double =
 
 using mul_scalar_float_vector_float =
     ten::binary_expr<scalar_float, vector_float, vector_float,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 using mul_scalar_double_vector_double =
     ten::binary_expr<scalar_double, vector_double, vector_double,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 
 using mul_scalar_int32_vector_int32 =
     ten::binary_expr<scalar_int32, vector_int32, vector_int32,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 using mul_scalar_int64_vector_int64 =
     ten::binary_expr<scalar_int64, vector_int64, vector_int64,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 
 using mul_scalar_uint32_vector_uint32 =
     ten::binary_expr<scalar_uint32, vector_uint32, vector_uint32,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 using mul_scalar_uint64_vector_uint64 =
     ten::binary_expr<scalar_uint64, vector_uint64, vector_uint64,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 
 using mul_scalar_float_matrix_float =
     ten::binary_expr<scalar_float, matrix_float, matrix_float,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 using mul_scalar_double_matrix_double =
     ten::binary_expr<scalar_double, matrix_double, matrix_double,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 
 using mul_scalar_float_tensor3_float =
     ten::binary_expr<scalar_float, tensor3_float, tensor3_float,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 using mul_scalar_double_tensor3_double =
     ten::binary_expr<scalar_double, tensor3_double, tensor3_double,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 
 using mul_scalar_float_tensor4_float =
     ten::binary_expr<scalar_float, tensor4_float, tensor4_float,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 using mul_scalar_double_tensor4_double =
     ten::binary_expr<scalar_double, tensor4_double, tensor4_double,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 
 using mul_scalar_float_tensor5_float =
     ten::binary_expr<scalar_float, tensor5_float, tensor5_float,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 using mul_scalar_double_tensor5_double =
     ten::binary_expr<scalar_double, tensor5_double, tensor5_double,
-                     ten::functional::mul>;
+                     ten::functional::scalar_left_binary_func<::ten::binary_operation::mul>::func>;
 
 using mul_diagonal_float_diagonal_float =
     ten::binary_expr<diagonal_float, diagonal_float, matrix_float,
@@ -543,22 +541,10 @@ using histogram_options = ten::ml::histogram_options;
 PYBIND11_MODULE(tenseurbackend, m) {
    m.doc() = "Tenseur Backend";
 
-   /*py::class_<std::initializer_list<std::size_t>>(m, "list")
-      .def(py::init<std::size_t>())
-      .def(py::init<std::size_t, std::size_t>())
-      .def(py::init<std::size_t, std::size_t, std::size_t>())
-      .def(py::init<std::size_t, std::size_t, std::size_t, std::size_t>())
-      .def(py::init<std::size_t, std::size_t, std::size_t, std::size_t,
-      std::size_t>());
-   */
-
    // Scalars
    py::class_<scalar_float>(m, "scalar_float")
-       .def(py::init<bool>())
-       .def(py::init<const float &, bool>())
+       .def(py::init<const float &>())
        //.def("value", &scalar_float::value)
-       //.def("requires_grad", &scalar_float::requires_grad)
-       //.def("grad", &scalar_float::grad)
        .def("__repr__", [](const scalar_float &s) {
           std::stringstream ss;
           ss << s;
@@ -566,11 +552,8 @@ PYBIND11_MODULE(tenseurbackend, m) {
        });
 
    py::class_<scalar_double>(m, "scalar_double")
-       .def(py::init<bool>())
-       .def(py::init<const double &, bool>())
+       .def(py::init<const double &>())
        //.def("value", &scalar_double::value)
-       //.def("requires_grad", &scalar_double::requires_grad)
-       //.def("grad", &scalar_double::grad)
        .def("__repr__", [](const scalar_double &s) {
           std::stringstream ss;
           ss << s;
@@ -578,11 +561,8 @@ PYBIND11_MODULE(tenseurbackend, m) {
        });
 
    py::class_<scalar_int32>(m, "scalar_int32")
-       .def(py::init<bool>())
-       .def(py::init<const int32_t &, bool>())
+       .def(py::init<const int32_t &>())
        //.def("value", &scalar_int32::value)
-       //.def("requires_grad", &scalar_int32::requires_grad)
-       //.def("grad", &scalar_int32::grad)
        .def("__repr__", [](const scalar_int32 &s) {
           std::stringstream ss;
           ss << s;
@@ -590,11 +570,8 @@ PYBIND11_MODULE(tenseurbackend, m) {
        });
 
    py::class_<scalar_int64>(m, "scalar_int64")
-       .def(py::init<bool>())
-       .def(py::init<const int64_t &, bool>())
+       .def(py::init<const int64_t &>())
        //.def("value", &scalar_int64::value)
-       //.def("requires_grad", &scalar_int64::requires_grad)
-       //.def("grad", &scalar_int64::grad)
        .def("__repr__", [](const scalar_int64 &s) {
           std::stringstream ss;
           ss << s;
@@ -1136,15 +1113,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Vector float
    py::class_<vector_float>(m, "vector_float")
        .def(py::init<const ten::shape<0> &>())
-       .def(py::init<const ten::shape<0> &, bool>())
        .def(py::init<const ten::shape<0> &, std::vector<float>>())
-       .def(py::init<const ten::shape<0> &, std::vector<float>, bool>())
        .def("rank", &vector_float::rank)
        .def("size", &vector_float::size)
        .def("shape", &vector_float::shape)
        .def("strides", &vector_float::strides)
-       .def("requires_grad", &vector_float::requires_grad)
-       .def("grad", &vector_float::grad)
        .def("__getitem__",
             [](const vector_float &v, size_t index) { return v[index]; })
        .def("__setitem__", [](vector_float &v, size_t index,
@@ -1189,14 +1162,10 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Vector double
    py::class_<vector_double>(m, "vector_double")
        .def(py::init<const ten::shape<0> &>())
-       .def(py::init<const ten::shape<0> &, bool>())
        .def(py::init<const ten::shape<0> &, std::vector<double>>())
-       .def(py::init<const ten::shape<0> &, std::vector<double>, bool>())
        .def("rank", &vector_double::rank)
        .def("size", &vector_double::size)
        .def("strides", &vector_double::strides)
-       .def("requires_grad", &vector_double::requires_grad)
-       .def("grad", &vector_double::grad)
        .def("__getitem__",
             [](const vector_double &v, size_t index) { return v[index]; })
        .def("__setitem__", [](vector_double &v, size_t index,
@@ -1249,15 +1218,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Vector int32
    py::class_<vector_int32>(m, "vector_int32")
        .def(py::init<const ten::shape<0> &>())
-       .def(py::init<const ten::shape<0> &, bool>())
        .def(py::init<const ten::shape<0> &, std::vector<int32_t>>())
-       .def(py::init<const ten::shape<0> &, std::vector<int32_t>, bool>())
        .def("rank", &vector_int32::rank)
        .def("size", &vector_int32::size)
        .def("shape", &vector_int32::shape)
        .def("strides", &vector_int32::strides)
-       .def("requires_grad", &vector_int32::requires_grad)
-       .def("grad", &vector_int32::grad)
        .def("__getitem__",
             [](const vector_int32 &v, size_t index) { return v[index]; })
        .def("__setitem__",
@@ -1302,15 +1267,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Vector int64
    py::class_<vector_int64>(m, "vector_int64")
        .def(py::init<const ten::shape<0> &>())
-       .def(py::init<const ten::shape<0> &, bool>())
        .def(py::init<const ten::shape<0> &, std::vector<int64_t>>())
-       .def(py::init<const ten::shape<0> &, std::vector<int64_t>, bool>())
        .def("rank", &vector_int64::rank)
        .def("size", &vector_int64::size)
        .def("shape", &vector_int64::shape)
        .def("strides", &vector_int64::strides)
-       .def("requires_grad", &vector_int64::requires_grad)
-       .def("grad", &vector_int64::grad)
        .def("__getitem__",
             [](const vector_int64 &v, size_t index) { return v[index]; })
        .def("__setitem__",
@@ -1355,15 +1316,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Vector uint32
    py::class_<vector_uint32>(m, "vector_uint32")
        .def(py::init<const ten::shape<0> &>())
-       .def(py::init<const ten::shape<0> &, bool>())
        .def(py::init<const ten::shape<0> &, std::vector<uint32_t>>())
-       .def(py::init<const ten::shape<0> &, std::vector<uint32_t>, bool>())
        .def("rank", &vector_uint32::rank)
        .def("size", &vector_uint32::size)
        .def("shape", &vector_uint32::shape)
        .def("strides", &vector_uint32::strides)
-       .def("requires_grad", &vector_uint32::requires_grad)
-       .def("grad", &vector_uint32::grad)
        .def("__getitem__",
             [](const vector_uint32 &v, size_t index) { return v[index]; })
        .def("__setitem__",
@@ -1416,15 +1373,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Vector uint64
    py::class_<vector_uint64>(m, "vector_uint64")
        .def(py::init<const ten::shape<0> &>())
-       .def(py::init<const ten::shape<0> &, bool>())
        .def(py::init<const ten::shape<0> &, std::vector<uint64_t>>())
-       .def(py::init<const ten::shape<0> &, std::vector<uint64_t>, bool>())
        .def("rank", &vector_uint64::rank)
        .def("size", &vector_uint64::size)
        .def("shape", &vector_uint64::shape)
        .def("strides", &vector_uint64::strides)
-       .def("requires_grad", &vector_uint64::requires_grad)
-       .def("grad", &vector_uint64::grad)
        .def("__getitem__",
             [](const vector_uint64 &v, size_t index) { return v[index]; })
        .def("__setitem__",
@@ -1477,15 +1430,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Matrix float
    py::class_<matrix_float>(m, "matrix_float")
        .def(py::init<const ten::shape<0, 0> &>())
-       .def(py::init<const ten::shape<0, 0> &, bool>())
        .def(py::init<const ten::shape<0, 0> &, std::vector<float>>())
-       .def(py::init<const ten::shape<0, 0> &, std::vector<float>, bool>())
        .def("rank", &matrix_float::rank)
        .def("size", &matrix_float::size)
        .def("shape", &matrix_float::shape)
        .def("strides", &matrix_float::strides)
-       .def("requires_grad", &matrix_float::requires_grad)
-       .def("grad", &matrix_float::grad)
        .def("__getitem__",
             [](const matrix_float &m, size_t index) { return m[index]; })
        .def("__getitem__",
@@ -1549,15 +1498,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Matrix double
    py::class_<matrix_double>(m, "matrix_double")
        .def(py::init<const ten::shape<0, 0> &>())
-       .def(py::init<const ten::shape<0, 0> &, bool>())
        .def(py::init<const ten::shape<0, 0> &, std::vector<double>>())
-       .def(py::init<const ten::shape<0, 0> &, std::vector<double>, bool>())
        .def("rank", &matrix_double::rank)
        .def("size", &matrix_double::size)
        .def("shape", &matrix_double::shape)
        .def("strides", &matrix_double::strides)
-       .def("requires_grad", &matrix_double::requires_grad)
-       .def("grad", &matrix_double::grad)
        .def("__getitem__",
             [](const matrix_double &m, size_t index) { return m[index]; })
        .def("__getitem__",
@@ -1629,21 +1574,16 @@ PYBIND11_MODULE(tenseurbackend, m) {
           ss << m;
           return ss.str();
        });
-
    // Tensor classes
 
    // Tensor 3d
    py::class_<tensor3_float>(m, "tensor3_float")
        .def(py::init<const ten::shape<0, 0, 0> &>())
-       .def(py::init<const ten::shape<0, 0, 0> &, bool>())
        .def(py::init<const ten::shape<0, 0, 0> &, std::vector<float>>())
-       .def(py::init<const ten::shape<0, 0, 0> &, std::vector<float>, bool>())
        .def("rank", &tensor3_float::rank)
        .def("size", &tensor3_float::size)
        .def("shape", &tensor3_float::shape)
        .def("strides", &tensor3_float::strides)
-       .def("requires_grad", &tensor3_float::requires_grad)
-       .def("grad", &tensor3_float::grad)
        .def("__getitem__",
             [](const tensor3_float &t, size_t index) { return t[index]; })
        .def("__getitem__",
@@ -1702,15 +1642,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    py::class_<tensor3_double>(m, "tensor3_double")
        .def(py::init<const ten::shape<0, 0, 0> &>())
-       .def(py::init<const ten::shape<0, 0, 0> &, bool>())
        .def(py::init<const ten::shape<0, 0, 0> &, std::vector<double>>())
-       .def(py::init<const ten::shape<0, 0, 0> &, std::vector<double>, bool>())
        .def("rank", &tensor3_double::rank)
        .def("size", &tensor3_double::size)
        .def("shape", &tensor3_double::shape)
        .def("strides", &tensor3_double::strides)
-       .def("requires_grad", &tensor3_double::requires_grad)
-       .def("grad", &tensor3_double::grad)
        .def("__getitem__",
             [](const tensor3_double &t, size_t index) { return t[index]; })
        .def("__getitem__",
@@ -1772,22 +1708,14 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Tensor 4d
    py::class_<tensor4_float>(m, "tensor4_float")
        .def(py::init<const ten::shape<0, 0, 0, 0> &>())
-       .def(py::init<const ten::shape<0, 0, 0, 0> &, bool>())
        .def(py::init<const ten::shape<0, 0, 0, 0> &, std::vector<float>>())
-       .def(
-           py::init<const ten::shape<0, 0, 0, 0> &, std::vector<float>, bool>())
        .def(py::init<std::initializer_list<size_t>>())
-       .def(py::init<std::initializer_list<size_t>, bool>())
        .def(py::init<std::initializer_list<size_t>,
                      std::initializer_list<float>>())
-       .def(py::init<std::initializer_list<size_t>,
-                     std::initializer_list<float>, bool>())
        .def("rank", &tensor4_float::rank)
        .def("size", &tensor4_float::size)
        .def("shape", &tensor4_float::shape)
        .def("strides", &tensor4_float::strides)
-       .def("requires_grad", &tensor4_float::requires_grad)
-       .def("grad", &tensor4_float::grad)
        .def("__getitem__",
             [](const tensor4_float &t, size_t index) { return t[index]; })
        .def("__getitem__",
@@ -1847,22 +1775,14 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    py::class_<tensor4_double>(m, "tensor4_double")
        .def(py::init<const ten::shape<0, 0, 0, 0> &>())
-       .def(py::init<const ten::shape<0, 0, 0, 0> &, bool>())
        .def(py::init<const ten::shape<0, 0, 0, 0> &, std::vector<double>>())
-       .def(py::init<const ten::shape<0, 0, 0, 0> &, std::vector<double>,
-                     bool>())
        .def(py::init<std::initializer_list<size_t>>())
-       .def(py::init<std::initializer_list<size_t>, bool>())
        .def(py::init<std::initializer_list<size_t>,
                      std::initializer_list<double>>())
-       .def(py::init<std::initializer_list<size_t>,
-                     std::initializer_list<double>, bool>())
        .def("rank", &tensor4_double::rank)
        .def("size", &tensor4_double::size)
        .def("shape", &tensor4_double::shape)
        .def("strides", &tensor4_double::strides)
-       .def("requires_grad", &tensor4_double::requires_grad)
-       .def("grad", &tensor4_double::grad)
        .def("__getitem__",
             [](const tensor4_double &t, size_t index) { return t[index]; })
        .def("__getitem__",
@@ -1925,16 +1845,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Tensor 5d
    py::class_<tensor5_float>(m, "tensor5_float")
        .def(py::init<const ten::shape<0, 0, 0, 0, 0> &>())
-       .def(py::init<const ten::shape<0, 0, 0, 0, 0> &, bool>())
        .def(py::init<const ten::shape<0, 0, 0, 0, 0> &, std::vector<float>>())
-       .def(py::init<const ten::shape<0, 0, 0, 0, 0> &, std::vector<float>,
-                     bool>())
        .def("rank", &tensor5_float::rank)
        .def("size", &tensor5_float::size)
        .def("shape", &tensor5_float::shape)
        .def("strides", &tensor5_float::strides)
-       .def("requires_grad", &tensor5_float::requires_grad)
-       .def("grad", &tensor5_float::grad)
        .def("__getitem__",
             [](const tensor5_float &t, size_t index) { return t[index]; })
        .def("__getitem__",
@@ -1996,16 +1911,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
 
    py::class_<tensor5_double>(m, "tensor5_double")
        .def(py::init<const ten::shape<0, 0, 0, 0, 0> &>())
-       .def(py::init<const ten::shape<0, 0, 0, 0, 0> &, bool>())
        .def(py::init<const ten::shape<0, 0, 0, 0, 0> &, std::vector<double>>())
-       .def(py::init<const ten::shape<0, 0, 0, 0, 0> &, std::vector<double>,
-                     bool>())
        .def("rank", &tensor5_double::rank)
        .def("size", &tensor5_double::size)
        .def("shape", &tensor5_double::shape)
        .def("strides", &tensor5_double::strides)
-       .def("requires_grad", &tensor5_double::requires_grad)
-       .def("grad", &tensor5_double::grad)
        .def("__getitem__",
             [](const tensor5_double &t, size_t index) { return t[index]; })
        .def("__getitem__",
@@ -2054,7 +1964,8 @@ PYBIND11_MODULE(tenseurbackend, m) {
        .def(
            "__mul__",
            [](double d, tensor5_double &self) {
-              return scalar_double(d) * self;
+               auto s = scalar_double(d);
+              return s * self;
            },
            py::is_operator())
        .def("is_transposed", &tensor5_double::is_transposed)
@@ -2071,15 +1982,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // Diagonal
    py::class_<diagonal_float>(m, "diagonal_float")
        .def(py::init<const ten::shape<0, 0> &>())
-       .def(py::init<const ten::shape<0, 0> &, bool>())
        .def(py::init<const ten::shape<0, 0> &, std::vector<float>>())
-       .def(py::init<const ten::shape<0, 0> &, std::vector<float>, bool>())
        .def("rank", &diagonal_float::rank)
        .def("size", &diagonal_float::size)
        .def("shape", &diagonal_float::shape)
        .def("strides", &diagonal_float::strides)
-       .def("requires_grad", &diagonal_float::requires_grad)
-       .def("grad", &diagonal_float::grad)
        .def("__getitem__",
             [](const diagonal_float &m, size_t index) { return m[index]; })
        .def("__getitem__",
@@ -2124,10 +2031,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
        //.def("__mul__", [](diagonal_float& self, vector_float&other) {
        //   return self * other;
        //}, py::is_operator())
-       .def(
+       /*.def(
            "__mul__",
            [](float f, diagonal_float &self) { return scalar_float(f) * self; },
            py::is_operator())
+         */
        .def("is_transposed", &diagonal_float::is_transposed)
        .def("is_symmetric", &diagonal_float::is_symmetric)
        .def("is_hermitian", &diagonal_float::is_hermitian)
@@ -2147,15 +2055,11 @@ PYBIND11_MODULE(tenseurbackend, m) {
    // diagonal double
    py::class_<diagonal_double>(m, "diagonal_double")
        .def(py::init<const ten::shape<0, 0> &>())
-       .def(py::init<const ten::shape<0, 0> &, bool>())
        .def(py::init<const ten::shape<0, 0> &, std::vector<double>>())
-       .def(py::init<const ten::shape<0, 0> &, std::vector<double>, bool>())
        .def("rank", &diagonal_double::rank)
        .def("size", &diagonal_double::size)
        .def("shape", &diagonal_double::shape)
        .def("strides", &diagonal_double::strides)
-       .def("requires_grad", &diagonal_double::requires_grad)
-       .def("grad", &diagonal_double::grad)
        .def("__getitem__",
             [](const diagonal_double &m, size_t index) { return m[index]; })
        .def("__getitem__",
@@ -2200,12 +2104,12 @@ PYBIND11_MODULE(tenseurbackend, m) {
        //.def("__mul__", [](diagonal_double& self, vector_double&other) {
        //   return self * other;
        //}, py::is_operator())
-       .def(
+       /*.def(
            "__mul__",
            [](double d, diagonal_double &self) {
               return scalar_double(d) * self;
            },
-           py::is_operator())
+           py::is_operator())*/
        .def("is_transposed", &diagonal_double::is_transposed)
        .def("is_symmetric", &diagonal_double::is_symmetric)
        .def("is_hermitian", &diagonal_double::is_hermitian)
