@@ -6,50 +6,24 @@ The functions/operators are defined in the `ten/tensor.hxx` and in `ten/function
 Elementwise operations
 ----------------------
 
-- Addition
+Operators ``+``, ``-``, ``*``, and ``/`` are defined for tensors, matrices and vectors.
 
 .. code-block:: cpp
 
-   ten::tensor<float, 3> x({2, 3, 4});
-   ten::tensor<float, 3> y({2, 3, 4});
-   auto z = x + y;
-
-- Substraction
-
-.. code-block:: cpp
-
-   ten::tensor<float, 3> x({2, 3, 4});
-   ten::tensor<float, 3> y({2, 3, 4});
-   auto z = x - y;
-
-- Multiplication
-
-.. code-block:: cpp
-
-   ten::tensor<float, 3> x({2, 3, 4});
-   ten::tensor<float, 3> y({2, 3, 4});
-   auto z = x * y;
-
-- Division
-
-.. code-block:: cpp
-
-   ten::tensor<float, 3> x({2, 3, 4});
-   ten::tensor<float, 3> y({2, 3, 4});
-   auto z = x / y;
+   ten::tensor<float, Rank> x(shape);
+   ten::tensor<float, Rank> y(shape);
+   auto z = x op y;
 
 Scalar tensor operations
 ------------------------
 
-- Addition
+Operators ``+``, ``-``, ``*``, and ``/`` are overloaded for scalar - tensor, matrice and vector operations.
 
 .. code-block:: cpp
 
-   ten::tensor<float, 3> x({2, 3, 4});
-   auto a = 1.0f + x;
-   auto b = x + 1.0f;
-
-- Substraction
+   ten::tensor<float, Rank> x(shape);
+   auto a = 1.0f op x;
+   auto b = x op 1.0f;
 
 .. code-block:: cpp
 
@@ -140,7 +114,7 @@ Tensor functions
 
    * - Description
      - Function
-   * - Tests whether all the elements are close to 0
+   * - Tests whether all the elements are close to 0 within a tolerance eps
      - ten::all_close(tensor, eps)
 
 TODO

@@ -39,52 +39,50 @@ Vector
 
 .. code-block:: cpp
 
-   size_t size = 5;
    // Uninitialized vector
    ten::vector<T> x({size});
    // Vector initialized with data
-   ten::vector<T> y({size}, {0., 1., 2., 3., 4.});
+   ten::vector<T> y({size}, data);
 
 Static vector
 -------------
 
 .. code-block:: cpp
 
-   constexpr size_t size = 5;
    ten::svector<float, size> x;
-   ten::svector<float, size> y({0., 1., 2., 3., 4.});
+   ten::svector<float, size> y(data);
 
 Matrix
 ------
 
 .. code-block:: cpp
 
-   ten::matrix<float> x({2, 3});
-   ten::matrix<float> y({2, 3}, {0., 1., 2., 3., 4., 5.});
+   ten::matrix<float> x(shape);
+   ten::matrix<float> y(shape, data);
 
 Static matrix
 -------------
 
 .. code-block:: cpp
 
-   ten::smatrix<float, 2, 3> x;
-   ten::smatrix<float, 2, 3> y({0., 1., 2., 3., 4., 5.});
+   ten::smatrix<float, dims...> x;
+   ten::smatrix<float, dims...> y(data);
 
 Tensor
 ------
 
 .. code-block:: cpp
 
-   ten::tensor<float> x({2, 3, 4});
-   ten::tensor<float> y({2, 3}, {0., 1., 2., 3., 4., 5.});
+   ten::tensor<float> x(shape);
+   ten::tensor<float> y(shape, data);
 
 Static tensor
 -------------
 
 .. code-block:: cpp
 
-   ten::stensor<float, 2, 3, 4> x;
-   ten::stensor<float, 2, 3> y({0., 1., 2., 3., 4., 5.});
+   ten::stensor<float, dims...> x;
+   ten::stensor<float, dims...> y(data);
 
 Special matrices
 ----------------
@@ -93,7 +91,7 @@ Special matrices
 
 .. code-block:: cpp
 
-   ten::matrix<float> x = ten::range<ten::matrix<float>>({2, 3});
+   ten::matrix<float> x = ten::range<ten::matrix<float>>(shape);
    auto y = ten::transposed(x);
    std::cout << std::boolalpha << y.is_transposed() << std::endl;
 
@@ -101,7 +99,7 @@ Special matrices
 
 .. code-block:: cpp
 
-   ten::matrix<float> x({2, 2}, {1.0f, 0.0f, 0.0f, 1.0f});
+   ten::matrix<float> x(shape, data);
    auto y = ten::symmetric(x);
    std::cout << std::boolalpha << y.is_symmetric() << std::endl;
 
@@ -109,26 +107,23 @@ Special matrices
 
 .. code-block:: cpp
 
-   ten::matrix<std::complex<float>> x({2, 2}, {1.0f, 1.0f-1.0i, 1.0f + 1.0i, 2.0f});
+   ten::matrix<std::complex<float>> x(shape, data);
    auto y = ten::hermitian(x);
    std::cout << std::boolalpha << y.is_hermitian() << std::endl;
-   std::cout << y << std::endl;
 
 - Lower triangular
 
 .. code-block:: cpp
 
-   ten::matrix<float> x({2, 2}, {1.0f, 2.0f, 0.0f, 3.0f});
+   ten::matrix<float> x(shape, data);
    auto y = ten::lower_tr(x);
    std::cout << std::boolalpha << y.is_lower_tr() << std::endl;
-   std::cout << y << std::endl;
 
 - Upper triangular
 
 .. code-block:: cpp
 
-   ten::matrix<float> x({2, 2}, {1.0f, 0.0f, 2.0f, 3.0f});
+   ten::matrix<float> x(shape, data);
    auto y = ten::upper_tr(x);
    std::cout << std::boolalpha << y.is_upper_tr() << std::endl;
-   std::cout << y << std::endl;
 

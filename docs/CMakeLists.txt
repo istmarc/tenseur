@@ -7,7 +7,7 @@ set(DOXYGEN_GENERATE_XML YES)
 
 doxygen_add_docs(
   docs
-  "${PROJECT_SOURCE_DIR}/Ten"
+  "${PROJECT_SOURCE_DIR}/ten"
   ALL
   COMMENT "Generate docs"
 )
