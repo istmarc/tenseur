@@ -4,5 +4,3 @@ Advanced
 Tensor classes
 ---------------
 
-
-

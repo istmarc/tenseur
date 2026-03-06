@@ -17,7 +17,7 @@ Operators ``+``, ``-``, ``*``, and ``/`` are defined for tensors, matrices and v
 Scalar tensor operations
 ------------------------
 
-Operators ``+``, ``-``, ``*``, and ``/`` are overloaded for scalar - tensor, matrice and vector operations.
+Operators ``+``, ``-``, ``*``, and ``/`` are overloaded for scalar - tensor, matrix and vector operations.
 
 .. code-block:: cpp
 

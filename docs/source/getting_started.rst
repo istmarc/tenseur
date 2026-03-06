@@ -1,33 +1,53 @@
 Getting started
 ===============
 
-API
----
-Tenseur has an easy to use api, It can be illustrated with the following example:
+Tensor
+------
+
+A ``ten::tensor<T, Rank>`` or ``stensor<T, Dims...>`` aka ``ten::ranked_tensor<T, Shape, Order, Storage, Allocator>`` is a multidimensional array. The number of dimensions is unlimited.
+
+
+By default a tensor is colum major that is its data is in a contiguous column. Support for row major tensors is limited.
 
 .. code-block:: cpp
 
-   // Normal distribution
-   ten::normal norm;
-   // Sample from a normal distribution
-   ten::vector<float> x = norm.sample(1000);
-   // Save to a mtx file (Matrix Market format)
-   ten::save_mtx(x, "norm.mtx");
+   ten::tensor<float, 3> x({2, 3, 4});
+   // Access indices with () operator
+   x(0, 0, 1) = 1.f;
+   // Access linear indices with [] operator
+   x[0] = 1.f;
+   x[23] = 1.f;
 
-The saved file can be loaded in numpy:
+Examples of a static tensor:
 
-.. code-block:: python
+.. code-block:: cpp
 
-   import numpy as np
-   import scipy as sp
-   import matplotlib.pyplot as plt
-   import seaborn as sn
-   plt.style.use("science")
-   a = sp.io.mmread("norm.mtx").flatten()
-   plt.hist(a, color = "black")
-   plt.show()
+   ten::stensor<float, 2, 3, 4> x;
+   // Access indices with () operator
+   x(0, 0, 1) = 1.f;
+   // Access linear indices with [] operator
+   x[0] = 1.f;
+   x[23] = 1.f;
 
-.. image:: _images/hist.png
+
+The number of dimensions of a tensor is returned by the function ``rank()``. The ``nth`` dimension is returned by ``dim(n)`` and the size of the tensor is returned by ``size()``.
+
+.. code-block:: cpp
+
+   ten::tensor<float, 3> x({2, 3, 4});
+   std::cout << x.rank() << std::endl; // 3
+   std::cout << x.dim(0) << std::endl; // 2
+   std::cout << x.dim(1) << std::endl; // 3
+   std::cout << x.dim(2) << std::endl; // 4
+   std::cout << x.size() << std::endl; // 2*3*4 = 24
+
+
+By default most functions don't copy the tensor, it can be copied by calling ``copy()``.
+
+.. code-block:: cpp
+
+   ten::tensor<float, 3> x({2, 3, 4});
+   auto y = x.copy();
 
 Constructors
 ------------
@@ -126,4 +146,35 @@ Special matrices
    ten::matrix<float> x(shape, data);
    auto y = ten::upper_tr(x);
    std::cout << std::boolalpha << y.is_upper_tr() << std::endl;
+
+Serialization
+-------------
+
+A tensor can be saved in binary format (extension .ten) or in matrix market format.
+
+Example:
+
+.. code-block:: cpp
+
+   // Normal distribution
+   ten::normal norm;
+   // Sample from a normal distribution
+   ten::vector<float> x = norm.sample(1000);
+   // Save to a mtx file (Matrix Market format)
+   ten::save_mtx(x, "norm.mtx");
+
+The saved file can be loaded in numpy:
+
+.. code-block:: python
+
+   import numpy as np
+   import scipy as sp
+   import matplotlib.pyplot as plt
+   import seaborn as sn
+   plt.style.use("science")
+   a = sp.io.mmread("norm.mtx").flatten()
+   plt.hist(a, color = "black")
+   plt.show()
+
+.. image:: _images/hist.png
 
