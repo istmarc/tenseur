@@ -1,5 +1,7 @@
 [![docs](https://readthedocs.org/projects/tenseur/badge/?version=latest)](https://tenseur.readthedocs.io/en/latest/index.html)
 
+[Doxygen docs](https://istmarc.github.io/documentation/tenseur/)
+
 # Tenseur
 
 A header only C++23 tensor, neural networks and mathematical library [WIP]
