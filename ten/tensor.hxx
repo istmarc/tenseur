@@ -592,8 +592,8 @@ class scalar : public expr<scalar<T>>, public scalar_operations<scalar<T>> {
    }
 
    /// Get or set  the value
-   T &value() { return *_value.get(); }
-   const T &value() const { return *_value.get(); }
+   [[nodiscard]] T &value() { return *_value.get(); }
+   [[nodiscard]] const T &value() const { return *_value.get(); }
 
    // Get tje node to the value
    [[nodiscard]] std::shared_ptr<T> value_node() const { return _value; }
@@ -789,13 +789,13 @@ template <class T, class Storage, class Allocator> class tensor_node {
    }
 
    /*
-   template <class T, class Shape, storage_order Order, class Storage,
-             class Allocator>
+   template <class Ty, class ShapeTy, storage_order StorageOrder, class StorageTy,
+             class AllocatorTy>
    friend bool
    serialize(std::ostream &os,
-             tensor_node<T, Shape, Order, Storage, Allocator> &node);*/
+             tensor_node<Ty, ShapeTy, StorageOrder, StorageTy, AllocatorTy> &node);
 
-   /*template <class TensorNode>
+   template <class TensorNode>
       requires(::ten::is_tensor_node<TensorNode>::value)
    friend TensorNode deserialize(std::istream &os);*/
 };

@@ -1883,6 +1883,11 @@ struct mul<X, Y, Z> : ::ten::functional::func<> {
    }
 };
 
+/*
+template<Scalar X, Tensor Y, Tensor Z>
+struct mul<X, Y, Z>  = scalar_left_binary_func<X, Y, Z>::func;
+*/
+
 // scalar * tensor
 /*
 template <Scalar X, Tensor Y, Tensor Z> struct mul<X, Y, Z> : func<> {
